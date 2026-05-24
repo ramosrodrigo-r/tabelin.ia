@@ -40,7 +40,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 Plans:
 **Wave 1**
 
-- [ ] 01-01: Scaffold Next.js workspace, auth, sessions, and navigation shell.
+- [x] 01-01: Scaffold Next.js workspace, auth, sessions, and navigation shell.
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
@@ -149,7 +149,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Localized Formula Workspace | 0/3 | Not started | - |
+| 1. Localized Formula Workspace | 1/3 | In Progress|  |
 | 2. Freemium Billing and Entitlements | 0/3 | Not started | - |
 | 3. Multi-Tool Generation Suite | 0/3 | Not started | - |
 | 4. Spreadsheet File Analysis | 0/3 | Not started | - |

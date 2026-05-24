@@ -9,10 +9,10 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Authentication and Accounts
 
-- [ ] **AUTH-01**: User can sign up with email and password.
-- [ ] **AUTH-02**: User can sign in, sign out, and keep a session across browser refresh.
-- [ ] **AUTH-03**: User can reset a forgotten password.
-- [ ] **AUTH-04**: Authenticated user can access a workspace that preserves their plan and usage state.
+- [x] **AUTH-01**: User can sign up with email and password.
+- [x] **AUTH-02**: User can sign in, sign out, and keep a session across browser refresh.
+- [x] **AUTH-03**: User can reset a forgotten password.
+- [x] **AUTH-04**: Authenticated user can access a workspace that preserves their plan and usage state.
 
 ### Quotas and Billing
 
@@ -25,9 +25,9 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Tool Workspace
 
-- [ ] **WORK-01**: User can navigate a distraction-free sidebar workspace with Formula, Scripts, SQL, Regex, File Analysis, and OCR tools.
-- [ ] **WORK-02**: Every tool uses a consistent input, streaming output, error, and loading pattern.
-- [ ] **WORK-03**: Every generated formula, code block, SQL query, regex, chart data, report, and table output has a prominent copy button with immediate copied feedback.
+- [x] **WORK-01**: User can navigate a distraction-free sidebar workspace with Formula, Scripts, SQL, Regex, File Analysis, and OCR tools.
+- [x] **WORK-02**: Every tool uses a consistent input, streaming output, error, and loading pattern.
+- [x] **WORK-03**: Every generated formula, code block, SQL query, regex, chart data, report, and table output has a prominent copy button with immediate copied feedback.
 - [ ] **WORK-04**: Tool outputs show assumptions or warnings when the request lacks enough context for safe use.
 
 ### Formula Assistant
@@ -122,19 +122,19 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| AUTH-01 | Phase 1 | Pending |
-| AUTH-02 | Phase 1 | Pending |
-| AUTH-03 | Phase 1 | Pending |
-| AUTH-04 | Phase 1 | Pending |
+| AUTH-01 | Phase 1 | Complete |
+| AUTH-02 | Phase 1 | Complete |
+| AUTH-03 | Phase 1 | Complete |
+| AUTH-04 | Phase 1 | Complete |
 | QUOT-01 | Phase 2 | Pending |
 | QUOT-02 | Phase 2 | Pending |
 | QUOT-03 | Phase 2 | Pending |
 | BILL-01 | Phase 2 | Pending |
 | BILL-02 | Phase 2 | Pending |
 | BILL-03 | Phase 2 | Pending |
-| WORK-01 | Phase 1 | Pending |
-| WORK-02 | Phase 1 | Pending |
-| WORK-03 | Phase 1 | Pending |
+| WORK-01 | Phase 1 | Complete |
+| WORK-02 | Phase 1 | Complete |
+| WORK-03 | Phase 1 | Complete |
 | WORK-04 | Phase 1 | Pending |
 | FORM-01 | Phase 1 | Pending |
 | FORM-02 | Phase 1 | Pending |
@@ -170,6 +170,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PRO-03 | Phase 2 | Pending |
 
 **Coverage:**
+
 - v1 requirements: 46 total
 - Mapped to phases: 46
 - Unmapped: 0
