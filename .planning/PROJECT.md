@@ -14,7 +14,11 @@ Brazilian spreadsheet users can describe the outcome they need in Portuguese and
 
 ### Validated
 
-(None yet - ship to validate)
+- [x] Phase 1 validated: authenticated users can sign up, sign in, sign out, request password reset, and access a protected workspace.
+- [x] Phase 1 validated: Formula workspace supports Excel, Google Sheets, Airtable, and LibreOffice Calc selectors.
+- [x] Phase 1 validated: formula language is explicit, with Portuguese (Brazil) using `;` and English using `,`.
+- [x] Phase 1 validated: users can generate localized formulas, explain pasted formulas in Portuguese, see assumptions/metadata, and copy validated output.
+- [x] Phase 1 validated: the simple formula path has automated streaming visibility coverage under the 2.5-second target.
 
 ### Active
 
@@ -70,12 +74,12 @@ The recommended technical direction from the PRD is a web SaaS with a Next.js/Ta
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| Build Brazil-first rather than generic spreadsheet AI | Localization is the main competitive advantage and solves the strongest market pain | Pending |
-| Include formula generation/explanation in the first release | This is the core adoption path and strongest daily-use workflow | Pending |
+| Build Brazil-first rather than generic spreadsheet AI | Localization is the main competitive advantage and solves the strongest market pain | Validated in Phase 1 formula workspace |
+| Include formula generation/explanation in the first release | This is the core adoption path and strongest daily-use workflow | Validated in Phase 1 |
 | Include auth, quotas, and payments in the MVP | Monetization and free-tier protection are required by the PRD | Pending |
-| Use vertical MVP phase structure | The project needs usable end-to-end slices quickly, not isolated technical layers | Pending |
+| Use vertical MVP phase structure | The project needs usable end-to-end slices quickly, not isolated technical layers | In use; Phase 1 shipped as a vertical auth-to-formula slice |
 | Keep upload limits small at launch | Controls cost, latency, parsing complexity, and corporate data risk | Pending |
-| Use commercial LLM APIs with data privacy controls | Avoids custom model training and aligns with privacy requirements | Pending |
+| Use commercial LLM APIs with data privacy controls | Avoids custom model training and aligns with privacy requirements | Server-side OpenAI boundary prepared in Phase 1 |
 
 ## Evolution
 
@@ -95,4 +99,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-05-23 after initialization*
+*Last updated: 2026-05-24 after Phase 1 completion*
