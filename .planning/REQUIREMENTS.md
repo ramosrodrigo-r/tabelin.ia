@@ -28,15 +28,15 @@ Requirements for initial release. Each maps to roadmap phases.
 - [x] **WORK-01**: User can navigate a distraction-free sidebar workspace with Formula, Scripts, SQL, Regex, File Analysis, and OCR tools.
 - [x] **WORK-02**: Every tool uses a consistent input, streaming output, error, and loading pattern.
 - [x] **WORK-03**: Every generated formula, code block, SQL query, regex, chart data, report, and table output has a prominent copy button with immediate copied feedback.
-- [ ] **WORK-04**: Tool outputs show assumptions or warnings when the request lacks enough context for safe use.
+- [x] **WORK-04**: Tool outputs show assumptions or warnings when the request lacks enough context for safe use.
 
 ### Formula Assistant
 
-- [ ] **FORM-01**: User can describe a spreadsheet task in Portuguese and receive a generated formula.
-- [ ] **FORM-02**: User can choose the target platform: Microsoft Excel, Google Sheets, Airtable, or LibreOffice Calc.
-- [ ] **FORM-03**: User can choose formula language explicitly: Portuguese (Brazil) with `;` separators or English with `,` separators.
-- [ ] **FORM-04**: User can paste an existing formula and receive a step-by-step Portuguese explanation.
-- [ ] **FORM-05**: Formula output includes platform, formula language, separator, and assumptions so the user can verify paste compatibility.
+- [x] **FORM-01**: User can describe a spreadsheet task in Portuguese and receive a generated formula.
+- [x] **FORM-02**: User can choose the target platform: Microsoft Excel, Google Sheets, Airtable, or LibreOffice Calc.
+- [x] **FORM-03**: User can choose formula language explicitly: Portuguese (Brazil) with `;` separators or English with `,` separators.
+- [x] **FORM-04**: User can paste an existing formula and receive a step-by-step Portuguese explanation.
+- [x] **FORM-05**: Formula output includes platform, formula language, separator, and assumptions so the user can verify paste compatibility.
 
 ### Code, SQL, and Regex Tools
 
@@ -72,7 +72,7 @@ Requirements for initial release. Each maps to roadmap phases.
 - [ ] **PRIV-03**: The product documents that customer data is not used for public model retraining by selected commercial AI providers unless explicitly opted in.
 - [ ] **PRIV-04**: Provider file uploads use available expiration controls when raw files must be sent to a provider.
 - [ ] **PERF-01**: Simple formula generation begins streaming visible output within 2.5 seconds under normal provider latency.
-- [ ] **RELY-01**: AI outputs are validated against structured schemas before the UI presents copy-ready content.
+- [x] **RELY-01**: AI outputs are validated against structured schemas before the UI presents copy-ready content.
 
 ### Pro Value and Support
 
@@ -135,12 +135,12 @@ Which phases cover which requirements. Updated during roadmap creation.
 | WORK-01 | Phase 1 | Complete |
 | WORK-02 | Phase 1 | Complete |
 | WORK-03 | Phase 1 | Complete |
-| WORK-04 | Phase 1 | Pending |
-| FORM-01 | Phase 1 | Pending |
-| FORM-02 | Phase 1 | Pending |
-| FORM-03 | Phase 1 | Pending |
-| FORM-04 | Phase 1 | Pending |
-| FORM-05 | Phase 1 | Pending |
+| WORK-04 | Phase 1 | Complete |
+| FORM-01 | Phase 1 | Complete |
+| FORM-02 | Phase 1 | Complete |
+| FORM-03 | Phase 1 | Complete |
+| FORM-04 | Phase 1 | Complete |
+| FORM-05 | Phase 1 | Complete |
 | CODE-01 | Phase 3 | Pending |
 | CODE-02 | Phase 3 | Pending |
 | CODE-03 | Phase 3 | Pending |
@@ -164,7 +164,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PRIV-03 | Phase 4 | Pending |
 | PRIV-04 | Phase 4 | Pending |
 | PERF-01 | Phase 1 | Pending |
-| RELY-01 | Phase 1 | Pending |
+| RELY-01 | Phase 1 | Complete |
 | PRO-01 | Phase 3 | Pending |
 | PRO-02 | Phase 2 | Pending |
 | PRO-03 | Phase 2 | Pending |

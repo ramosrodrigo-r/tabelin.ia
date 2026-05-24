@@ -44,7 +44,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 01-02: Implement formula/explainer tool contracts, locale/platform selectors, prompt builders, and structured validation.
+- [x] 01-02: Implement formula/explainer tool contracts, locale/platform selectors, prompt builders, and structured validation.
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
@@ -149,7 +149,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Localized Formula Workspace | 1/3 | In Progress|  |
+| 1. Localized Formula Workspace | 2/3 | In Progress|  |
 | 2. Freemium Billing and Entitlements | 0/3 | Not started | - |
 | 3. Multi-Tool Generation Suite | 0/3 | Not started | - |
 | 4. Spreadsheet File Analysis | 0/3 | Not started | - |
