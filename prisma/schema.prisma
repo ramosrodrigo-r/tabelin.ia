@@ -51,6 +51,7 @@ model Account {
   user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+  @@unique([providerId, accountId])
 }
 
 model Verification {

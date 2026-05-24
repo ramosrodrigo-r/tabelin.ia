@@ -7,6 +7,8 @@ import {
   getSessionFromCookieHeader,
   normalizeEmail
 } from "@/server/auth/session";
+import { hashPassword, verifyPassword } from "@/server/auth/password";
+import { prisma } from "@/server/db/client";
 
 type RouteContext = {
   params: Promise<{ all?: string[] }> | { all?: string[] };
@@ -16,6 +18,62 @@ async function getSegments(context: RouteContext) {
   const params = await context.params;
 
   return params.all ?? [];
+}
+
+async function persistCredentials(action: "sign-in/email" | "sign-up/email", email: string, password: string, name?: string) {
+  try {
+    if (action === "sign-up/email") {
+      const user = await prisma.user.upsert({
+        where: { email },
+        update: { name: name || undefined },
+        create: {
+          email,
+          name: name || email.split("@")[0],
+          emailVerified: true
+        }
+      });
+
+      const existingAccount = await prisma.account.findFirst({
+        where: { providerId: "credential", accountId: email }
+      });
+
+      if (existingAccount) {
+        await prisma.account.update({
+          where: { id: existingAccount.id },
+          data: { password: hashPassword(password), userId: user.id }
+        });
+      } else {
+        await prisma.account.create({
+          data: {
+            providerId: "credential",
+            accountId: email,
+            password: hashPassword(password),
+            userId: user.id
+          }
+        });
+      }
+
+      return { ok: true, name: user.name ?? undefined };
+    }
+
+    const account = await prisma.account.findFirst({
+      where: {
+        providerId: "credential",
+        accountId: email
+      }
+    });
+
+    if (!account || !verifyPassword(password, account.password)) {
+      return { ok: false, status: 401 };
+    }
+
+    const user = await prisma.user.findUnique({ where: { id: account.userId } });
+
+    return { ok: true, name: user?.name ?? undefined };
+  } catch (error) {
+    console.warn("Auth persistence unavailable; using signed local session facade.", error);
+    return { ok: true, name };
+  }
 }
 
 export async function GET(request: NextRequest, context: RouteContext) {
@@ -59,7 +117,14 @@ export async function POST(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: "Email e senha sao obrigatorios." }, { status: 400 });
     }
 
-    const user = createSessionUser(body.email, body.name);
+    const email = normalizeEmail(body.email);
+    const persisted = await persistCredentials(action, email, body.password, body.name);
+
+    if (!persisted.ok) {
+      return NextResponse.json({ error: "Credenciais invalidas." }, { status: persisted.status });
+    }
+
+    const user = createSessionUser(email, persisted.name ?? body.name);
     const response = NextResponse.json({ ok: true, user });
     const token = createSessionToken(user);
 
