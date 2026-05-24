@@ -122,58 +122,58 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| AUTH-01 | TBD | Pending |
-| AUTH-02 | TBD | Pending |
-| AUTH-03 | TBD | Pending |
-| AUTH-04 | TBD | Pending |
-| QUOT-01 | TBD | Pending |
-| QUOT-02 | TBD | Pending |
-| QUOT-03 | TBD | Pending |
-| BILL-01 | TBD | Pending |
-| BILL-02 | TBD | Pending |
-| BILL-03 | TBD | Pending |
-| WORK-01 | TBD | Pending |
-| WORK-02 | TBD | Pending |
-| WORK-03 | TBD | Pending |
-| WORK-04 | TBD | Pending |
-| FORM-01 | TBD | Pending |
-| FORM-02 | TBD | Pending |
-| FORM-03 | TBD | Pending |
-| FORM-04 | TBD | Pending |
-| FORM-05 | TBD | Pending |
-| CODE-01 | TBD | Pending |
-| CODE-02 | TBD | Pending |
-| CODE-03 | TBD | Pending |
-| SQL-01 | TBD | Pending |
-| SQL-02 | TBD | Pending |
-| REGX-01 | TBD | Pending |
-| REGX-02 | TBD | Pending |
-| SAFE-01 | TBD | Pending |
-| FILE-01 | TBD | Pending |
-| FILE-02 | TBD | Pending |
-| FILE-03 | TBD | Pending |
-| FILE-04 | TBD | Pending |
-| FILE-05 | TBD | Pending |
-| CHRT-01 | TBD | Pending |
-| CHRT-02 | TBD | Pending |
-| OCR-01 | TBD | Pending |
-| OCR-02 | TBD | Pending |
-| OCR-03 | TBD | Pending |
-| PRIV-01 | TBD | Pending |
-| PRIV-02 | TBD | Pending |
-| PRIV-03 | TBD | Pending |
-| PRIV-04 | TBD | Pending |
-| PERF-01 | TBD | Pending |
-| RELY-01 | TBD | Pending |
-| PRO-01 | TBD | Pending |
-| PRO-02 | TBD | Pending |
-| PRO-03 | TBD | Pending |
+| AUTH-01 | Phase 1 | Pending |
+| AUTH-02 | Phase 1 | Pending |
+| AUTH-03 | Phase 1 | Pending |
+| AUTH-04 | Phase 1 | Pending |
+| QUOT-01 | Phase 2 | Pending |
+| QUOT-02 | Phase 2 | Pending |
+| QUOT-03 | Phase 2 | Pending |
+| BILL-01 | Phase 2 | Pending |
+| BILL-02 | Phase 2 | Pending |
+| BILL-03 | Phase 2 | Pending |
+| WORK-01 | Phase 1 | Pending |
+| WORK-02 | Phase 1 | Pending |
+| WORK-03 | Phase 1 | Pending |
+| WORK-04 | Phase 1 | Pending |
+| FORM-01 | Phase 1 | Pending |
+| FORM-02 | Phase 1 | Pending |
+| FORM-03 | Phase 1 | Pending |
+| FORM-04 | Phase 1 | Pending |
+| FORM-05 | Phase 1 | Pending |
+| CODE-01 | Phase 3 | Pending |
+| CODE-02 | Phase 3 | Pending |
+| CODE-03 | Phase 3 | Pending |
+| SQL-01 | Phase 3 | Pending |
+| SQL-02 | Phase 3 | Pending |
+| REGX-01 | Phase 3 | Pending |
+| REGX-02 | Phase 3 | Pending |
+| SAFE-01 | Phase 3 | Pending |
+| FILE-01 | Phase 4 | Pending |
+| FILE-02 | Phase 4 | Pending |
+| FILE-03 | Phase 4 | Pending |
+| FILE-04 | Phase 4 | Pending |
+| FILE-05 | Phase 4 | Pending |
+| CHRT-01 | Phase 5 | Pending |
+| CHRT-02 | Phase 5 | Pending |
+| OCR-01 | Phase 5 | Pending |
+| OCR-02 | Phase 5 | Pending |
+| OCR-03 | Phase 5 | Pending |
+| PRIV-01 | Phase 4 | Pending |
+| PRIV-02 | Phase 4 | Pending |
+| PRIV-03 | Phase 4 | Pending |
+| PRIV-04 | Phase 4 | Pending |
+| PERF-01 | Phase 1 | Pending |
+| RELY-01 | Phase 1 | Pending |
+| PRO-01 | Phase 3 | Pending |
+| PRO-02 | Phase 2 | Pending |
+| PRO-03 | Phase 2 | Pending |
 
 **Coverage:**
 - v1 requirements: 46 total
-- Mapped to phases: 0
-- Unmapped: 46
+- Mapped to phases: 46
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-05-23*
-*Last updated: 2026-05-23 after initial definition*
+*Last updated: 2026-05-23 after roadmap creation*
