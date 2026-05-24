@@ -8,6 +8,7 @@ import {
   normalizeEmail
 } from "@/server/auth/session";
 import { hashPassword, verifyPassword } from "@/server/auth/password";
+import { consumePasswordResetToken, createPasswordResetToken } from "@/server/auth/reset-password";
 import { prisma } from "@/server/db/client";
 
 type RouteContext = {
@@ -80,6 +81,87 @@ async function persistCredentials(action: "sign-in/email" | "sign-up/email", ema
   }
 }
 
+function getOrigin(value: string | null | undefined) {
+  if (!value) {
+    return null;
+  }
+
+  try {
+    return new URL(value).origin;
+  } catch {
+    return null;
+  }
+}
+
+function getRequestSourceOrigin(request: NextRequest) {
+  const origin = request.headers.get("origin");
+
+  if (origin) {
+    return getOrigin(origin);
+  }
+
+  return getOrigin(request.headers.get("referer"));
+}
+
+function getAllowedAuthOrigins(request: NextRequest) {
+  const allowedOrigins = new Set<string>();
+  const configuredOrigin = getOrigin(process.env.BETTER_AUTH_URL);
+
+  if (configuredOrigin) {
+    allowedOrigins.add(configuredOrigin);
+  }
+
+  allowedOrigins.add(new URL(request.url).origin);
+
+  return allowedOrigins;
+}
+
+function validateAuthPostOrigin(request: NextRequest) {
+  const sourceOrigin = getRequestSourceOrigin(request);
+
+  if (!sourceOrigin || !getAllowedAuthOrigins(request).has(sourceOrigin)) {
+    return NextResponse.json({ error: "Origem da requisicao nao permitida." }, { status: 403 });
+  }
+
+  return null;
+}
+
+function getSafeResetPath(redirectTo: string | undefined) {
+  if (!redirectTo || !redirectTo.startsWith("/") || redirectTo.startsWith("//")) {
+    return "/reset-password";
+  }
+
+  let parsed: URL;
+
+  try {
+    parsed = new URL(redirectTo, "http://tabelin.local");
+  } catch {
+    return "/reset-password";
+  }
+
+  return `${parsed.pathname}${parsed.search}`;
+}
+
+function buildResetUrl(request: NextRequest, redirectTo: string | undefined, token: string) {
+  const baseOrigin = getOrigin(process.env.BETTER_AUTH_URL) ?? new URL(request.url).origin;
+  const resetUrl = new URL(getSafeResetPath(redirectTo), baseOrigin);
+  resetUrl.searchParams.set("token", token);
+
+  return resetUrl.toString();
+}
+
+async function createResetLinkIfUserExists(request: NextRequest, email: string, redirectTo: string | undefined) {
+  const user = await prisma.user.findUnique({ where: { email } });
+
+  if (!user) {
+    return null;
+  }
+
+  const { token } = await createPasswordResetToken(email);
+
+  return buildResetUrl(request, redirectTo, token);
+}
+
 export async function GET(request: NextRequest, context: RouteContext) {
   const segments = await getSegments(context);
 
@@ -95,11 +177,19 @@ export async function GET(request: NextRequest, context: RouteContext) {
 export async function POST(request: NextRequest, context: RouteContext) {
   const segments = await getSegments(context);
   const action = segments.join("/");
+
+  const originError = validateAuthPostOrigin(request);
+
+  if (originError) {
+    return originError;
+  }
+
   const body = (await request.json().catch(() => null)) as {
     email?: string;
     password?: string;
     name?: string;
     redirectTo?: string;
+    token?: string;
   } | null;
 
   if (action === "sign-out") {
@@ -110,8 +200,38 @@ export async function POST(request: NextRequest, context: RouteContext) {
 
   if (action === "forget-password") {
     const email = normalizeEmail(body?.email ?? "");
-    const resetUrl = `${process.env.BETTER_AUTH_URL ?? "http://localhost:3000"}${body?.redirectTo ?? "/reset-password"}?email=${encodeURIComponent(email)}`;
-    console.info(`Password reset link for ${email || "unknown"}: ${resetUrl}`);
+
+    if (email) {
+      try {
+        const resetUrl = await createResetLinkIfUserExists(request, email, body?.redirectTo);
+
+        if (resetUrl) {
+          console.info(`Password reset link for ${email}: ${resetUrl}`);
+        }
+      } catch {
+        if (process.env.NODE_ENV === "production") {
+          return NextResponse.json({ error: "Nao foi possivel gerar o link de redefinicao." }, { status: 503 });
+        }
+
+        console.warn("Password reset persistence unavailable; skipping reset link creation.");
+      }
+    }
+
+    return NextResponse.json({ ok: true });
+  }
+
+  if (action === "reset-password") {
+    if (!body?.token || !body.password || body.password.length < 8) {
+      return NextResponse.json({ error: "Token e nova senha sao obrigatorios." }, { status: 400 });
+    }
+
+    const result = await consumePasswordResetToken(body.token, body.password);
+
+    if (!result.ok) {
+      const error = result.reason === "expired" ? "Token expirado." : "Token invalido.";
+
+      return NextResponse.json({ error }, { status: 400 });
+    }
 
     return NextResponse.json({ ok: true });
   }
