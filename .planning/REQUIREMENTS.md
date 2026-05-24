@@ -71,7 +71,7 @@ Requirements for initial release. Each maps to roadmap phases.
 - [ ] **PRIV-02**: Raw uploaded file contents are not written to application logs.
 - [ ] **PRIV-03**: The product documents that customer data is not used for public model retraining by selected commercial AI providers unless explicitly opted in.
 - [ ] **PRIV-04**: Provider file uploads use available expiration controls when raw files must be sent to a provider.
-- [ ] **PERF-01**: Simple formula generation begins streaming visible output within 2.5 seconds under normal provider latency.
+- [x] **PERF-01**: Simple formula generation begins streaming visible output within 2.5 seconds under normal provider latency.
 - [x] **RELY-01**: AI outputs are validated against structured schemas before the UI presents copy-ready content.
 
 ### Pro Value and Support
@@ -163,7 +163,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PRIV-02 | Phase 4 | Pending |
 | PRIV-03 | Phase 4 | Pending |
 | PRIV-04 | Phase 4 | Pending |
-| PERF-01 | Phase 1 | Pending |
+| PERF-01 | Phase 1 | Complete |
 | RELY-01 | Phase 1 | Complete |
 | PRO-01 | Phase 3 | Pending |
 | PRO-02 | Phase 2 | Pending |

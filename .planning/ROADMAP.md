@@ -13,7 +13,7 @@ Tabelin.IA will be built as a vertical MVP: first prove the localized formula as
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Localized Formula Workspace** - Authenticated workspace with Brazilian formula generation, explanation, streaming, and copy-ready output.
+- [x] **Phase 1: Localized Formula Workspace** - Authenticated workspace with Brazilian formula generation, explanation, streaming, and copy-ready output. (completed 2026-05-24)
 - [ ] **Phase 2: Freemium Billing and Entitlements** - Usage limits, Pix/card checkout, and Pro plan state.
 - [ ] **Phase 3: Multi-Tool Generation Suite** - Scripts, SQL, regex, safety warnings, and Pro templates.
 - [ ] **Phase 4: Spreadsheet File Analysis** - CSV/XLSX upload, schema chat, reports, and privacy lifecycle.
@@ -48,7 +48,7 @@ Plans:
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 01-03: Implement streaming output UI, copy feedback, assumptions/warnings, and formula MVP verification.
+- [x] 01-03: Implement streaming output UI, copy feedback, assumptions/warnings, and formula MVP verification.
 
 ### Phase 2: Freemium Billing and Entitlements
 
@@ -149,7 +149,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Localized Formula Workspace | 2/3 | In Progress|  |
+| 1. Localized Formula Workspace | 3/3 | Complete   | 2026-05-24 |
 | 2. Freemium Billing and Entitlements | 0/3 | Not started | - |
 | 3. Multi-Tool Generation Suite | 0/3 | Not started | - |
 | 4. Spreadsheet File Analysis | 0/3 | Not started | - |
