@@ -24,9 +24,8 @@ export async function recordFormulaToolRequest(input: {
         providerModel: input.metadata.providerModel
       }
     });
-  } catch (error) {
-    console.warn("Formula metadata persistence skipped.", error);
+  } catch {
+    console.warn("Formula metadata persistence skipped.");
     return null;
   }
 }
-

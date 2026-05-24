@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 
 import { Sidebar } from "@/components/app/sidebar";
 import { Topbar } from "@/components/app/topbar";
+import { FormulaTool } from "@/features/formula/formula-tool";
 import { getCurrentUser } from "@/server/auth/session";
 
 export default async function WorkspacePage() {
@@ -23,23 +24,9 @@ export default async function WorkspacePage() {
               <p>Descreva a tarefa em portugues e receba uma formula pronta para copiar.</p>
             </div>
           </section>
-          <section className="tool-grid" aria-label="Formula workspace">
-            <div className="tool-panel">
-              <h2>Entrada</h2>
-              <div className="placeholder-box">
-                Regiao estavel para prompt, plataforma, idioma da formula e acao principal.
-              </div>
-            </div>
-            <div className="tool-panel">
-              <h2>Resultado</h2>
-              <div className="placeholder-box">
-                Regiao estavel para streaming, premissas, avisos, erros e copiar.
-              </div>
-            </div>
-          </section>
+          <FormulaTool />
         </main>
       </div>
     </div>
   );
 }
-

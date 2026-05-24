@@ -70,8 +70,8 @@ async function persistCredentials(action: "sign-in/email" | "sign-up/email", ema
     const user = await prisma.user.findUnique({ where: { id: account.userId } });
 
     return { ok: true, name: user?.name ?? undefined };
-  } catch (error) {
-    console.warn("Auth persistence unavailable; using signed local session facade.", error);
+  } catch {
+    console.warn("Auth persistence unavailable; using signed local session facade.");
     return { ok: true, name };
   }
 }
