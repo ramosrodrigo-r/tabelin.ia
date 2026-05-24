@@ -71,6 +71,10 @@ async function persistCredentials(action: "sign-in/email" | "sign-up/email", ema
 
     return { ok: true, name: user?.name ?? undefined };
   } catch {
+    if (process.env.NODE_ENV === "production") {
+      return { ok: false, status: 503 };
+    }
+
     console.warn("Auth persistence unavailable; using signed local session facade.");
     return { ok: true, name };
   }
