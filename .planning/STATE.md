@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-05-24)
 Phase: 2 of 5 (freemium billing and entitlements)
 Plan: Not started
 Status: Ready to plan
-Last activity: 2026-05-24
+Last activity: 2026-05-24 - Completed quick task 260524-o3i: CSRF/origin auth hardening and one-use password reset
 
 Progress: [----------] 0%
 
@@ -75,6 +75,12 @@ None yet.
 
 - Payment provider finalization remains open for phase planning: Mercado Pago is recommended first, Stripe Pix is optional only if subscription/account constraints fit.
 - Provider retention requirements should be revisited before real corporate file uploads; Zero Data Retention may be needed for stricter customers.
+
+### Quick Tasks Completed
+
+| # | Description | Date | Commit | Directory |
+|---|-------------|------|--------|-----------|
+| 260524-o3i | CSRF/origin auth hardening and one-use password reset | 2026-05-24 | 61d70e5 | [260524-o3i-1-csrf-origin-nas-rotas-de-auth-validar-](./quick/260524-o3i-1-csrf-origin-nas-rotas-de-auth-validar-/) |
 
 ## Deferred Items
 
