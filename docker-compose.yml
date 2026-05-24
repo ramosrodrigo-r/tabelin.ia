@@ -1,0 +1,22 @@
+services:
+  postgres:
+    image: postgres:18
+    container_name: tabelin-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: tabelin
+      POSTGRES_USER: tabelin
+      POSTGRES_PASSWORD: tabelin
+    ports:
+      - "5432:5432"
+    volumes:
+      - tabelin_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tabelin -d tabelin"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  tabelin_postgres_data:
+
