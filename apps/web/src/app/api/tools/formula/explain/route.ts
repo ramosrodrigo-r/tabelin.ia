@@ -5,6 +5,7 @@ import { formulaExplainRequestSchema } from "@tabelin/shared";
 import { createFormulaEventStream, resolveFormulaPayload } from "@/server/ai/formula-stream";
 import { getSessionFromCookieHeader } from "@/server/auth/session";
 import { recordFormulaToolRequest } from "@/server/tools/formula-repository";
+import { reserveToolUse, confirmToolUse, releaseToolUse } from "@/server/usage/quota-service";
 
 export async function POST(request: Request) {
   const user = getSessionFromCookieHeader(request.headers.get("cookie"));
@@ -21,8 +22,22 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Pedido de explicacao invalido.", issues: parsed.error.issues }, { status: 400 });
   }
 
+  const quotaCheck = await reserveToolUse(user.id, "formula", "explain");
+
+  if (!quotaCheck.allowed) {
+    return NextResponse.json(
+      {
+        code: "quota_exceeded",
+        meterKind: quotaCheck.meterKind,
+        cta: "pro_checkout"
+      },
+      { status: 429 }
+    );
+  }
+
   try {
     const payload = await resolveFormulaPayload({ mode: "explain", request: parsed.data });
+    await confirmToolUse(quotaCheck.reservationKey);
     await recordFormulaToolRequest({
       userId: user.id,
       metadata: payload.metadata,
@@ -37,6 +52,7 @@ export async function POST(request: Request) {
       }
     });
   } catch {
+    await releaseToolUse(quotaCheck.reservationKey);
     return NextResponse.json({ error: "Nao consegui validar a resposta." }, { status: 502 });
   }
 }

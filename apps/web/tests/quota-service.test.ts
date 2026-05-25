@@ -49,7 +49,9 @@ describe("quota service", () => {
 
     expect(result.allowed).toBe(true);
     expect(result).toHaveProperty("reservationKey");
-    expect(result.lastFreeUse).toBe(true);
+    if (result.allowed) {
+      expect(result.lastFreeUse).toBe(true);
+    }
   });
 
   it("blocks the fifth Free tool use", async () => {
