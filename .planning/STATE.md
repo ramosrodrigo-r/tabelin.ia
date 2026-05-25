@@ -4,7 +4,7 @@ milestone: v1.0
 milestone_name: milestone
 status: executing
 stopped_at: Completed 01-03-PLAN.md
-last_updated: "2026-05-24T14:58:43.765Z"
+last_updated: "2026-05-24T20:24:00Z"
 last_activity: 2026-05-24
 progress:
   total_phases: 5
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-05-24)
 Phase: 2 of 5 (freemium billing and entitlements)
 Plan: Not started
 Status: Ready to plan
-Last activity: 2026-05-24 - Completed quick task 260524-o3i: CSRF/origin auth hardening and one-use password reset
+Last activity: 2026-05-24 - Completed quick task 260524-gh1: Published project to GitHub
 
 Progress: [----------] 0%
 
@@ -81,6 +81,7 @@ None yet.
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
 | 260524-o3i | CSRF/origin auth hardening and one-use password reset | 2026-05-24 | 61d70e5 | [260524-o3i-1-csrf-origin-nas-rotas-de-auth-validar-](./quick/260524-o3i-1-csrf-origin-nas-rotas-de-auth-validar-/) |
+| 260524-gh1 | Published project to GitHub | 2026-05-24 | f6471e0 | [260524-gh1-publicar-projeto-no-github](./quick/260524-gh1-publicar-projeto-no-github/) |
 
 ## Deferred Items
 
