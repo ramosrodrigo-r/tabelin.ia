@@ -14,7 +14,7 @@ Tabelin.IA will be built as a vertical MVP: first prove the localized formula as
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Localized Formula Workspace** - Authenticated workspace with Brazilian formula generation, explanation, streaming, and copy-ready output. (completed 2026-05-24)
-- [ ] **Phase 2: Freemium Billing and Entitlements** - Usage limits, Pix/card checkout, and Pro plan state.
+- [x] **Phase 2: Freemium Billing and Entitlements** - Usage limits, Pix/card checkout, and Pro plan state. (completed 2026-05-25)
 - [ ] **Phase 3: Multi-Tool Generation Suite** - Scripts, SQL, regex, safety warnings, and Pro templates.
 - [ ] **Phase 4: Spreadsheet File Analysis** - CSV/XLSX upload, schema chat, reports, and privacy lifecycle.
 - [ ] **Phase 5: OCR, Charts, and Launch Hardening** - Image-to-table OCR, chart rendering, and final launch readiness.
@@ -77,7 +77,7 @@ Plans:
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 02-03: Implement Pro entitlement UX, support paths, priority flags, and billing verification.
+- [x] 02-03: Implement Pro entitlement UX, support paths, priority flags, and billing verification.
 
 ### Phase 3: Multi-Tool Generation Suite
 
@@ -156,7 +156,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Localized Formula Workspace | 3/3 | Complete    | 2026-05-24 |
-| 2. Freemium Billing and Entitlements | 2/3 | In Progress|  |
+| 2. Freemium Billing and Entitlements | 3/3 | Complete   | 2026-05-25 |
 | 3. Multi-Tool Generation Suite | 0/3 | Not started | - |
 | 4. Spreadsheet File Analysis | 0/3 | Not started | - |
 | 5. OCR, Charts, and Launch Hardening | 0/3 | Not started | - |

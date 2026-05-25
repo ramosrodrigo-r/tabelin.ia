@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: executing
-last_updated: "2026-05-25T16:36:09.769Z"
+status: verifying
+last_updated: "2026-05-25T16:48:41.638Z"
 last_activity: 2026-05-25
 progress:
   total_phases: 5
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 6
-  completed_plans: 5
-  percent: 20
+  completed_plans: 6
+  percent: 40
 ---
 
 # Project State
@@ -26,29 +26,29 @@ See: .planning/PROJECT.md (updated 2026-05-24)
 
 Phase: 02 (freemium-billing-and-entitlements) — EXECUTING
 Plan: 3 of 3
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-05-25
 
-Progress: [████████░░] 83%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 4
-- Average duration: 13 min
-- Total execution time: 0.8 hours
+- Total plans completed: 6
+- Average duration: 10 min
+- Total execution time: 1.1 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01 | 3 | 40 min | 13 min |
-| 02 | 1 | 10 min | 10 min |
+| 02 | 3 | 25 min | 8 min |
 
 **Recent Trend:**
 
-- Last 5 plans: 24, 8, 8, 10 min
+- Last 5 plans: 8, 8, 10, 7, 8 min
 - Trend: stable
 
 *Updated after each plan completion*
@@ -56,6 +56,8 @@ Progress: [████████░░] 83%
 | Phase 01 P02 | 8 min | 3 tasks | 18 files |
 | Phase 01 P03 | 8 min | 3 tasks | 14 files |
 | Phase 02 P01 | 10 min | 4 tasks | 15 files |
+| Phase 02 P02 | 7 min | 3 tasks | 14 files |
+| Phase 02 P03 | 8 min | 3 tasks | 15 files |
 
 ## Accumulated Context
 
@@ -70,6 +72,8 @@ Recent decisions affecting current work:
 - Phase 02 Plan 01: Use Prisma cuid() user IDs in session tokens for consistent billing relationships.
 - Phase 02 Plan 01: Transactional quota reservation with serializable isolation and retry on write conflict.
 - Phase 02 Plan 01: Free tool_use limit is 4 confirmed uses per 12-hour window; active reservations count against capacity.
+- Phase 02 Plan 02: Use Mercado Pago SDK for hosted Checkout Pro with Pix/card support and webhook-driven entitlement reconciliation.
+- Phase 02 Plan 03: Inline quota UX with last-use warning, blocked-state monthly checkout CTA, and revoked-plan downgrade notice.
 
 ### Pending Todos
 
@@ -100,6 +104,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-05-25T16:36:09.764Z
-Stopped at: Completed Phase 02 Plan 01 - Transactional Quota and Entitlement Foundation
+Last session: 2026-05-25T16:48:41.638Z
+Stopped at: Completed Phase 02 Plan 03 - Pro Entitlement UX and End-to-End Billing Verification
 Resume file: None

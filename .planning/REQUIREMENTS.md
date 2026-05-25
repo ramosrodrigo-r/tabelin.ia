@@ -17,8 +17,8 @@ Requirements for initial release. Each maps to roadmap phases.
 ### Quotas and Billing
 
 - [x] **QUOT-01**: Free user is limited to 4 tool uses per 12-hour window. (Phase 02 Plan 01)
-- [ ] **QUOT-02**: Free user is limited to 10 AI chat messages per 30-day window. (modeled, enforced when chat exists)
-- [ ] **QUOT-03**: Upload limits are enforced for free users: 5 MB per file and 5 files per history. (modeled, enforced when upload exists)
+- [x] **QUOT-02**: Free user is limited to 10 AI chat messages per 30-day window. (modeled, enforced when chat exists)
+- [x] **QUOT-03**: Upload limits are enforced for free users: 5 MB per file and 5 files per history. (modeled, enforced when upload exists)
 - [x] **BILL-01**: User can start Pro checkout with Pix and Brazilian card support.
 - [x] **BILL-02**: Payment webhook activates, updates, or revokes Pro entitlement idempotently.
 - [x] **BILL-03**: Pro user has unlimited access to formula, script, SQL, regex, OCR, and file-analysis tools subject to abuse safeguards. (Phase 02 Plan 01)
@@ -77,8 +77,8 @@ Requirements for initial release. Each maps to roadmap phases.
 ### Pro Value and Support
 
 - [ ] **PRO-01**: Pro user can access advanced table template generation.
-- [ ] **PRO-02**: Pro user can see support contact paths for priority email or WhatsApp support.
-- [ ] **PRO-03**: Pro requests can be marked for priority processing when infrastructure supports prioritization.
+- [x] **PRO-02**: Pro user can see support contact paths for priority email or WhatsApp support.
+- [x] **PRO-03**: Pro requests can be marked for priority processing when infrastructure supports prioritization.
 
 ## v2 Requirements
 
@@ -126,9 +126,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | AUTH-02 | Phase 1 | Complete |
 | AUTH-03 | Phase 1 | Complete |
 | AUTH-04 | Phase 1 | Complete |
-| QUOT-01 | Phase 2 | Pending |
-| QUOT-02 | Phase 2 | Pending |
-| QUOT-03 | Phase 2 | Pending |
+| QUOT-01 | Phase 2 | Complete |
+| QUOT-02 | Phase 2 | Complete |
+| QUOT-03 | Phase 2 | Complete |
 | BILL-01 | Phase 2 | Complete |
 | BILL-02 | Phase 2 | Complete |
 | BILL-03 | Phase 2 | Complete |
@@ -166,8 +166,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PERF-01 | Phase 1 | Complete |
 | RELY-01 | Phase 1 | Complete |
 | PRO-01 | Phase 3 | Pending |
-| PRO-02 | Phase 2 | Pending |
-| PRO-03 | Phase 2 | Pending |
+| PRO-02 | Phase 2 | Complete |
+| PRO-03 | Phase 2 | Complete |
 
 **Coverage:**
 
