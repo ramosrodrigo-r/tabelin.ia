@@ -1,7 +1,6 @@
 import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { POST } from "@/app/api/auth/[...all]/route";
-import { verifyPassword } from "@/server/auth/password";
 import { PASSWORD_RESET_IDENTIFIER_PREFIX, hashPasswordResetToken } from "@/server/auth/reset-password";
 
 const db = vi.hoisted(() => {
@@ -27,7 +26,18 @@ const db = vi.hoisted(() => {
   return { prisma };
 });
 
+const passwordMocks = vi.hoisted(() => ({
+  verifyPassword: vi.fn()
+}));
+
 vi.mock("@/server/db/client", () => ({ prisma: db.prisma }));
+vi.mock("@/server/auth/password", async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...(actual as Record<string, unknown>),
+    verifyPassword: passwordMocks.verifyPassword
+  };
+});
 
 const originalBetterAuthUrl = process.env.BETTER_AUTH_URL;
 
@@ -91,7 +101,7 @@ describe("auth API route hardening", () => {
 
   it("creates a hashed expiring reset token on forget-password", async () => {
     const info = vi.spyOn(console, "info").mockImplementation(() => undefined);
-    db.prisma.user.findUnique.mockResolvedValue({ id: "user_1", email: "ana@empresa.com" });
+    db.prisma.user.findUnique.mockResolvedValue({ id: "user_1", email: "ana@empresa.com", name: "Ana", emailVerified: true, image: null, createdAt: new Date(), updatedAt: new Date() });
     db.prisma.verification.deleteMany.mockResolvedValue({ count: 0 });
     db.prisma.verification.create.mockResolvedValue({ id: "verification_1" });
 
@@ -182,6 +192,86 @@ describe("auth API route hardening", () => {
     });
     expect(updateArg.where).toEqual({ providerId: "credential", accountId: "ana@empresa.com" });
     expect(updateArg.data.password).not.toBe("novaSenha123");
-    expect(verifyPassword("novaSenha123", updateArg.data.password)).toBe(true);
+    expect(updateArg.data.password).toMatch(/^scrypt\$/);
+  });
+
+  it("returns Prisma user ID in sign-up response", async () => {
+    db.prisma.user.upsert.mockResolvedValue({
+      id: "cuid_user_123",
+      email: "teste@empresa.com",
+      name: "Teste",
+      emailVerified: true,
+      image: null,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    });
+    db.prisma.account.findFirst.mockResolvedValue(null);
+    db.prisma.account.create.mockResolvedValue({
+      id: "account_1",
+      accountId: "teste@empresa.com",
+      providerId: "credential",
+      userId: "cuid_user_123",
+      password: "hashed",
+      accessToken: null,
+      refreshToken: null,
+      idToken: null,
+      accessTokenExpiresAt: null,
+      refreshTokenExpiresAt: null,
+      scope: null,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    });
+
+    const response = await POST(
+      authRequest("sign-up/email", { email: "teste@empresa.com", password: "senha1234", name: "Teste" }),
+      authContext("sign-up/email")
+    );
+
+    const json = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(json.user.id).toBe("cuid_user_123");
+    expect(json.user.email).toBe("teste@empresa.com");
+  });
+
+  it("returns Prisma user ID in sign-in response", async () => {
+    const hashedPassword = "$argon2id$v=19$m=19456,t=2,p=1$test$hash";
+    db.prisma.account.findFirst.mockResolvedValue({
+      id: "account_2",
+      accountId: "login@empresa.com",
+      providerId: "credential",
+      userId: "cuid_user_456",
+      password: hashedPassword,
+      accessToken: null,
+      refreshToken: null,
+      idToken: null,
+      accessTokenExpiresAt: null,
+      refreshTokenExpiresAt: null,
+      scope: null,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    });
+    db.prisma.user.findUnique.mockResolvedValue({
+      id: "cuid_user_456",
+      email: "login@empresa.com",
+      name: "Login User",
+      emailVerified: true,
+      image: null,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    });
+
+    passwordMocks.verifyPassword.mockReturnValue(true);
+
+    const response = await POST(
+      authRequest("sign-in/email", { email: "login@empresa.com", password: "senha1234" }),
+      authContext("sign-in/email")
+    );
+
+    const json = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(json.user.id).toBe("cuid_user_456");
+    expect(json.user.email).toBe("login@empresa.com");
   });
 });

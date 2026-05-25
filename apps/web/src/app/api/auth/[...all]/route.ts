@@ -54,7 +54,7 @@ async function persistCredentials(action: "sign-in/email" | "sign-up/email", ema
         });
       }
 
-      return { ok: true, name: user.name ?? undefined };
+      return { ok: true, userId: user.id, name: user.name ?? undefined };
     }
 
     const account = await prisma.account.findFirst({
@@ -70,14 +70,14 @@ async function persistCredentials(action: "sign-in/email" | "sign-up/email", ema
 
     const user = await prisma.user.findUnique({ where: { id: account.userId } });
 
-    return { ok: true, name: user?.name ?? undefined };
+    return { ok: true, userId: user?.id, name: user?.name ?? undefined };
   } catch {
     if (process.env.NODE_ENV === "production") {
       return { ok: false, status: 503 };
     }
 
     console.warn("Auth persistence unavailable; using signed local session facade.");
-    return { ok: true, name };
+    return { ok: true, userId: undefined, name };
   }
 }
 
@@ -248,7 +248,9 @@ export async function POST(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: "Credenciais invalidas." }, { status: persisted.status });
     }
 
-    const user = createSessionUser(email, persisted.name ?? body.name);
+    const user = persisted.userId
+      ? { id: persisted.userId, email, name: (persisted.name ?? body.name ?? email.split("@")[0]) || "Usuario" }
+      : createSessionUser(email, persisted.name ?? body.name);
     const response = NextResponse.json({ ok: true, user });
     const token = createSessionToken(user);
 
