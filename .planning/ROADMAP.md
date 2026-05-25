@@ -65,11 +65,11 @@ Plans:
   4. Payment webhooks idempotently activate, update, or revoke Pro access.
   5. Pro users see unlimited tool access, support contact paths, and priority-processing state where available.
 
-**Plans**: 3 plans
+**Plans**: 3 plans (1 complete, 2 remaining)
 Plans:
 **Wave 1**
 
-- [ ] 02-01: Build transactional usage ledger, quota reservations, and free-tier enforcement.
+- [x] 02-01: Build transactional usage ledger, quota reservations, and free-tier enforcement. (4 tasks, 15 files, completed 2026-05-25)
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
