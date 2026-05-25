@@ -3,10 +3,15 @@ import { processMercadoPagoWebhook } from "@/server/billing/webhook-service";
 
 export async function POST(request: Request) {
   const rawBody = await request.text();
-  const signatureHeader = request.headers.get("x-signature") || request.headers.get("x-hub-signature-256");
+  const signatureHeader = request.headers.get("x-signature");
+  const requestIdHeader = request.headers.get("x-request-id");
 
   try {
-    const result = await processMercadoPagoWebhook(rawBody, signatureHeader);
+    const result = await processMercadoPagoWebhook(rawBody, {
+      signatureHeader,
+      requestIdHeader,
+      requestUrl: request.url,
+    });
 
     if (!result.processed) {
       console.error("Webhook processing failed:", result.reason);

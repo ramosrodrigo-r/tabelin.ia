@@ -1,5 +1,5 @@
 import "server-only";
-import { createHmac } from "node:crypto";
+import { createHmac, timingSafeEqual } from "node:crypto";
 import { createMercadoPagoClient, getBillingConfig } from "./mercado-pago-client";
 import { getCheckoutByReference } from "./checkout-service";
 import { activateProEntitlement, revokeProEntitlement } from "./entitlements";
@@ -18,29 +18,109 @@ type MercadoPagoWebhookPayload = {
   };
 };
 
-function validateWebhookSignature(rawBody: string, signatureHeader: string | null, secret: string): boolean {
+export type MercadoPagoWebhookOptions = {
+  signatureHeader?: string | null;
+  requestIdHeader?: string | null;
+  requestUrl?: string;
+  receivedAtMs?: number;
+};
+
+const WEBHOOK_SIGNATURE_TOLERANCE_MS = 10 * 60 * 1000;
+
+function parseSignatureHeader(signatureHeader: string) {
+  const entries = new Map<string, string>();
+
+  for (const part of signatureHeader.split(",")) {
+    const [key, value] = part.split("=", 2);
+
+    if (key && value) {
+      entries.set(key.trim(), value.trim());
+    }
+  }
+
+  return {
+    timestamp: entries.get("ts"),
+    signature: entries.get("v1"),
+  };
+}
+
+function getDataIdFromUrl(requestUrl?: string) {
+  if (!requestUrl) {
+    return undefined;
+  }
+
+  try {
+    return new URL(requestUrl).searchParams.get("data.id") ?? undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function compareHexSignatures(received: string, expected: string) {
+  if (!/^[a-f0-9]+$/i.test(received) || received.length % 2 !== 0) {
+    return false;
+  }
+
+  const receivedBuffer = Buffer.from(received, "hex");
+  const expectedBuffer = Buffer.from(expected, "hex");
+
+  if (receivedBuffer.length !== expectedBuffer.length) {
+    return false;
+  }
+
+  return timingSafeEqual(receivedBuffer, expectedBuffer);
+}
+
+function validateWebhookSignature(options: MercadoPagoWebhookOptions & { secret: string }): boolean {
+  const { signatureHeader, requestIdHeader, requestUrl, receivedAtMs, secret } = options;
+
   if (!signatureHeader) {
     return false;
   }
 
-  const expectedSignature = createHmac("sha256", secret).update(rawBody).digest("hex");
+  const { timestamp, signature } = parseSignatureHeader(signatureHeader);
+  const timestampMs = Number(timestamp);
 
-  return signatureHeader === expectedSignature;
+  if (!timestamp || !signature || !Number.isFinite(timestampMs)) {
+    return false;
+  }
+
+  const now = receivedAtMs ?? Date.now();
+
+  if (Math.abs(now - timestampMs) > WEBHOOK_SIGNATURE_TOLERANCE_MS) {
+    return false;
+  }
+
+  const dataId = getDataIdFromUrl(requestUrl);
+  const manifest = [
+    dataId ? `id:${dataId};` : "",
+    requestIdHeader ? `request-id:${requestIdHeader};` : "",
+    `ts:${timestamp};`,
+  ].join("");
+  const expectedSignature = createHmac("sha256", secret).update(manifest).digest("hex");
+
+  return compareHexSignatures(signature, expectedSignature);
 }
 
 export async function processMercadoPagoWebhook(
   rawBody: string,
-  signatureHeader: string | null
+  options: MercadoPagoWebhookOptions = {}
 ): Promise<WebhookProcessResult> {
   const config = getBillingConfig();
 
   if (config.mercadoPagoWebhookSecret) {
-    const isValid = validateWebhookSignature(rawBody, signatureHeader, config.mercadoPagoWebhookSecret);
+    const isValid = validateWebhookSignature({
+      ...options,
+      secret: config.mercadoPagoWebhookSecret,
+    });
 
     if (!isValid) {
       console.warn("Invalid Mercado Pago webhook signature");
       return { processed: false, reason: "invalid_signature" };
     }
+  } else if (process.env.NODE_ENV === "production") {
+    console.error("MERCADO_PAGO_WEBHOOK_SECRET must be configured in production");
+    return { processed: false, reason: "missing_webhook_secret" };
   } else {
     console.warn("MERCADO_PAGO_WEBHOOK_SECRET not configured - webhook signature validation skipped (dev/test only)");
   }

@@ -5,6 +5,7 @@ import { Topbar } from "@/components/app/topbar";
 import { FormulaTool } from "@/features/formula/formula-tool";
 import { getCurrentUser } from "@/server/auth/session";
 import { getUserEntitlement } from "@/server/billing/entitlements";
+import { getSupportLinks } from "@/server/support/support-config";
 
 export default async function WorkspacePage() {
   const user = await getCurrentUser();
@@ -14,12 +15,13 @@ export default async function WorkspacePage() {
   }
 
   const entitlement = await getUserEntitlement(user.id);
+  const supportLinks = getSupportLinks();
 
   return (
     <div className="workspace-layout">
       <Sidebar />
       <div className="workspace-main">
-        <Topbar user={user} entitlement={entitlement} />
+        <Topbar user={user} entitlement={entitlement} supportLinks={supportLinks} />
         <main className="workspace-content">
           <section className="workspace-heading">
             <div>

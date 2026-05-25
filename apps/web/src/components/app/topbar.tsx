@@ -5,9 +5,18 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import type { SessionUser } from "@/server/auth/session";
+import type { SupportLinks } from "@/server/support/support-config";
 import type { UserEntitlement } from "@tabelin/shared";
 
-export function Topbar({ user, entitlement }: { user: SessionUser; entitlement: UserEntitlement }) {
+export function Topbar({
+  user,
+  entitlement,
+  supportLinks,
+}: {
+  user: SessionUser;
+  entitlement: UserEntitlement;
+  supportLinks: SupportLinks;
+}) {
   const router = useRouter();
   const [showAccountMenu, setShowAccountMenu] = useState(false);
   const isPro = entitlement.plan === "pro" && entitlement.status === "active";
@@ -16,9 +25,6 @@ export function Topbar({ user, entitlement }: { user: SessionUser; entitlement: 
     await fetch("/api/auth/sign-out", { method: "POST" });
     router.push("/sign-in");
   }
-
-  const supportEmail = process.env.NEXT_PUBLIC_PRO_SUPPORT_EMAIL || "suporte@tabelin.ia";
-  const supportWhatsApp = process.env.NEXT_PUBLIC_PRO_SUPPORT_WHATSAPP_URL || "";
 
   return (
     <header className="topbar">
@@ -49,12 +55,12 @@ export function Topbar({ user, entitlement }: { user: SessionUser; entitlement: 
                 <>
                   <div className="menu-section">
                     <span className="menu-label">Suporte Pro</span>
-                    <a href={`mailto:${supportEmail}`} className="menu-item" role="menuitem">
+                    <a href={supportLinks.emailHref} className="menu-item" role="menuitem">
                       <Mail aria-hidden size={16} />
                       Email prioritario
                     </a>
-                    {supportWhatsApp ? (
-                      <a href={supportWhatsApp} className="menu-item" target="_blank" rel="noopener noreferrer" role="menuitem">
+                    {supportLinks.whatsAppHref ? (
+                      <a href={supportLinks.whatsAppHref} className="menu-item" target="_blank" rel="noopener noreferrer" role="menuitem">
                         <MessageCircle aria-hidden size={16} />
                         WhatsApp
                       </a>
@@ -74,4 +80,3 @@ export function Topbar({ user, entitlement }: { user: SessionUser; entitlement: 
     </header>
   );
 }
-
