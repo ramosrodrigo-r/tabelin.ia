@@ -112,7 +112,11 @@ blocked: 0
   reason: "User reported: nao acontece nada ao clicar no botão Assinar Pro"
   severity: major
   test: 5
-  root_cause: ""
-  artifacts: []
-  missing: []
+  root_cause: "MERCADO_PAGO_ACCESS_TOKEN vazio -> API retorna 500. onClick em formula-input-panel.tsx:126 só trata response.ok, sem else — erro silenciado."
+  artifacts:
+    - path: "apps/web/src/features/formula/components/formula-input-panel.tsx"
+      issue: "onClick handler linha 132 sem else branch — falha silenciosa quando API retorna !ok"
+  missing:
+    - "Adicionar else ao onClick: exibir mensagem de erro inline quando response.ok é false"
+    - "Configurar MERCADO_PAGO_ACCESS_TOKEN no .env.local para testar fluxo completo"
   debug_session: ""
