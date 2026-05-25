@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import type { FormulaLanguage, FormulaPlatform } from "@tabelin/shared";
 import { FORMULA_LANGUAGES, FORMULA_PLATFORMS } from "@tabelin/shared";
 import { Wand2 } from "lucide-react";
@@ -37,6 +38,8 @@ export function FormulaInputPanel({
   onTextChange: (text: string) => void;
   onSubmit: () => void;
 }) {
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
+
   return (
     <section className="tool-panel formula-panel" aria-label="Entrada da formula">
       <div className="mode-tabs" role="tablist" aria-label="Modo">
@@ -124,6 +127,7 @@ export function FormulaInputPanel({
               className="primary-button"
               type="button"
               onClick={async () => {
+                setCheckoutError(null);
                 const response = await fetch("/api/billing/checkout", {
                   method: "POST",
                   headers: { "content-type": "application/json" },
@@ -132,11 +136,16 @@ export function FormulaInputPanel({
                 if (response.ok) {
                   const data = await response.json();
                   window.location.href = data.checkoutUrl;
+                } else {
+                  setCheckoutError("Não foi possível iniciar o checkout. Tente novamente.");
                 }
               }}
             >
               Assinar Pro
             </button>
+            {checkoutError ? (
+              <p className="form-error">{checkoutError}</p>
+            ) : null}
           </div>
         ) : (
           <button className="primary-button" disabled={pending || quotaBlocked} onClick={onSubmit} type="button">
