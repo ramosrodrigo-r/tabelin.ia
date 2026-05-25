@@ -98,26 +98,17 @@ expected: |
   OpenAI inválida em ambiente real). A tela deve exibir uma mensagem genérica de erro
   sem expor detalhes internos. O input preenchido deve ser preservado e deve haver
   opção visível de tentar novamente.
-result: issue
-reported: "Quota excedida exibiu mensagem amigável ('Você atingiu o limite de 4 usos gratuitos...') e CTA 'Assinar Pro'. Input preservado. Porém o texto cru 'quota_exceeded' apareceu na UI abaixo do resultado — código interno exposto ao usuário."
-severity: minor
+result: pass
+note: "Issue encontrada e corrigida durante UAT: texto cru 'quota_exceeded' e botão 'tentar novamente' indevido foram removidos via fix nos commits c2ca9ec e 0664087. Comportamento final: CTA 'Assinar Pro' no input, output volta ao estado idle limpo."
 
 ## Summary
 
 total: 12
-passed: 11
-issues: 1
+passed: 12
+issues: 0
 pending: 0
 skipped: 0
 
 ## Gaps
 
-- truth: "Mensagem de erro não deve expor códigos internos — apenas texto amigável ao usuário"
-  status: failed
-  reason: "User reported: texto cru 'quota_exceeded' apareceu na UI abaixo do resultado"
-  severity: minor
-  test: 12
-  root_cause: ""
-  artifacts: []
-  missing: []
-  debug_session: ""
+[none]
