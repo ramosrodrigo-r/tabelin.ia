@@ -1,11 +1,11 @@
 ---
 phase: 01
 slug: localized-formula-workspace
-status: blocked
-threats_open: 2
+status: verified
+threats_open: 0
 asvs_level: 1
 created: 2026-05-24
-updated: 2026-05-24
+updated: 2026-05-25
 ---
 
 # Phase 01 - Security
@@ -28,9 +28,9 @@ Per-phase security contract for the localized formula workspace. This audit veri
 | Threat ID | Category | Component | Disposition | Mitigation | Status |
 |-----------|----------|-----------|-------------|------------|--------|
 | T-01-01 | Spoofing | Session cookies | mitigate | Session cookie is signed, expires, uses `httpOnly`, `sameSite: "lax"`, production `secure`, and is verified server-side. Evidence: `apps/web/src/server/auth/session.ts:35`, `apps/web/src/app/api/auth/[...all]/route.ts:135`. | closed |
-| T-01-02 | Tampering / CSRF | Auth mutation routes | mitigate | Plan required CSRF protection per Better Auth guidance. Implemented custom auth routes do not show an explicit origin/CSRF token check; only `sameSite: "lax"` is present. Evidence searched: `apps/web/src/app/api/auth/[...all]/route.ts:105`, repo grep for `csrf`, `origin`, `referer`, `sec-fetch`. | open |
+| T-01-02 | Tampering / CSRF | Auth mutation routes | mitigate | Função `validateAuthPostOrigin()` verifica o header `Origin` (com fallback para `Referer`) contra o conjunto de origens permitidas (`BETTER_AUTH_URL` + origem da própria request). Retorna HTTP 403 se a origem não constar na lista. Chamada no topo do handler POST antes de qualquer processamento. Evidence: `apps/web/src/app/api/auth/[...all]/route.ts:118-124` (função), `apps/web/src/app/api/auth/[...all]/route.ts:181` (chamada no POST). | closed |
 | T-01-03 | Information Disclosure | Password storage | mitigate | Passwords are hashed with random salt using scrypt and compared with `timingSafeEqual`. Evidence: `apps/web/src/server/auth/password.ts:1`. | closed |
-| T-01-04 | Elevation of Privilege | Password reset | mitigate | Plan required reset tokens that expire and cannot be reused. Current custom reset route logs a URL containing the email and does not create or consume a token. Evidence: `apps/web/src/app/api/auth/[...all]/route.ts:111`; `prisma/schema.prisma:57` has a `Verification` model but the custom route does not use it. | open |
+| T-01-04 | Elevation of Privilege | Password reset | mitigate | `createPasswordResetToken()` gera token aleatório de 32 bytes (base64url), armazena hash SHA-256 com TTL de 1 hora no modelo `Verification`, excluindo tokens anteriores do mesmo e-mail. `consumePasswordResetToken()` executa em transação atômica: localiza pelo hash, rejeita se expirado, exclui antes de atualizar a senha (uso único). Retorna `reason: "expired"` ou `"invalid"` conforme o caso. Evidence: `apps/web/src/server/auth/reset-password.ts:34-48` (criação), `apps/web/src/server/auth/reset-password.ts:51-105` (consumo), `apps/web/src/app/api/auth/[...all]/route.ts` (uso via import). | closed |
 | T-01-05 | Spoofing | Workspace access | mitigate | `/workspace` performs a server-side session check and redirects signed-out users. Evidence: `apps/web/src/app/(workspace)/workspace/page.tsx:8`. | closed |
 | T-01-06 | Information Disclosure | Client bundles | mitigate | Provider secrets are isolated from app UI/component paths. Evidence: `apps/web/src/server/ai/openai-client.ts:1`; `rg "OPENAI_API_KEY" apps/web/src/app apps/web/src/features apps/web/src/components --glob '!**/*.test.ts'` returned no matches. | closed |
 | T-01-07 | Information Disclosure | OpenAI provider key | mitigate | OpenAI client is server-only and reads `OPENAI_API_KEY` only server-side. Evidence: `apps/web/src/server/ai/openai-client.ts:1`. | closed |
@@ -54,30 +54,32 @@ No explicit `## Threat Flags` sections were present in the phase summaries. The 
 
 ## Open Threats
 
-| Threat ID | Severity | Reason | Required Follow-Up |
-|-----------|----------|--------|--------------------|
-| T-01-02 | high | Auth mutation endpoints use cookies and do not show explicit CSRF/origin validation in the custom route facade. | Add CSRF/origin protection around sign-in, sign-up, sign-out, and reset POST routes, or route those actions through Better Auth's verified handlers and tests. |
-| T-01-04 | high | Password reset flow does not create an expiring single-use token before logging/sending a reset URL. | Implement token creation, expiry, consumption, and reuse rejection using the auth framework or `Verification` model, then test expiry/reuse behavior. |
+Nenhuma ameaça em aberto. Todas as ameaças possuem disposição verificada.
 
 ## Security Audit Trail
 
 | Audit Date | Threats Total | Closed | Open | Run By |
 |------------|---------------|--------|------|--------|
 | 2026-05-24 | 16 | 14 | 2 | Codex gsd-secure-phase |
+| 2026-05-25 | 16 | 16 | 0 | Claude gsd-secure-phase |
 
-## Security Audit 2026-05-24
+## Security Audit 2026-05-25
 
 | Metric | Count |
 |--------|-------|
 | Threats found | 16 |
-| Closed | 14 |
-| Open | 2 |
+| Closed | 16 |
+| Open | 0 |
+
+Ameaças anteriormente abertas verificadas como fechadas:
+- **T-01-02**: `validateAuthPostOrigin()` implementada e chamada em todos os POSTs de auth.
+- **T-01-04**: Fluxo de reset com token criptográfico, TTL de 1h, hash SHA-256, consumo atômico em transação.
 
 ## Sign-Off
 
-- [x] All threats have a disposition (mitigate / accept / transfer)
-- [x] Accepted risks documented in Accepted Risks Log
-- [ ] `threats_open: 0` confirmed
-- [ ] `status: verified` set in frontmatter
+- [x] Todas as ameaças possuem disposição (mitigate / accept / transfer)
+- [x] Riscos aceitos documentados no Accepted Risks Log
+- [x] `threats_open: 0` confirmado
+- [x] `status: verified` definido no frontmatter
 
-**Approval:** blocked 2026-05-24
+**Approval:** verified 2026-05-25
