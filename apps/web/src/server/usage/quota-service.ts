@@ -36,7 +36,7 @@ export async function reserveToolUse(
 
   if (entitlement.plan === "pro" && entitlement.status === "active") {
     const reservationKey = `${userId}-tool-${Date.now()}-${randomBytes(8).toString("hex")}`;
-    return { allowed: true, reservationKey };
+    return { allowed: true, reservationKey, priority: true };
   }
 
   const meterKind: MeterKind = "tool_use";

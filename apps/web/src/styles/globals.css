@@ -163,6 +163,25 @@ a {
   line-height: 1.5;
 }
 
+.revoked-notice {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border: 1px solid rgb(47 111 237 / 35%);
+  border-radius: 6px;
+  background: rgb(47 111 237 / 8%);
+  color: var(--info);
+  padding: 12px 16px;
+  margin-bottom: 16px;
+}
+
+.revoked-notice p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
 .workspace-layout {
   display: grid;
   min-height: 100vh;

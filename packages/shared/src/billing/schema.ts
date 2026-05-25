@@ -35,10 +35,12 @@ export type UserEntitlement = {
   cycle?: PlanCycle;
   status: EntitlementStatus;
   currentPeriodEnd?: Date;
+  recentlyRevoked?: boolean;
+  priority?: boolean;
 };
 
 export type QuotaCheckResult =
-  | { allowed: true; reservationKey: string; lastFreeUse?: boolean }
+  | { allowed: true; reservationKey: string; lastFreeUse?: boolean; priority?: boolean }
   | { allowed: false; reason: "quota_exceeded"; meterKind: MeterKind };
 
 export type QuotaConfirmResult = { confirmed: true } | { confirmed: false; reason: string };

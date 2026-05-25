@@ -12,15 +12,30 @@ export async function getUserEntitlement(userId: string): Promise<UserEntitlemen
     orderBy: { createdAt: "desc" }
   });
 
-  if (!entitlement || entitlement.plan === "free") {
-    return { plan: "free", status: "active" };
+  if (entitlement && entitlement.plan === "pro") {
+    return {
+      plan: "pro",
+      cycle: entitlement.cycle as "monthly" | "annual" | undefined,
+      status: entitlement.status as "active",
+      currentPeriodEnd: entitlement.currentPeriodEnd ?? undefined,
+      priority: true
+    };
   }
 
+  const recentlyCanceled = await prisma.entitlement.findFirst({
+    where: {
+      userId,
+      plan: "pro",
+      status: "canceled",
+      updatedAt: { gte: new Date(Date.now() - 5 * 60 * 1000) }
+    },
+    orderBy: { updatedAt: "desc" }
+  });
+
   return {
-    plan: "pro",
-    cycle: entitlement.cycle as "monthly" | "annual" | undefined,
-    status: entitlement.status as "active",
-    currentPeriodEnd: entitlement.currentPeriodEnd ?? undefined
+    plan: "free",
+    status: "active",
+    recentlyRevoked: !!recentlyCanceled
   };
 }
 
