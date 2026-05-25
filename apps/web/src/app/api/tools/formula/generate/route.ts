@@ -45,7 +45,7 @@ export async function POST(request: Request) {
       latencyMs: Math.round(performance.now() - startedAt)
     });
 
-    return new Response(createFormulaEventStream(payload), {
+    return new Response(createFormulaEventStream(payload, quotaCheck.lastFreeUse), {
       headers: {
         "content-type": "application/x-ndjson; charset=utf-8",
         "cache-control": "no-store"

@@ -112,6 +112,10 @@ export function useFormulaStream() {
           setWarnings((current) => [...current, event.warning]);
         }
 
+        if (event.type === "quota_warning") {
+          setLastFreeUse(event.lastFreeUse);
+        }
+
         if (event.type === "delta") {
           setDraft((current) => `${current}${event.text}`);
         }

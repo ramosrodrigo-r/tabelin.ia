@@ -76,11 +76,12 @@ function splitForStreaming(payload: FormulaCompletePayload) {
   return [payload.formula, "\n", ...payload.steps.map((step, index) => `${index + 1}. ${step}\n`)];
 }
 
-export function createFormulaEventStream(payload: FormulaCompletePayload) {
+export function createFormulaEventStream(payload: FormulaCompletePayload, lastFreeUse?: boolean) {
   const encoder = new TextEncoder();
   const events: FormulaStreamEvent[] = [
     { type: "metadata", metadata: payload.metadata },
     ...payload.warnings.map((warning): FormulaStreamEvent => ({ type: "warning", warning })),
+    ...(lastFreeUse ? [{ type: "quota_warning" as const, lastFreeUse: true }] : []),
     ...splitForStreaming(payload).map((text): FormulaStreamEvent => ({ type: "delta", text })),
     { type: "complete", payload }
   ];

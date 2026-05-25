@@ -111,10 +111,39 @@ export function FormulaInputPanel({
 
         {validationError ? <div className="form-error">{validationError}</div> : null}
 
-        <button className="primary-button" disabled={pending} onClick={onSubmit} type="button">
-          <Wand2 aria-hidden size={16} />
-          {pending ? "Gerando..." : mode === "generate" ? "Gerar formula" : "Explicar formula"}
-        </button>
+        {!isPro && lastFreeUse && !quotaBlocked ? (
+          <div className="quota-warning">
+            Este e seu ultimo uso gratuito. Assine Pro para acesso ilimitado.
+          </div>
+        ) : null}
+
+        {!isPro && quotaBlocked ? (
+          <div className="quota-blocked">
+            <p>Voce atingiu o limite de 4 usos gratuitos. Experimente novamente mais tarde ou assine Pro para acesso ilimitado.</p>
+            <button
+              className="primary-button"
+              type="button"
+              onClick={async () => {
+                const response = await fetch("/api/billing/checkout", {
+                  method: "POST",
+                  headers: { "content-type": "application/json" },
+                  body: JSON.stringify({ cycle: "monthly" })
+                });
+                if (response.ok) {
+                  const data = await response.json();
+                  window.location.href = data.checkoutUrl;
+                }
+              }}
+            >
+              Assinar Pro
+            </button>
+          </div>
+        ) : (
+          <button className="primary-button" disabled={pending || quotaBlocked} onClick={onSubmit} type="button">
+            <Wand2 aria-hidden size={16} />
+            {pending ? "Gerando..." : mode === "generate" ? "Gerar formula" : "Explicar formula"}
+          </button>
+        )}
       </div>
     </section>
   );

@@ -66,6 +66,7 @@ export const formulaStreamEventSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("metadata"), metadata: formulaMetadataSchema }),
   z.object({ type: z.literal("delta"), text: z.string() }),
   z.object({ type: z.literal("warning"), warning: z.string() }),
+  z.object({ type: z.literal("quota_warning"), lastFreeUse: z.boolean() }),
   z.object({ type: z.literal("complete"), payload: formulaCompletePayloadSchema }),
   z.object({ type: z.literal("error"), message: z.string() })
 ]);
