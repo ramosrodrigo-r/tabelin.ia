@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { getBillingConfig } from "../src/server/billing/mercado-pago-client";
+import { checkoutRequestSchema } from "@tabelin/shared";
 
 describe("Billing Configuration", () => {
   let originalEnv: NodeJS.ProcessEnv;
@@ -45,5 +46,25 @@ describe("Billing Configuration", () => {
     const config = getBillingConfig();
 
     expect(config.mercadoPagoWebhookSecret).toBe("secret-123");
+  });
+});
+
+describe("Checkout Schema Validation", () => {
+  it("should reject invalid billing cycles", () => {
+    const invalidCycle = checkoutRequestSchema.safeParse({ cycle: "invalid" });
+    expect(invalidCycle.success).toBe(false);
+
+    const weeklyNotSupported = checkoutRequestSchema.safeParse({ cycle: "weekly" });
+    expect(weeklyNotSupported.success).toBe(false);
+  });
+
+  it("should accept monthly and annual cycles", () => {
+    const monthly = checkoutRequestSchema.safeParse({ cycle: "monthly" });
+    expect(monthly.success).toBe(true);
+    expect(monthly.data?.cycle).toBe("monthly");
+
+    const annual = checkoutRequestSchema.safeParse({ cycle: "annual" });
+    expect(annual.success).toBe(true);
+    expect(annual.data?.cycle).toBe("annual");
   });
 });

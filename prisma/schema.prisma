@@ -8,18 +8,19 @@ datasource db {
 
 
 model User {
-  id            String        @id @default(cuid())
-  name          String?
-  email         String        @unique
-  emailVerified Boolean       @default(false)
-  image         String?
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
-  sessions      Session[]
-  accounts      Account[]
-  toolRequests  ToolRequest[]
-  entitlements  Entitlement[]
-  usageLedger   UsageLedger[]
+  id               String            @id @default(cuid())
+  name             String?
+  email            String            @unique
+  emailVerified    Boolean           @default(false)
+  image            String?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  sessions         Session[]
+  accounts         Account[]
+  toolRequests     ToolRequest[]
+  entitlements     Entitlement[]
+  usageLedger      UsageLedger[]
+  billingCheckouts BillingCheckout[]
 }
 
 model Session {
@@ -123,4 +124,37 @@ model UsageLedger {
 
   @@index([userId, meterKind, status, createdAt])
   @@index([status, confirmedAt])
+}
+
+model BillingCheckout {
+  id                  String    @id @default(cuid())
+  userId              String
+  cycle               String
+  status              String
+  provider            String
+  providerPreferenceId String?
+  externalReference   String    @unique
+  checkoutUrl         String?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  user                User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, status])
+  @@index([externalReference])
+}
+
+model PaymentEvent {
+  id              String    @id @default(cuid())
+  provider        String
+  providerEventId String
+  topic           String?
+  resourceId      String?
+  status          String
+  rawPayload      String?
+  processedAt     DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([provider, providerEventId])
+  @@unique([provider, providerEventId])
 }
