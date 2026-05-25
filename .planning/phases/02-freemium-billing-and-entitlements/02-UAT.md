@@ -3,7 +3,7 @@ status: complete
 phase: 02-freemium-billing-and-entitlements
 source: [02-01-SUMMARY.md, 02-02-SUMMARY.md, 02-03-SUMMARY.md]
 started: 2026-05-25T22:03:13Z
-updated: 2026-05-25T22:25:00Z
+updated: 2026-05-25T23:10:00Z
 ---
 
 ## Current Test
@@ -52,9 +52,8 @@ expected: |
   para a URL de checkout do Mercado Pago (Checkout Pro). A chamada é feita com
   ciclo "monthly" por padrão. Se as credenciais MP não estiverem configuradas,
   a API deve retornar um erro claro (não um redirect vazio).
-result: issue
-reported: "nao acontece nada ao clicar no botão Assinar Pro"
-severity: major
+result: pass
+notes: "Fix aplicado inline (b648823): adicionado else branch ao onClick — exibe 'Não foi possível iniciar o checkout. Tente novamente.' quando API retorna !ok. Falha silenciosa eliminada."
 
 ### 6. Página de retorno do billing
 expected: |
@@ -99,8 +98,8 @@ notes: "Aviso exibido corretamente: 'Seu plano Pro foi cancelado. Voce retornou 
 ## Summary
 
 total: 10
-passed: 9
-issues: 1
+passed: 10
+issues: 0
 pending: 0
 skipped: 0
 blocked: 0
@@ -108,15 +107,13 @@ blocked: 0
 ## Gaps
 
 - truth: "Clicar em 'Assinar Pro' redireciona para checkout Mercado Pago (ou exibe erro claro se credenciais ausentes)"
-  status: failed
+  status: resolved
   reason: "User reported: nao acontece nada ao clicar no botão Assinar Pro"
   severity: major
   test: 5
   root_cause: "MERCADO_PAGO_ACCESS_TOKEN vazio -> API retorna 500. onClick em formula-input-panel.tsx:126 só trata response.ok, sem else — erro silenciado."
+  fix: "Adicionado else branch ao onClick (commit b648823): limpa erro anterior, exibe mensagem inline 'Não foi possível iniciar o checkout. Tente novamente.' quando response.ok é false."
   artifacts:
     - path: "apps/web/src/features/formula/components/formula-input-panel.tsx"
       issue: "onClick handler linha 132 sem else branch — falha silenciosa quando API retorna !ok"
-  missing:
-    - "Adicionar else ao onClick: exibir mensagem de erro inline quando response.ok é false"
-    - "Configurar MERCADO_PAGO_ACCESS_TOKEN no .env.local para testar fluxo completo"
   debug_session: ""
