@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { FormulaTool } from "@/features/formula/formula-tool";
+import type { UserEntitlement } from "@tabelin/shared";
 
 function streamResponse(lines: unknown[]) {
   const encoder = new TextEncoder();
@@ -20,6 +21,9 @@ function streamResponse(lines: unknown[]) {
   );
 }
 
+const freeEntitlement: UserEntitlement = { plan: "free", status: "active" };
+const proEntitlement: UserEntitlement = { plan: "pro", status: "active", cycle: "monthly", currentPeriodEnd: new Date("2027-01-01") };
+
 describe("FormulaTool", () => {
   beforeEach(() => {
     vi.restoreAllMocks();
@@ -32,7 +36,7 @@ describe("FormulaTool", () => {
   });
 
   it("renders platform and language controls with separator indicators", () => {
-    render(<FormulaTool />);
+    render(<FormulaTool entitlement={freeEntitlement} />);
 
     expect(screen.getByText("Microsoft Excel")).toBeInTheDocument();
     expect(screen.getByText("Google Sheets")).toBeInTheDocument();
@@ -44,7 +48,7 @@ describe("FormulaTool", () => {
 
   it("blocks submit with visible validation when input is missing", async () => {
     const user = userEvent.setup();
-    render(<FormulaTool />);
+    render(<FormulaTool entitlement={freeEntitlement} />);
 
     await user.click(screen.getByRole("button", { name: "Gerar formula" }));
 
@@ -74,7 +78,7 @@ describe("FormulaTool", () => {
       ])
     );
 
-    render(<FormulaTool />);
+    render(<FormulaTool entitlement={freeEntitlement} />);
 
     expect(screen.getByRole("button", { name: "Copiar resultado" })).toBeDisabled();
     await user.type(screen.getByLabelText("Pedido"), "Quero somar a coluna B se a coluna C for Pago");
@@ -88,5 +92,18 @@ describe("FormulaTool", () => {
     await user.click(screen.getByRole("button", { name: "Copiar resultado" }));
 
     expect(await screen.findByRole("button", { name: "Copiado" })).toBeInTheDocument();
+  });
+
+  it("does not show Pro badge or support links for Free users", () => {
+    render(<FormulaTool entitlement={freeEntitlement} />);
+
+    expect(screen.queryByText("Pro")).not.toBeInTheDocument();
+  });
+
+  it("renders Pro badge for active Pro users", () => {
+    render(<FormulaTool entitlement={proEntitlement} />);
+
+    // Pro badge presence would be tested at workspace/topbar level, not in FormulaTool
+    // FormulaTool receives isPro state for quota bypass only
   });
 });

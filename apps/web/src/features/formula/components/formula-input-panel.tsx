@@ -13,6 +13,9 @@ export function FormulaInputPanel({
   text,
   validationError,
   pending,
+  isPro,
+  quotaBlocked,
+  lastFreeUse,
   onModeChange,
   onPlatformChange,
   onLanguageChange,
@@ -25,6 +28,9 @@ export function FormulaInputPanel({
   text: string;
   validationError: string;
   pending: boolean;
+  isPro: boolean;
+  quotaBlocked: boolean;
+  lastFreeUse: boolean;
   onModeChange: (mode: FormulaMode) => void;
   onPlatformChange: (platform: FormulaPlatform) => void;
   onLanguageChange: (language: FormulaLanguage) => void;

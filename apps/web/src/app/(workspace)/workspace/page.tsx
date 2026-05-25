@@ -4,6 +4,7 @@ import { Sidebar } from "@/components/app/sidebar";
 import { Topbar } from "@/components/app/topbar";
 import { FormulaTool } from "@/features/formula/formula-tool";
 import { getCurrentUser } from "@/server/auth/session";
+import { getUserEntitlement } from "@/server/billing/entitlements";
 
 export default async function WorkspacePage() {
   const user = await getCurrentUser();
@@ -12,11 +13,13 @@ export default async function WorkspacePage() {
     redirect("/sign-in");
   }
 
+  const entitlement = await getUserEntitlement(user.id);
+
   return (
     <div className="workspace-layout">
       <Sidebar />
       <div className="workspace-main">
-        <Topbar user={user} />
+        <Topbar user={user} entitlement={entitlement} />
         <main className="workspace-content">
           <section className="workspace-heading">
             <div>
@@ -24,7 +27,7 @@ export default async function WorkspacePage() {
               <p>Descreva a tarefa em portugues e receba uma formula pronta para copiar.</p>
             </div>
           </section>
-          <FormulaTool />
+          <FormulaTool entitlement={entitlement} />
         </main>
       </div>
     </div>

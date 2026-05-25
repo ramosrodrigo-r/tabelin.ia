@@ -230,6 +230,74 @@ a {
   gap: 12px;
 }
 
+.pro-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid rgb(11 107 87 / 24%);
+  border-radius: 12px;
+  background: rgb(11 107 87 / 8%);
+  color: var(--primary);
+  font-size: 12px;
+  font-weight: 650;
+  padding: 4px 10px;
+}
+
+.account-menu-container {
+  position: relative;
+}
+
+.account-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 10;
+  width: 220px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  box-shadow: 0 8px 24px rgb(15 23 42 / 12%);
+  padding: 8px;
+}
+
+.menu-section {
+  display: grid;
+  gap: 4px;
+  padding: 4px 0;
+}
+
+.menu-label {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 4px 10px;
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 0;
+  border-radius: 4px;
+  background: none;
+  color: var(--text);
+  cursor: pointer;
+  padding: 8px 10px;
+  text-align: left;
+  text-decoration: none;
+}
+
+.menu-item:hover {
+  background: var(--background);
+}
+
+.menu-divider {
+  border-top: 1px solid var(--border);
+  margin: 4px 0;
+}
+
 .ghost-button {
   display: inline-flex;
   min-height: 36px;

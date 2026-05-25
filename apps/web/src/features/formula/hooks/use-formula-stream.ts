@@ -26,6 +26,8 @@ export function useFormulaStream() {
   const [metadata, setMetadata] = useState<FormulaMetadata | null>(null);
   const [warnings, setWarnings] = useState<string[]>([]);
   const [error, setError] = useState("");
+  const [quotaBlocked, setQuotaBlocked] = useState(false);
+  const [lastFreeUse, setLastFreeUse] = useState(false);
 
   const submit = useCallback(async (input: SubmitFormulaInput) => {
     setStatus("loading");
@@ -34,6 +36,8 @@ export function useFormulaStream() {
     setMetadata(null);
     setWarnings([]);
     setError("");
+    setQuotaBlocked(false);
+    setLastFreeUse(false);
 
     const endpoint = input.mode === "generate" ? "/api/tools/formula/generate" : "/api/tools/formula/explain";
     const response = await fetch(endpoint, {
@@ -54,7 +58,23 @@ export function useFormulaStream() {
       )
     });
 
-    if (!response.ok || !response.body) {
+    if (!response.ok) {
+      if (response.status === 429) {
+        const errorData = await response.json().catch(() => ({}));
+        if (errorData.code === "quota_exceeded") {
+          setStatus("error");
+          setQuotaBlocked(true);
+          setError("quota_exceeded");
+          return;
+        }
+      }
+
+      setStatus("error");
+      setError("Nao consegui validar a resposta. Ajuste o pedido e tente novamente.");
+      return;
+    }
+
+    if (!response.body) {
       setStatus("error");
       setError("Nao consegui validar a resposta. Ajuste o pedido e tente novamente.");
       return;
@@ -118,6 +138,8 @@ export function useFormulaStream() {
     metadata,
     warnings,
     error,
+    quotaBlocked,
+    lastFreeUse,
     submit
   };
 }

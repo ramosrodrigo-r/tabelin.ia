@@ -1,13 +1,13 @@
 "use client";
 
-import type { FormulaLanguage, FormulaPlatform } from "@tabelin/shared";
+import type { FormulaLanguage, FormulaPlatform, UserEntitlement } from "@tabelin/shared";
 import { useState } from "react";
 
 import { FormulaInputPanel } from "./components/formula-input-panel";
 import { FormulaOutputPanel } from "./components/formula-output-panel";
 import { type FormulaMode, useFormulaStream } from "./hooks/use-formula-stream";
 
-export function FormulaTool() {
+export function FormulaTool({ entitlement }: { entitlement: UserEntitlement }) {
   const [mode, setMode] = useState<FormulaMode>("generate");
   const [platform, setPlatform] = useState<FormulaPlatform>("excel");
   const [formulaLanguage, setFormulaLanguage] = useState<FormulaLanguage>("pt-BR");
@@ -15,6 +15,7 @@ export function FormulaTool() {
   const [validationError, setValidationError] = useState("");
   const stream = useFormulaStream();
   const pending = stream.status === "loading" || stream.status === "streaming";
+  const isPro = entitlement.plan === "pro" && entitlement.status === "active";
 
   async function submit() {
     if (!platform || !formulaLanguage) {
@@ -45,6 +46,9 @@ export function FormulaTool() {
         text={text}
         validationError={validationError}
         pending={pending}
+        isPro={isPro}
+        quotaBlocked={stream.quotaBlocked}
+        lastFreeUse={stream.lastFreeUse}
         onModeChange={setMode}
         onPlatformChange={setPlatform}
         onLanguageChange={setFormulaLanguage}
