@@ -1,0 +1,79 @@
+{
+  "phase": "2",
+  "phase_name": "Freemium Billing and Entitlements",
+  "timestamp": "2026-05-24T20:23:04Z",
+  "areas_completed": ["Regra exata de quota"],
+  "areas_remaining": [
+    "Bloqueio e upgrade no workspace",
+    "Fluxo de checkout Pix/cartao",
+    "Estado Pro, suporte e prioridade"
+  ],
+  "decisions": {
+    "Regra exata de quota": [
+      {
+        "question": "O que deve contar como uso de ferramenta?",
+        "answer": "Contar somente resposta validada com sucesso. Reservar a quota antes da IA para evitar corrida, mas confirmar o consumo so quando a resposta passar na validacao estruturada. Falha de provedor, erro 5xx ou resposta invalida estorna a reserva.",
+        "options_presented": [
+          "Contar somente resposta validada com sucesso",
+          "Contar toda tentativa enviada para IA",
+          "Contar so quando o usuario copia o resultado",
+          "Outro"
+        ]
+      },
+      {
+        "question": "Explicacao de formula conta igual geracao?",
+        "answer": "Sim. Toda chamada de ferramenta AI conta igual: generate e explain consomem o mesmo limite de 4 usos por 12h.",
+        "options_presented": [
+          "Sim, toda chamada de ferramenta AI conta igual",
+          "Explicacao tem limite separado ou peso menor",
+          "Explicacao nao conta na fase 2",
+          "Outro"
+        ]
+      },
+      {
+        "question": "Como lidar com limite de 10 mensagens de chat em 30 dias?",
+        "answer": "Criar o modelo geral agora, mas aplicar chat so quando a feature existir. Planejar uma ledger generica com meterKind ou equivalente para tool_use, chat_message e futuro upload; nesta fase so a formula usa o medidor ativo.",
+        "options_presented": [
+          "Criar o modelo geral agora, mas aplicar chat so quando a feature existir",
+          "Implementar contador de chat invisivel agora",
+          "Adiar completamente QUOT-02",
+          "Outro"
+        ]
+      },
+      {
+        "question": "Usuario Pro deve ser realmente ilimitado?",
+        "answer": "Ilimitado para produto, com salvaguardas antiabuso internas. Pro nao ve limite de ferramenta/chat no fluxo normal, mas o servidor mantem rate limit tecnico ou flags internas para abuso/custo extremo.",
+        "options_presented": [
+          "Ilimitado para produto, com salvaguardas antiabuso internas",
+          "Ilimitado com teto oculto alto",
+          "Ilimitado apenas em algumas ferramentas",
+          "Outro"
+        ]
+      },
+      {
+        "question": "Quer aprofundar quota ou seguir para bloqueio/upgrade no workspace?",
+        "answer": "Seguir para a proxima area.",
+        "options_presented": [
+          "Seguir para a proxima area",
+          "Mais perguntas sobre quota"
+        ]
+      }
+    ]
+  },
+  "deferred_ideas": [],
+  "canonical_refs": [
+    "PRD.md",
+    ".planning/PROJECT.md",
+    ".planning/REQUIREMENTS.md",
+    ".planning/ROADMAP.md",
+    ".planning/phases/01-localized-formula-workspace/01-CONTEXT.md",
+    "prisma/schema.prisma",
+    "apps/web/src/app/api/tools/formula/generate/route.ts",
+    "apps/web/src/app/api/tools/formula/explain/route.ts",
+    "apps/web/src/server/tools/formula-repository.ts",
+    "apps/web/src/server/auth/session.ts",
+    "apps/web/src/app/(workspace)/workspace/page.tsx",
+    "apps/web/src/components/app/sidebar.tsx",
+    "apps/web/src/components/app/topbar.tsx"
+  ]
+}
