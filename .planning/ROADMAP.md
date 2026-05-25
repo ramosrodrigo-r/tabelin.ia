@@ -66,11 +66,17 @@ Plans:
   5. Pro users see unlimited tool access, support contact paths, and priority-processing state where available.
 
 **Plans**: 3 plans
-
 Plans:
+**Wave 1**
 
 - [ ] 02-01: Build transactional usage ledger, quota reservations, and free-tier enforcement.
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
 - [ ] 02-02: Integrate Mercado Pago checkout and webhook reconciliation.
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
 - [ ] 02-03: Implement Pro entitlement UX, support paths, priority flags, and billing verification.
 
 ### Phase 3: Multi-Tool Generation Suite
