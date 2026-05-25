@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: ready_to_plan
-last_updated: 2026-05-25T16:53:54.230Z
+last_updated: 2026-05-25T17:40:22.000Z
 last_activity: 2026-05-25
 progress:
   total_phases: 5
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-05-24)
 Phase: 3
 Plan: Not started
 Status: Ready to plan
-Last activity: 2026-05-25
+Last activity: 2026-05-25 - Completed quick task 260525-s01: corrigir threats T-02-02-04 e T-02-03-03 da fase 2
 
 Progress: [██████████] 100%
 
@@ -87,10 +87,11 @@ None yet.
 
 ### Quick Tasks Completed
 
-| # | Description | Date | Commit | Directory |
-|---|-------------|------|--------|-----------|
-| 260524-o3i | CSRF/origin auth hardening and one-use password reset | 2026-05-24 | 61d70e5 | [260524-o3i-1-csrf-origin-nas-rotas-de-auth-validar-](./quick/260524-o3i-1-csrf-origin-nas-rotas-de-auth-validar-/) |
-| 260524-gh1 | Published project to GitHub | 2026-05-24 | f6471e0 | [260524-gh1-publicar-projeto-no-github](./quick/260524-gh1-publicar-projeto-no-github/) |
+| # | Description | Date | Commit | Status | Directory |
+|---|-------------|------|--------|--------|-----------|
+| 260524-o3i | CSRF/origin auth hardening and one-use password reset | 2026-05-24 | 61d70e5 |  | [260524-o3i-1-csrf-origin-nas-rotas-de-auth-validar-](./quick/260524-o3i-1-csrf-origin-nas-rotas-de-auth-validar-/) |
+| 260524-gh1 | Published project to GitHub | 2026-05-24 | f6471e0 |  | [260524-gh1-publicar-projeto-no-github](./quick/260524-gh1-publicar-projeto-no-github/) |
+| 260525-s01 | corrigir threats T-02-02-04 e T-02-03-03 da fase 2 | 2026-05-25 | 107b908 | Verified | [260525-s01-corrigir-threats-seguranca-fase-2](./quick/260525-s01-corrigir-threats-seguranca-fase-2/) |
 
 ## Deferred Items
 
