@@ -62,7 +62,7 @@ export function useFormulaStream() {
       if (response.status === 429) {
         const errorData = await response.json().catch(() => ({}));
         if (errorData.code === "quota_exceeded") {
-          setStatus("error");
+          setStatus("idle");
           setQuotaBlocked(true);
           setError("");
           return;
