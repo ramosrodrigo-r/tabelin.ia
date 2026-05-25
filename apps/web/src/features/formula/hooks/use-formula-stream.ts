@@ -64,7 +64,7 @@ export function useFormulaStream() {
         if (errorData.code === "quota_exceeded") {
           setStatus("error");
           setQuotaBlocked(true);
-          setError("quota_exceeded");
+          setError("");
           return;
         }
       }
