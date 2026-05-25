@@ -44,7 +44,7 @@ const lastFreeUseBody = [
   .join("\n");
 
 test("billing flow: Free quota to Pro activation to revocation", async ({ page }) => {
-  await page.route("**/api/tools/formula/generate", async (route, request) => {
+  await page.route("**/api/tools/formula/generate", async (route) => {
     const requestCount = (await page.evaluate(() => sessionStorage.getItem("requestCount"))) || "0";
     const count = Number.parseInt(requestCount, 10);
 
