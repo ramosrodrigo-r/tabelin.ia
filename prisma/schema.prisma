@@ -18,6 +18,8 @@ model User {
   sessions      Session[]
   accounts      Account[]
   toolRequests  ToolRequest[]
+  entitlements  Entitlement[]
+  usageLedger   UsageLedger[]
 }
 
 model Session {
@@ -82,4 +84,43 @@ model ToolRequest {
 
   @@index([userId, createdAt])
   @@index([toolKind, mode])
+}
+
+model Entitlement {
+  id                 String    @id @default(cuid())
+  userId             String
+  plan               String
+  cycle              String?
+  status             String
+  currentPeriodStart DateTime?
+  currentPeriodEnd   DateTime?
+  provider           String?
+  providerCustomerId String?
+  providerSubId      String?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  user               User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, status])
+  @@index([status, currentPeriodEnd])
+}
+
+model UsageLedger {
+  id             String    @id @default(cuid())
+  userId         String
+  meterKind      String
+  toolKind       String?
+  mode           String?
+  status         String
+  reservationKey String    @unique
+  periodStart    DateTime?
+  periodEnd      DateTime?
+  confirmedAt    DateTime?
+  releasedAt     DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, meterKind, status, createdAt])
+  @@index([status, confirmedAt])
 }
