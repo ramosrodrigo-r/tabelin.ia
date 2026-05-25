@@ -73,7 +73,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 02-02: Integrate Mercado Pago checkout and webhook reconciliation.
+- [x] 02-02: Integrate Mercado Pago checkout and webhook reconciliation.
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
@@ -156,7 +156,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Localized Formula Workspace | 3/3 | Complete    | 2026-05-24 |
-| 2. Freemium Billing and Entitlements | 0/3 | Not started | - |
+| 2. Freemium Billing and Entitlements | 2/3 | In Progress|  |
 | 3. Multi-Tool Generation Suite | 0/3 | Not started | - |
 | 4. Spreadsheet File Analysis | 0/3 | Not started | - |
 | 5. OCR, Charts, and Launch Hardening | 0/3 | Not started | - |

@@ -19,8 +19,8 @@ Requirements for initial release. Each maps to roadmap phases.
 - [x] **QUOT-01**: Free user is limited to 4 tool uses per 12-hour window. (Phase 02 Plan 01)
 - [ ] **QUOT-02**: Free user is limited to 10 AI chat messages per 30-day window. (modeled, enforced when chat exists)
 - [ ] **QUOT-03**: Upload limits are enforced for free users: 5 MB per file and 5 files per history. (modeled, enforced when upload exists)
-- [ ] **BILL-01**: User can start Pro checkout with Pix and Brazilian card support.
-- [ ] **BILL-02**: Payment webhook activates, updates, or revokes Pro entitlement idempotently.
+- [x] **BILL-01**: User can start Pro checkout with Pix and Brazilian card support.
+- [x] **BILL-02**: Payment webhook activates, updates, or revokes Pro entitlement idempotently.
 - [x] **BILL-03**: Pro user has unlimited access to formula, script, SQL, regex, OCR, and file-analysis tools subject to abuse safeguards. (Phase 02 Plan 01)
 
 ### Tool Workspace
@@ -129,9 +129,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | QUOT-01 | Phase 2 | Pending |
 | QUOT-02 | Phase 2 | Pending |
 | QUOT-03 | Phase 2 | Pending |
-| BILL-01 | Phase 2 | Pending |
-| BILL-02 | Phase 2 | Pending |
-| BILL-03 | Phase 2 | Pending |
+| BILL-01 | Phase 2 | Complete |
+| BILL-02 | Phase 2 | Complete |
+| BILL-03 | Phase 2 | Complete |
 | WORK-01 | Phase 1 | Complete |
 | WORK-02 | Phase 1 | Complete |
 | WORK-03 | Phase 1 | Complete |
