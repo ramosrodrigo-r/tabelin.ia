@@ -11,3 +11,6 @@ export * from "./regex/schema";
 export * from "./regex/fixtures";
 export * from "./template/schema";
 export * from "./template/fixtures";
+// Fase 4: file analysis
+export * from "./file-analysis/schema";
+export * from "./file-analysis/fixtures";
