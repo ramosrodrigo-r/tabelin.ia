@@ -59,15 +59,17 @@ Source: `globals.css` body baseline + Phase 1 UI-SPEC (approved).
 | Role | Size | Weight | Line Height | Usage |
 |------|------|--------|-------------|-------|
 | Body | 14px | 400 | 1.5 | Default text, panel content, output explanation text |
-| Label | 12px | 650 | 1.35 | Form field labels, legend text, segmented control legends |
+| Label | 12px | 600 | 1.35 | Form field labels, legend text, segmented control legends |
 | Meta / caption | 12px | 400 | 1.35 | Output status line, metadata chips, muted timestamps |
-| Section heading | 16px | 650 | 1.35 | Panel headings (Resultado, tool section titles) |
-| Page title | 20px | 700 | 1.25 | Workspace page h1 (Scripts, SQL, Regex, Templates) |
+| Section heading | 16px | 600 | 1.35 | Panel headings (Resultado, tool section titles) |
+| Page title | 20px | 600 | 1.25 | Workspace page h1 (Scripts, SQL, Regex, Templates) |
 
 Code output (syntax-highlighted blocks):
 - Font: `ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace`
-- Size: 13px at weight 400, line-height 1.5
+- Size: 12px at weight 400, line-height 1.5
 - Source: `globals.css` `.output-box pre` rule — all new tool output panels inherit this
+
+Exactly 4 font sizes in use: 12px, 14px, 16px, 20px. Exactly 2 font weights in use: 400 (body/meta/code) and 600 (labels, headings, page titles).
 
 No viewport-scaled font sizing. Letter spacing stays `0`.
 
@@ -208,7 +210,7 @@ Activate three currently-disabled nav items. Add Templates entry for Pro tool:
 **Mode tabs:** "Gerar regex" | "Explicar regex"
 
 **Generate mode input:**
-- Text area: Portuguese-language prompt describing the pattern needed (ex: "CPF com pontos e traço")
+- Text area: Portuguese-language prompt describing the pattern needed (ex: "CPF com pontos e traco")
 - Submit button: "Gerar regex" (pending: "Gerando...")
 
 **Explain mode input:**
