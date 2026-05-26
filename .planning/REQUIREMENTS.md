@@ -40,14 +40,14 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Code, SQL, and Regex Tools
 
-- [ ] **CODE-01**: User can generate VBA scripts for Excel automation from a Portuguese prompt.
-- [ ] **CODE-02**: User can generate Google Apps Script for Sheets automation from a Portuguese prompt.
-- [ ] **CODE-03**: User can generate Airtable Scripts from a Portuguese prompt.
-- [ ] **SQL-01**: User can generate SQL queries from text prompts.
-- [ ] **SQL-02**: User can select SQL dialect: PostgreSQL, MySQL, SQL Server, Oracle, or BigQuery.
-- [ ] **REGX-01**: User can generate regex patterns from Portuguese prompts.
-- [ ] **REGX-02**: User can paste an existing regex and receive a Portuguese explanation.
-- [ ] **SAFE-01**: Generated scripts and SQL include warnings or guardrails for destructive operations.
+- [x] **CODE-01**: User can generate VBA scripts for Excel automation from a Portuguese prompt.
+- [x] **CODE-02**: User can generate Google Apps Script for Sheets automation from a Portuguese prompt.
+- [x] **CODE-03**: User can generate Airtable Scripts from a Portuguese prompt.
+- [x] **SQL-01**: User can generate SQL queries from text prompts.
+- [x] **SQL-02**: User can select SQL dialect: PostgreSQL, MySQL, SQL Server, Oracle, or BigQuery.
+- [x] **REGX-01**: User can generate regex patterns from Portuguese prompts.
+- [x] **REGX-02**: User can paste an existing regex and receive a Portuguese explanation.
+- [x] **SAFE-01**: Generated scripts and SQL include warnings or guardrails for destructive operations.
 
 ### Spreadsheet File Analysis
 
@@ -76,7 +76,7 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Pro Value and Support
 
-- [ ] **PRO-01**: Pro user can access advanced table template generation.
+- [x] **PRO-01**: Pro user can access advanced table template generation.
 - [x] **PRO-02**: Pro user can see support contact paths for priority email or WhatsApp support.
 - [x] **PRO-03**: Pro requests can be marked for priority processing when infrastructure supports prioritization.
 
@@ -141,14 +141,14 @@ Which phases cover which requirements. Updated during roadmap creation.
 | FORM-03 | Phase 1 | Complete |
 | FORM-04 | Phase 1 | Complete |
 | FORM-05 | Phase 1 | Complete |
-| CODE-01 | Phase 3 | Pending |
-| CODE-02 | Phase 3 | Pending |
-| CODE-03 | Phase 3 | Pending |
-| SQL-01 | Phase 3 | Pending |
-| SQL-02 | Phase 3 | Pending |
-| REGX-01 | Phase 3 | Pending |
-| REGX-02 | Phase 3 | Pending |
-| SAFE-01 | Phase 3 | Pending |
+| CODE-01 | Phase 3 | Complete |
+| CODE-02 | Phase 3 | Complete |
+| CODE-03 | Phase 3 | Complete |
+| SQL-01 | Phase 3 | Complete |
+| SQL-02 | Phase 3 | Complete |
+| REGX-01 | Phase 3 | Complete |
+| REGX-02 | Phase 3 | Complete |
+| SAFE-01 | Phase 3 | Complete |
 | FILE-01 | Phase 4 | Pending |
 | FILE-02 | Phase 4 | Pending |
 | FILE-03 | Phase 4 | Pending |
@@ -165,7 +165,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PRIV-04 | Phase 4 | Pending |
 | PERF-01 | Phase 1 | Complete |
 | RELY-01 | Phase 1 | Complete |
-| PRO-01 | Phase 3 | Pending |
+| PRO-01 | Phase 3 | Complete |
 | PRO-02 | Phase 2 | Complete |
 | PRO-03 | Phase 2 | Complete |
 
