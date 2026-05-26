@@ -21,6 +21,7 @@ model User {
   entitlements     Entitlement[]
   usageLedger      UsageLedger[]
   billingCheckouts BillingCheckout[]
+  uploadedFiles    UploadedFile[]
 }
 
 model Session {
@@ -141,6 +142,35 @@ model BillingCheckout {
 
   @@index([userId, status])
   @@index([externalReference])
+}
+
+model UploadedFile {
+  id         String        @id @default(cuid())
+  userId     String
+  fileName   String
+  fileSize   Int
+  mimeType   String
+  schema     Json
+  rowCount   Int
+  lastChatAt DateTime?
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+  user       User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages   ChatMessage[]
+
+  @@index([userId, createdAt])
+  @@index([lastChatAt])
+}
+
+model ChatMessage {
+  id             String       @id @default(cuid())
+  uploadedFileId String
+  role           String
+  content        String       @db.Text
+  createdAt      DateTime     @default(now())
+  uploadedFile   UploadedFile @relation(fields: [uploadedFileId], references: [id], onDelete: Cascade)
+
+  @@index([uploadedFileId, createdAt])
 }
 
 model PaymentEvent {
