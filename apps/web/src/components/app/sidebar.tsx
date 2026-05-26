@@ -23,7 +23,7 @@ const navItems: NavItem[] = [
   { label: "SQL", icon: ScrollText, href: "/workspace/sql" },
   { label: "Regex", icon: Regex, href: "/workspace/regex" },
   { label: "Templates", icon: LayoutTemplate, href: "/workspace/templates" },
-  { label: "File Analysis", icon: FileText, disabled: true },
+  { label: "File Analysis", icon: FileText, href: "/workspace/file-analysis" },
   { label: "OCR", icon: Image, disabled: true }
 ];
 
