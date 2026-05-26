@@ -192,7 +192,7 @@ test.describe("smoke: formula generation", () => {
 test.describe("smoke: quota block após 4 uses", () => {
   test("4 uses → 5o bloqueado com banner de quota", async ({ page }) => {
     await page.route("**/api/tools/formula/generate", async (route) => {
-      const requestCount = (await page.evaluate(() => window.__smokeCount ?? 0)) as number;
+      const requestCount = (await page.evaluate(() => (window as typeof window & { __smokeCount?: number }).__smokeCount ?? 0)) as number;
 
       if (requestCount === 3) {
         await route.fulfill({
