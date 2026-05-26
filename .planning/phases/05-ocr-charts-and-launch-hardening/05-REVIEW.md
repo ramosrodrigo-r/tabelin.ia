@@ -23,10 +23,10 @@ files_reviewed_list:
   - packages/shared/src/ocr/fixtures.ts
   - packages/shared/src/ocr/schema.ts
 findings:
-  critical: 6
-  warning: 4
-  info: 2
-  total: 12
+  critical: 5
+  warning: 6
+  info: 3
+  total: 14
 status: issues_found
 ---
 
@@ -39,165 +39,165 @@ status: issues_found
 
 ## Summary
 
-Revisão cobre a implementação de OCR (imagem → planilha), o componente de gráfico `ChartMessage`, o hook de streaming `useFileChat` e os smoke tests E2E da fase 5. O código geral segue padrões consistentes com fases anteriores, mas apresenta seis blockers: dois bugs de estado React com gravidade funcional alta, uma rejeição de Promise sem tratamento que congela a UI, um smoke test cujo helper `signOut` nunca de fato encerra a sessão, um fallback silencioso de mock data quando a chave da OpenAI está ausente, e a dependência `xlsx@0.18.5` afetada por prototype pollution (CVE-2023-30533) usada sobre arquivos não-confiáveis.
+This phase adds the OCR image-to-table feature, chart rendering in the file-analysis chat, and associated hardening. The core OCR pipeline (route -> quota -> processor -> response) is structurally sound. The main problems cluster around: (1) unhandled promise rejections that leave the UI permanently stuck, (2) a dev-mode fallback in a production code path that silently returns fake data when the API key is absent, (3) the streaming parser in `use-file-chat` throwing uncaught exceptions that discard all error state, (4) an unsafe type cast of AI-returned chart data, and (5) a CSV generator that does not escape field content. Several accessibility and test-reliability issues round out the findings.
 
 ---
 
 ## Critical Issues
 
-### CR-01: Tela em branco durante processamento OCR — `uiState === "processing"` oculta ambos os painéis
+### CR-01: `use-image-upload` — no outer try/catch; network errors leave UI permanently stuck in "processing"
 
-**File:** `apps/web/src/features/ocr/ocr-tool.tsx:22-68`
+**File:** `apps/web/src/features/ocr/hooks/use-image-upload.ts:42-85`
+**Issue:** The `upload` callback is an `async` function that contains two unawaited rejection sources with no wrapping `try/catch`:
+1. The `FileReader` promise (line 42) rejects if the OS denies file access.
+2. The `fetch()` call (line 54) throws if the network is offline or DNS fails.
 
-**Issue:** `handleUpload` define `setUiState("processing")` imediatamente. A condição de renderização exige `uiState === "idle" || uiState === "error"` para mostrar o `ImageUploadPanel` e `uiState === "complete"` para mostrar o `OcrResultPanel`. Enquanto `uiState === "processing"`, **nenhum painel é renderizado** e o usuário vê uma área completamente vazia, sem nenhum indicador de carregamento, pelo tempo inteiro do processamento OCR (que pode durar vários segundos).
-
-**Fix:**
-```tsx
-// Incluir "processing" na condição do ImageUploadPanel
-{uiState === "idle" || uiState === "error" || uiState === "processing" ? (
-  <ImageUploadPanel
-    error={imageUploadHook.error}
-    onUpload={handleUpload}
-    processing={imageUploadHook.status === "processing"}
-    quotaBlocked={imageUploadHook.quotaBlocked}
-  />
-) : null}
-```
-Assim, quando `processing={true}`, o painel já exibe o texto "Processando..." e o botão desabilitado corretamente (lógica já existente no `ImageUploadPanel`).
-
----
-
-### CR-02: Stale closure em `handleUpload` — estado do hook não atualizado após `await`
-
-**File:** `apps/web/src/features/ocr/ocr-tool.tsx:26-32`
-
-**Issue:** `handleUpload` é uma função comum (não `useCallback`) que captura `imageUploadHook` do snapshot de render. Após `await imageUploadHook.upload(file)`, a variável `imageUploadHook` ainda aponta para o snapshot anterior; `imageUploadHook.result` e `imageUploadHook.status` retornarão os valores pré-upload (`null` e `"idle"` respectivamente). A lógica nas linhas 26-31 **nunca** transitará para `"complete"` via esse caminho — depende exclusivamente do fallback de render-time nas linhas 36-43, que por sua vez chama `setState` durante o render (anti-pattern React).
-
-**Fix:** Remover o IIFE interno e confiar exclusivamente na reatividade via render (linhas 36-43), ou reescrever com `useEffect` reagindo a `imageUploadHook.status`:
-
-```tsx
-// Substituir handleUpload por:
-function handleUpload(file: File) {
-  void imageUploadHook.upload(file);
-}
-
-// Adicionar useEffect:
-useEffect(() => {
-  if (imageUploadHook.status === "complete" && imageUploadHook.result) {
-    setResult(imageUploadHook.result);
-    setUiState("complete");
-  } else if (imageUploadHook.status === "error") {
-    setUiState("error");
-  } else if (imageUploadHook.status === "processing") {
-    setUiState("processing");
-  }
-}, [imageUploadHook.status, imageUploadHook.result]);
-
-// Remover o bloco render-time nas linhas 36-43
-```
-
----
-
-### CR-03: Rejeição de Promise sem tratamento em `useImageUpload.upload` — congela UI em "processing"
-
-**File:** `apps/web/src/features/ocr/hooks/use-image-upload.ts:15-88`
-
-**Issue:** O callback `upload` é uma função `async` sem nenhum bloco `try/catch`. Se o `FileReader` disparar o evento `onerror` (linha 50), a Promise rejeita e o erro se propaga para fora do `useCallback`, resultando em uma **rejeição de Promise não tratada**. O estado `status` permanece `"processing"` para sempre (nunca transiciona para `"error"`), a UI congela com botão desabilitado e nenhuma mensagem de erro é exibida.
+When either of those throws, the async callback exits without calling `setStatus("error")` or `setError(...)`. The component stays in `processing` state with no way for the user to retry. The `void (async () => { await imageUploadHook.upload(file); ... })()` wrapper in `ocr-tool.tsx` also has no catch, so the rejection is silently swallowed.
 
 **Fix:**
 ```ts
 const upload = useCallback(async (file: File) => {
   setError("");
   setQuotaBlocked(false);
-  // ... validações existentes ...
+  // ... early validation ...
 
   setSelectedFile(file);
   setStatus("processing");
 
   try {
-    const imageBase64 = await new Promise<string>((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        const dataUrl = reader.result as string;
-        resolve(dataUrl.split(",")[1] ?? "");
-      };
-      reader.onerror = () => reject(new Error("Falha ao ler o arquivo."));
-      reader.readAsDataURL(file);
-    });
-
-    // ... restante da lógica de fetch ...
+    const imageBase64 = await new Promise<string>((resolve, reject) => { /* ... */ });
+    const response = await fetch("/api/tools/ocr/process", { /* ... */ });
+    // ... existing response handling ...
+    const data = await response.json() as OcrResponse;
+    setResult(data);
+    setStatus("complete");
   } catch {
     setStatus("error");
-    setError("Nao foi possivel ler o arquivo. Tente novamente.");
+    setError("Erro de rede. Verifique sua conexao e tente novamente.");
   }
 }, []);
 ```
 
 ---
 
-### CR-04: `signOut` nos smoke tests usa GET em endpoint POST-only — sessão nunca é encerrada
+### CR-02: `use-file-chat` — `chatStreamEventSchema.parse()` throws uncaught, UI stuck in "streaming" forever
 
-**File:** `apps/web/tests/e2e/smoke.spec.ts:143-146`
+**File:** `apps/web/src/features/file-analysis/hooks/use-file-chat.ts:78`
+**Issue:** Inside the `while (true)` read loop, line 78 calls `chatStreamEventSchema.parse(JSON.parse(line))`. This uses Zod's `.parse()` (throws on validation failure) rather than `.safeParse()`. If the server sends a malformed line, a `ZodError` or `SyntaxError` propagates out of the loop with no `try/catch` to intercept it. Because `submit` is called via `void submit(...)`, the rejection is discarded. The UI remains in `"streaming"` state with `chat.draft` frozen and the input locked, giving the user no feedback and no recovery path.
 
-**Issue:** O helper `signOut` faz `page.goto("/api/auth/sign-out")`, que dispara uma requisição **GET**. O handler de autenticação (`apps/web/src/app/api/auth/[...all]/route.ts`) trata `sign-out` exclusivamente na função `POST`; a função `GET` retorna `404`. O cookie de sessão **nunca é deletado**. Dois testes são afetados:
-
-1. `smoke: auth flow` — o teste verifica `not.toHaveURL(/workspace/)` após o "sign-out", mas o usuário continua autenticado; a verificação passa apenas por acidente de timing ou redirecionamento.
-2. `smoke: privacy cleanup` — o upload continua acessível após o falso sign-out; a asserção de privacidade é completamente inválida.
+The same `while` loop also does not call `reader.cancel()` on exit, leaking the stream reader.
 
 **Fix:**
 ```ts
-async function signOut(page: import("@playwright/test").Page) {
-  await page.request.post("/api/auth/sign-out");
-  // Aguardar redirecionamento após logout
-  await page.goto("/");
+setStatus("streaming");
+const reader = response.body.getReader();
+const decoder = new TextDecoder();
+let buffer = "";
+
+try {
+  while (true) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split("\n");
+    buffer = lines.pop() ?? "";
+    for (const line of lines) {
+      if (!line.trim()) continue;
+      let rawObj: unknown;
+      try { rawObj = JSON.parse(line); } catch { continue; }
+      const parsed = chatStreamEventSchema.safeParse(rawObj);
+      if (!parsed.success) continue;
+      const event = parsed.data;
+      // ... handle events ...
+    }
+  }
+} catch {
+  setStatus("error");
+  setError("Nao foi possivel gerar a resposta. Tente novamente.");
+} finally {
+  reader.cancel().catch(() => undefined);
 }
 ```
 
 ---
 
-### CR-05: Fallback silencioso de mock data quando `OPENAI_API_KEY` está ausente em produção
+### CR-03: `ocr-processor.ts` — absent `OPENAI_API_KEY` silently returns fixture data in production
 
 **File:** `apps/web/src/server/ai/ocr-processor.ts:38-46`
+**Issue:** When `process.env.OPENAI_API_KEY` is undefined, `processImageOcr` returns a hardcoded fixture (the Alice/Bob table) instead of failing with an error. In a misconfigured production deployment (missing secret), users receive fake data and the API route returns HTTP 200 with fabricated rows. The failure is completely invisible to both the user and any monitoring system.
 
-**Issue:** Quando `process.env.OPENAI_API_KEY` não está definida, a função retorna dados fabricados (`["Alice", "100", "Ativo"]`), sem nenhum log, sem erro, e com status HTTP 200 para o cliente. Em produção, se a variável de ambiente for omitida por engano, **todos os usuários recebem a mesma resposta hardcoded** sem qualquer sinalização de falha. O mecanismo de quota também é consumido (`confirmToolUse` é chamado) sobre uma operação fictícia.
+This contradicts `createOpenAIClient()` in `openai-client.ts`, which correctly throws when the key is absent.
 
-**Fix:** Lançar um erro explícito em vez de retornar mock data:
+**Fix:** Delegate to `createOpenAIClient()` directly, which already enforces the key requirement:
 ```ts
 export async function processImageOcr(
   imageBase64: string,
   mimeType: "image/png" | "image/jpeg"
 ): Promise<{ headers: string[]; rows: string[][] }> {
-  if (!process.env.OPENAI_API_KEY) {
-    throw new Error("OPENAI_API_KEY nao configurada.");
-  }
-  // ... restante da implementação ...
+  const openai = createOpenAIClient(); // throws if OPENAI_API_KEY is missing
+  const model = getOpenAIModel();
+  // ... rest of function unchanged ...
 }
 ```
-Para desenvolvimento local sem chave, usar uma variável de ambiente separada (`OPENAI_API_KEY_MOCK=true`) que ative o fallback de forma explícita.
+If a local-dev fixture is needed, gate it explicitly on `process.env.NODE_ENV === "development"`.
 
 ---
 
-### CR-06: `xlsx@0.18.5` afetado por prototype pollution (CVE-2023-30533) ao processar arquivos de usuários
+### CR-04: `use-file-chat` — AI chart response cast with `as ChartData` bypasses runtime validation
 
-**File:** `apps/web/package.json:34`
+**File:** `apps/web/src/features/file-analysis/hooks/use-file-chat.ts:88-100`
+**Issue:** When the AI returns JSON that looks like chart data, the code checks only that three field names exist (`parsedObj.chartType`, `parsedObj.xKey`, `parsedObj.yKey`) and then casts with `parsedObj as ChartData` (line 100). No schema validation is applied to field types or `rows` contents. If the AI returns `rows: null`, `chartType: "donut"`, or `rows: [1, 2, 3]` (numbers instead of objects), `ChartMessage` will receive invalid props and throw a runtime error during render, crashing the entire chat panel for the user.
 
-**Issue:** A biblioteca SheetJS/xlsx na versão `0.18.5` possui uma vulnerabilidade de **prototype pollution** (CVE-2023-30533) ao fazer parse de arquivos `.xlsx` maliciosos. O código em `apps/web/src/server/file-analysis/file-parser.ts` chama `XLSX.read(buffer, ...)` diretamente sobre buffers enviados por usuários não-confiáveis. Um atacante pode enviar um arquivo `.xlsx` especialmente construído para poluir o protótipo de `Object`, afetando comportamento global da aplicação Node.js.
+**Fix:** Use the existing `chartDataSchema.safeParse()`:
+```ts
+import { chartDataSchema } from "@tabelin/shared";
 
-**Fix:** Atualizar para a versão corrigida:
-```json
-"xlsx": "0.20.3"
+// inside the complete event handler:
+const chartValidation = chartDataSchema.safeParse(parsedObj);
+if (chartValidation.success) {
+  setMessages((prev) => [
+    ...prev,
+    { role: "assistant", type: "chart", chartData: chartValidation.data }
+  ]);
+} else {
+  setMessages((prev) => [
+    ...prev,
+    { role: "assistant", type: "text", content: event.content }
+  ]);
+}
 ```
-Nota: versões `>= 0.19.3` contêm a correção. Verificar compatibilidade de API antes do upgrade.
+
+---
+
+### CR-05: `ocr-result-panel.tsx` — `toCsv` does not escape field content; commas and newlines corrupt output
+
+**File:** `apps/web/src/features/ocr/components/ocr-result-panel.tsx:16-18`
+**Issue:** `toCsv` joins cells with a bare comma (`r.join(",")`) without RFC 4180 escaping. If any OCR-extracted cell contains a comma (common in addresses, monetary values, or names), the generated CSV is structurally broken: a cell like `"Smith, John"` becomes two fields when pasted into Excel or Google Sheets. Cells with embedded newlines produce extra rows. This is a data-correctness defect because OCR output from financial and address tables commonly contains commas.
+
+**Fix:**
+```ts
+function escapeCsvField(field: string): string {
+  if (field.includes('"') || field.includes(',') || field.includes('\n')) {
+    return `"${field.replaceAll('"', '""')}"`;
+  }
+  return field;
+}
+
+function toCsv(headers: string[], rows: string[][]): string {
+  return [headers, ...rows]
+    .map((r) => r.map(escapeCsvField).join(","))
+    .join("\n");
+}
+```
 
 ---
 
 ## Warnings
 
-### WR-01: `navigator.clipboard.writeText` sem tratamento de erro — rejeição não capturada
+### WR-01: `copy-button.tsx` — `navigator.clipboard.writeText` unhandled rejection
 
-**File:** `apps/web/src/features/file-analysis/components/copy-button.tsx:19-26`
-
-**Issue:** A função `copy` chama `await navigator.clipboard.writeText(value)` sem `try/catch`. A API Clipboard pode rejeitar a Promise em contextos não-HTTPS, quando a permissão foi negada pelo usuário, ou em certos navegadores/versões. A rejeição resultante é uma Promise não tratada e o estado `copied` nunca muda para `true`, sem feedback ao usuário.
+**File:** `apps/web/src/features/file-analysis/components/copy-button.tsx:24`
+**Issue:** The `copy()` function awaits `navigator.clipboard.writeText(value)` with no `try/catch`. On non-HTTPS origins, in Safari's strict clipboard policy, or when the user denies the permission, this throws a `DOMException`. The `onClick` handler calls `copy()` directly without `void`, so the rejection propagates as an unhandled promise rejection. The `copied` state never becomes `true`, and the user receives no feedback.
 
 **Fix:**
 ```ts
@@ -207,97 +207,133 @@ async function copy() {
     await navigator.clipboard.writeText(value);
     setCopied(true);
   } catch {
-    // Fallback silencioso ou exibir mensagem de erro
+    // Clipboard unavailable — silently ignore or show brief error state
   }
 }
 ```
 
 ---
 
-### WR-02: Detecção de gráfico em `useFileChat` não valida campo `title` — renderiza `undefined` como título
+### WR-02: `ocr-tool.tsx` — stale closure: post-`await` reads of `imageUploadHook.result` are always the pre-upload snapshot
 
-**File:** `apps/web/src/features/file-analysis/hooks/use-file-chat.ts:89-95`
+**File:** `apps/web/src/features/ocr/ocr-tool.tsx:26-30`
+**Issue:** Inside `handleUpload`, after `await imageUploadHook.upload(file)`, the code reads `imageUploadHook.result` and `imageUploadHook.status` from the closure (lines 26-29). These are the values captured at render time before the upload ran. React state updates are applied in a new render cycle; the closure will always see `null` / `"idle"`. The `if (imageUploadHook.result)` branch at line 26 is therefore always false, making the entire post-await block dead code.
 
-**Issue:** A condição de detecção de gráfico verifica `chartType`, `xKey`, `yKey` e `rows`, mas **não verifica `title`**. O tipo `ChartData` exige `title: string`. Se a IA retornar um JSON sem o campo `title` (ou com `title: null`), o objeto é tratado como gráfico válido e `ChartMessage` renderiza `data.title` e a `aria-label` com `undefined`, resultando em texto "undefined" visível na UI e aria-label quebrada.
+The component is saved only by the fallback derived-state logic at lines 36-43, but this creates confusing dual code paths. If the fallback were ever removed, the component would silently stop working.
 
-**Fix:**
+**Fix:** Remove the dead post-await check entirely. The render-time checks at lines 36-43 are the correct place for this logic. Document why the IIFE only needs to call `upload()`:
 ```ts
-if (
-  parsedObj.chartType &&
-  parsedObj.xKey &&
-  parsedObj.yKey &&
-  parsedObj.title &&           // <-- adicionar
-  Array.isArray(parsedObj.rows)
-) {
+function handleUpload(file: File) {
+  setUiState("processing");
+  void imageUploadHook.upload(file);
+  // State transitions handled by render-time derived state checks below
+}
 ```
 
 ---
 
-### WR-03: `toCsv` não aplica quoting RFC 4180 — CSV malformado e risco de injeção de fórmula
+### WR-03: `use-image-upload.ts` — double `response.json()` body consumption on non-quota 429
 
-**File:** `apps/web/src/features/ocr/components/ocr-result-panel.tsx:16-18`
+**File:** `apps/web/src/features/ocr/hooks/use-image-upload.ts:62-82`
+**Issue:** On a 429 response where `errorData.code !== "quota_exceeded"`, the body has already been consumed by `response.json()` at line 62. Execution falls through to line 75, which calls `response.json()` a second time. The second call always fails (body already consumed), is caught by `.catch(() => ({}))`, and the server's actual error message is silently discarded. The user sees the generic fallback message instead.
 
-**Issue:** A função `toCsv` simplesmente faz `.join(",")` sem escapar células que contenham vírgulas, aspas ou quebras de linha, resultando em CSV inválido ao abrir no Excel/Sheets. Além disso, células cujo conteúdo comece com `=`, `+`, `-` ou `@` serão interpretadas como fórmulas pela planilha ao importar — risco de **CSV formula injection** se o OCR extraiu dados como `=SUM(A1:A10)` de imagens controladas por atacante.
-
-**Fix:**
+**Fix:** Parse the body once and reuse the result:
 ```ts
-function csvEscape(cell: string): string {
-  if (cell.includes(",") || cell.includes('"') || cell.includes("\n") || /^[=+\-@]/.test(cell)) {
-    return `"${cell.replace(/"/g, '""')}"`;
+if (!response.ok) {
+  const errData = await response.json().catch(() => ({})) as Record<string, unknown>;
+  if (response.status === 429 && errData.code === "quota_exceeded") {
+    setQuotaBlocked(true);
+    setStatus("error");
+    setError("");
+    return;
   }
-  return cell;
-}
-
-function toCsv(headers: string[], rows: string[][]): string {
-  return [headers, ...rows].map((r) => r.map(csvEscape).join(",")).join("\n");
+  if (response.status === 413) {
+    setStatus("error");
+    setError("Imagem excede o limite de 5 MB. Envie uma imagem menor.");
+    return;
+  }
+  setStatus("error");
+  setError(
+    typeof errData.error === "string"
+      ? errData.error
+      : "Nao foi possivel processar a imagem."
+  );
+  return;
 }
 ```
 
 ---
 
-### WR-04: Side-effect com `requestAnimationFrame` executado durante o render em `ChatPanel`
+### WR-04: `chat-panel.tsx` — side effect with `requestAnimationFrame` executed directly in render body
 
 **File:** `apps/web/src/features/file-analysis/components/chat-panel.tsx:40-48`
-
-**Issue:** O auto-scroll chama `requestAnimationFrame(...)` diretamente no corpo da função de render (fora de qualquer `useEffect`). Mutação de ref e agendamento de efeitos durante o render violam o modelo do React; em modo Strict Mode (padrão em Next.js dev), o componente é renderizado duas vezes, causando dois `requestAnimationFrame` agendados por ciclo. Pode causar scroll duplo ou comportamento inconsistente.
+**Issue:** The auto-scroll logic mutates `prevMessageCount.current` and schedules a `requestAnimationFrame` directly in the component's render body (not inside a `useEffect`). React 18 Strict Mode double-invokes renders in development, causing the frame to fire twice. In concurrent mode, renders may be interrupted and replayed; direct DOM side effects in the render body violate React's model and produce unpredictable behavior.
 
 **Fix:**
-```tsx
-// Substituir o bloco nas linhas 40-48 por:
-const prevMessageCount = useRef(chat.messages.length);
+```ts
+const prevMessageCountRef = useRef(chat.messages.length);
 useEffect(() => {
-  if (chat.messages.length !== prevMessageCount.current) {
-    prevMessageCount.current = chat.messages.length;
-    requestAnimationFrame(() => {
-      if (listRef.current) {
-        listRef.current.scrollTop = listRef.current.scrollHeight;
-      }
-    });
+  if (chat.messages.length !== prevMessageCountRef.current) {
+    prevMessageCountRef.current = chat.messages.length;
+    if (listRef.current) {
+      listRef.current.scrollTop = listRef.current.scrollHeight;
+    }
   }
 }, [chat.messages.length]);
 ```
 
 ---
 
-## Info
+### WR-05: `ocr-result-panel.tsx` — `role="img"` on interactive container violates ARIA specification
 
-### IN-01: `role="img"` em container interativo no `OcrResultPanel` — semântica ARIA incorreta
+**File:** `apps/web/src/features/ocr/components/ocr-result-panel.tsx:29-32`
+**Issue:** The outermost `<div>` of `OcrResultPanel` has `role="img"` (line 31), yet it contains interactive children: a `<button>` ("Nova imagem"), a scrollable `<table>`, and two `CopyButton` instances. The `img` role requires presentational, non-interactive content. Screen readers honouring the role treat the entire panel as a single image and skip all interactive children; the heading, table data, and copy buttons become inaccessible to keyboard and screen reader users.
 
-**File:** `apps/web/src/features/ocr/components/ocr-result-panel.tsx:30-32`
-
-**Issue:** O elemento `<div>` raiz recebe `role="img"`, mas contém uma tabela, botões interativos e outros elementos. O papel ARIA `img` indica conteúdo puramente gráfico não-interativo; leitores de tela podem ignorar os filhos interativos. O `aria-label` associado descreve bem o conteúdo, mas o role está semanticamente errado.
-
-**Fix:** Remover `role="img"` do container. O `aria-label` pode ser mantido como `aria-label` em um `<section>` ou simplesmente removido, deixando o heading `<h2>Tabela reconstruida</h2>` como identificador acessível natural.
+**Fix:** Remove `role="img"` from the outer container. Use `role="region"` with `aria-label` if a labelled landmark is desired:
+```tsx
+<div
+  className="tool-panel"
+  role="region"
+  aria-label="Resultado da extracao de tabela por OCR"
+>
+```
 
 ---
 
-### IN-02: Fixtures duplicadas com dados idênticos em `packages/shared/src/ocr/fixtures.ts`
+### WR-06: `smoke.spec.ts:498` — privacy test swallows assertion failures, always passes
 
-**File:** `packages/shared/src/ocr/fixtures.ts:3-18`
+**File:** `apps/web/tests/e2e/smoke.spec.ts:498-500`
+**Issue:** The privacy verification assertion appends `.catch(() => { /* File data not visible */ })` to `expect(...).not.toBeVisible()`. If the assertion fails because the element IS visible (a real privacy regression), Playwright throws an `AssertionError` that the `.catch()` intercepts, and the test reports as passed. The privacy test provides zero regression protection in its current form.
 
-**Issue:** O arquivo exporta `OCR_FIXTURE_RESPONSE` e `ocrResponseFixture` como dois fixtures separados, sendo que o primeiro (`OCR_FIXTURE_RESPONSE`) tem exatamente os mesmos dados usados no mock do smoke test (`ocrMockResponse` em `smoke.spec.ts:121-127`), enquanto `ocrResponseFixture` tem dados diferentes. A duplicidade gera confusão sobre qual fixture usar. `OCR_FIXTURE_RESPONSE` não é importado em nenhum teste nem código de produção revisado.
+**Fix:** Remove the `.catch()` and let Playwright's assertion fail the test:
+```ts
+await expect(page.getByText("Alice")).not.toBeVisible({ timeout: 5_000 });
+```
 
-**Fix:** Consolidar em um único export `ocrResponseFixture`, ou garantir que `OCR_FIXTURE_RESPONSE` seja o único fixture de referência e remover o duplicado.
+---
+
+## Info
+
+### IN-01: `openai-client.ts` — default model name `"gpt-5-mini"` should be verified against OpenAI's published model list
+
+**File:** `apps/web/src/server/ai/openai-client.ts:6`
+**Issue:** The fallback model ID is `"gpt-5-mini"`. As of the review date, this identifier has not been confirmed as a valid OpenAI API model ID (known variants include `"gpt-5"` and `"gpt-4o-mini"`). If the ID is wrong, every deployment without an explicit `OPENAI_MODEL` environment variable will receive a 404 from OpenAI on every call. Verify against the current OpenAI model list and update to a confirmed ID.
+
+---
+
+### IN-02: `file-analysis/schema.ts` — `chart_data` stream event type defined but never emitted
+
+**File:** `packages/shared/src/file-analysis/schema.ts:39-47`
+**Issue:** `chatStreamEventSchema` includes a `chart_data` discriminated union variant. Searching all server-side AI stream modules confirms this event type is never emitted; the client hook does not handle it either. This dead schema variant creates a false expectation and risks confusion during future development.
+
+**Fix:** Remove the `chart_data` variant until it is actively implemented, or add a comment marking it as reserved/planned.
+
+---
+
+### IN-03: `ocr-tool.tsx` — `_entitlement` prop accepted but not wired to any access gate
+
+**File:** `apps/web/src/features/ocr/ocr-tool.tsx:16`
+**Issue:** `OcrTool` accepts `entitlement: UserEntitlement` (renamed `_entitlement` to suppress the lint warning) but never uses it. If the intent is to enforce entitlement checks in the UI layer before quota is consumed, this prop must be wired up. If enforcement is intentionally delegated entirely to the API quota system, the prop and the `Props` type should be removed to avoid misleading future readers.
 
 ---
 
