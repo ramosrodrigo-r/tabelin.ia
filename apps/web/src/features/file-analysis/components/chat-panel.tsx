@@ -2,7 +2,7 @@
 
 import type { FileSchema } from "@tabelin/shared";
 import { Send } from "lucide-react";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { useFileChat } from "../hooks/use-file-chat";
 import { ChartMessage } from "./chart-message";
@@ -37,15 +37,15 @@ export function ChatPanel({ uploadedFileId, schema, onNewFile }: Props) {
   const listRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll to bottom on new messages
-  const prevMessageCount = useRef(chat.messages.length);
-  if (chat.messages.length !== prevMessageCount.current) {
-    prevMessageCount.current = chat.messages.length;
-    requestAnimationFrame(() => {
+  const prevMessageCountRef = useRef(chat.messages.length);
+  useEffect(() => {
+    if (chat.messages.length !== prevMessageCountRef.current) {
+      prevMessageCountRef.current = chat.messages.length;
       if (listRef.current) {
         listRef.current.scrollTop = listRef.current.scrollHeight;
       }
-    });
-  }
+    }
+  }, [chat.messages.length]);
 
   return (
     <div className="file-analysis-layout">
