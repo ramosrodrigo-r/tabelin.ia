@@ -1,5 +1,7 @@
 import "server-only";
 
+import { OCR_FIXTURE_RESPONSE } from "@tabelin/shared";
+
 import { createOpenAIClient, getOpenAIModel } from "./openai-client";
 
 /**
@@ -35,7 +37,11 @@ export async function processImageOcr(
   imageBase64: string,
   mimeType: "image/png" | "image/jpeg"
 ): Promise<{ headers: string[]; rows: string[][] }> {
-  // createOpenAIClient() throws if OPENAI_API_KEY is absent — no silent fixture fallback
+  // Fixture fallback quando OPENAI_API_KEY ausente — retorna dados sintéticos para dev
+  if (!process.env.OPENAI_API_KEY) {
+    return OCR_FIXTURE_RESPONSE;
+  }
+
   const openai = createOpenAIClient();
   // NOTA: o modelo configurado via OPENAI_MODEL deve suportar vision (D-02).
   // gpt-4o-mini, gpt-4o e gpt-4-turbo suportam vision. gpt-3.5-turbo nao suporta.
