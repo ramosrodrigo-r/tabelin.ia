@@ -13,8 +13,17 @@ function toTsv(headers: string[], rows: string[][]): string {
   return [headers, ...rows].map((r) => r.join("\t")).join("\n");
 }
 
+function escapeCsvField(field: string): string {
+  if (field.includes('"') || field.includes(',') || field.includes('\n')) {
+    return `"${field.replaceAll('"', '""')}"`;
+  }
+  return field;
+}
+
 function toCsv(headers: string[], rows: string[][]): string {
-  return [headers, ...rows].map((r) => r.join(",")).join("\n");
+  return [headers, ...rows]
+    .map((r) => r.map(escapeCsvField).join(","))
+    .join("\n");
 }
 
 export function OcrResultPanel({ result, onNewImage }: Props) {
