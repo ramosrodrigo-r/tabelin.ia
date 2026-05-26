@@ -98,9 +98,17 @@ Plans:
 
 Plans:
 
-- [ ] 03-01: Extend tool contract framework for scripts, SQL, and regex.
-- [ ] 03-02: Add safety classification, warnings, and copy-ready renderers for code/query outputs.
-- [ ] 03-03: Add Pro table template generation and multi-tool verification fixtures.
+**Wave 1**
+
+- [ ] 03-01-PLAN.md — Schema Prisma nullable, contratos Zod shared (scripts/sql/regex/template), tool-repository genérico, destructive-classifier, sidebar com active state dinâmico
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 03-02-PLAN.md — Server AI streams (scripts, sql, regex, template) e route handlers de API com quota + Pro gate
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
+- [ ] 03-03-PLAN.md — Features UI completas (scripts, sql, regex, templates), workspace pages RSC, react-shiki syntax highlighting, safety banners
 
 ### Phase 4: Spreadsheet File Analysis
 
