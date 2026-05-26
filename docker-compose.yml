@@ -8,9 +8,9 @@ services:
       POSTGRES_USER: tabelin
       POSTGRES_PASSWORD: tabelin
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
-      - tabelin_postgres_data:/var/lib/postgresql/data
+      - tabelin_postgres_data:/var/lib/postgresql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U tabelin -d tabelin"]
       interval: 5s
