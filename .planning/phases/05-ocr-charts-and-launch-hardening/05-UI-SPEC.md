@@ -5,6 +5,7 @@ status: draft
 shadcn_initialized: false
 preset: none
 created: 2026-05-26
+revised: 2026-05-26
 ---
 
 # Phase 5 — UI Design Contract
@@ -50,20 +51,21 @@ Exceptions:
 
 ## Typography
 
-Carried directly from `globals.css` body declarations. No new sizes introduced in Phase 5.
+Carried directly from `globals.css` body declarations. Consolidated to 4 sizes and 2 weights for Phase 5.
 
 | Role | Size | Weight | Line Height |
 |------|------|--------|-------------|
+| Label / Caption / Axis / Table cell / Chart title | 12px | 600 (semibold) | 1.4 |
 | Body | 14px | 400 (regular) | 1.5 |
-| Label / Caption | 12px | 650 (semibold) | 1.4 |
-| Tool heading (h2) | 16px | 700 (bold) | 1.25 |
-| Section heading (h1) | 20px | 700 (bold) | 1.25 |
+| Tool heading (h2) | 16px | 600 (semibold) | 1.25 |
+| Section heading (h1) | 20px | 600 (semibold) | 1.25 |
 
-Source: `globals.css` — body: `font-size: 14px; line-height: 1.5`. Label weights from `.field label { font-weight: 650 }`. Headings from `.workspace-heading h1 { font-size: 20px }` and `.tool-panel h2 { font-size: 16px }`.
+Source: `globals.css` — body: `font-size: 14px; line-height: 1.5`. Label weights from `.field label`. Headings from `.workspace-heading h1 { font-size: 20px }` and `.tool-panel h2 { font-size: 16px }`.
 
 Phase 5 specific:
-- OCR table cell text: 13px / weight 400 — matches `.output-box pre { font-size: 13px }` (monospace for table data consistency)
-- Chart axis tick labels: 11px / weight 400 — Recharts `tick={{ fontSize: 11 }}` (from RESEARCH.md Padrão 3)
+- OCR table cell text: 12px / weight 400 — unified with label/caption tier
+- Chart axis tick labels: 12px / weight 400 — Recharts `tick={{ fontSize: 12 }}` (consolidates former 11px)
+- Chart title: 12px / weight 400 — color `var(--muted)` (consolidates former 13px)
 - Chart type toggle buttons: 12px / weight 400 — matches `.quick-action-row` button sizing
 
 ---
@@ -107,21 +109,21 @@ New components for Phase 5. Each must match the visual pattern of its Phase 4 co
 |-----------|-----------------------------------|----|
 | `ImageUploadPanel` | `.tool-panel` wrapper, dashed drop zone (`border: 1px dashed var(--border)`), `Image` lucide icon (32px muted) | Mirror `FileUploadPanel`. Accept: `.png`, `.jpeg`, `.jpg`. Label below icon: "PNG, JPEG — maximo 5 MB" |
 | Drop zone drag-over state | `border: 1px solid rgb(11 107 87 / 40%)`, `background: rgb(11 107 87 / 4%)` | Identical to `FileUploadPanel` drag state |
-| File chip (selected image) | `border: 1px solid var(--border)`, `border-radius: 6px`, `padding: 6px 10px`, `font-size: 13px` | Mirror file chip pattern; show filename + size + X button |
+| File chip (selected image) | `border: 1px solid var(--border)`, `border-radius: 6px`, `padding: 8px 12px`, `font-size: 12px` | Mirror file chip pattern; show filename + size + X button |
 | "Enviar imagem" CTA | `.primary-button` full width | Label: "Enviar imagem" (idle) / "Processando..." (loading state) |
 | `OcrResultPanel` | `.tool-panel` wrapper + inner `<div>` holding table + copy buttons | Appears below (or replaces) upload panel after success |
-| OCR reconstructed table | `<table>` with `border: 1px solid var(--border)`, `border-radius: 6px`, `border-collapse: collapse`. `<th>` background `#f8fafc`, `font-size: 13px`, `font-weight: 650`. `<td>` `font-size: 13px`, `padding: 6px 10px`, `border: 1px solid var(--border)`. Max-height `240px` with `overflow-y: auto` | Mirrors `.output-box` styling; uses monospace font for data cells |
-| Empty table state | Single muted row: "Nenhuma tabela detectada na imagem." | Use `--muted` color, 13px |
+| OCR reconstructed table | `<table>` with `border: 1px solid var(--border)`, `border-radius: 6px`, `border-collapse: collapse`. `<th>` background `#f8fafc`, `font-size: 12px`, `font-weight: 600`. `<td>` `font-size: 12px`, `padding: 8px 12px`, `border: 1px solid var(--border)`. Max-height `240px` with `overflow-y: auto` | Mirrors `.output-box` styling; uses monospace font for data cells |
+| Empty table state | Single muted row: "Nenhuma tabela detectada na imagem." | Use `--muted` color, 12px |
 | "Copiar TSV" button | `.copy-button` class | Label: "Copiar TSV" → "Copiado!" (1.5s feedback, then revert) |
 | "Copiar CSV" button | `.copy-button` class | Label: "Copiar CSV" → "Copiado!" (1.5s feedback, then revert) |
-| Button row | `display: flex; gap: 8px; margin-top: 12px` | TSV button first, CSV second |
+| Button row | `display: flex; gap: 8px; margin-top: 8px` | TSV button first, CSV second |
 
 ### Chart Message (inside ChatPanel)
 
 | Component | CSS Classes / Inline Style Pattern | Notes |
 |-----------|-----------------------------------|----|
 | `ChartMessage` wrapper | `margin-top: 8px` | Rendered inside `.chat-message-list` as assistant message |
-| Chart title | `font-size: 13px; color: var(--muted); margin: 0 0 8px` | E.g. "Gráfico de Barras — Valor por Nome" |
+| Chart title | `font-size: 12px; color: var(--muted); margin: 0 0 8px` | E.g. "Gráfico de Barras — Valor por Nome" |
 | `ResponsiveContainer` | `width="100%" height={220}`, parent `min-height: 220px` | Fixed px height avoids SSR/hydration height-0 pitfall |
 | Recharts grid | `CartesianGrid strokeDasharray="3 3"` with `stroke: var(--border)` | Subtle grid lines matching existing border token |
 | Recharts primary color | `fill="var(--primary)"` (bars), `stroke="var(--primary)"` (lines) | Consistent with accent token |
@@ -129,13 +131,14 @@ New components for Phase 5. Each must match the visual pattern of its Phase 4 co
 | Chart type toggle row | `display: flex; gap: 6px; margin-top: 8px` | Buttons: "Barras", "Linhas", "Pizza" |
 | Chart type button (inactive) | `border: 1px solid var(--border)`, `border-radius: 6px`, `background: #fff`, `color: var(--text)`, `padding: 2px 12px`, `font-size: 12px` | Ghost state |
 | Chart type button (active) | `background: var(--primary)`, `color: #fff` | Filled state — accent token |
+| Recharts axis ticks | `tick={{ fontSize: 12 }}` on both `XAxis` and `YAxis` | Unified with label/caption tier (12px) |
 | Copy CSV button (chart data) | `.copy-button` class, `margin-left: auto` | Right-aligned in toggle row |
 
 ### "Sugerir Gráfico" Quick Action Button
 
 | State | Style |
 |-------|-------|
-| Enabled | Same inline style as "Resumo Pivô" and "Relatório Executivo" buttons in `chat-panel.tsx`: `border: 1px solid var(--border)`, `border-radius: 6px`, `background: #fff`, `padding: 4px 16px`, `font-size: 12px`, `font-weight: 650`, `color: var(--text)` |
+| Enabled | Same inline style as "Resumo Pivô" and "Relatório Executivo" buttons in `chat-panel.tsx`: `border: 1px solid var(--border)`, `border-radius: 6px`, `background: #fff`, `padding: 4px 16px`, `font-size: 12px`, `font-weight: 600`, `color: var(--text)` |
 | Disabled (streaming or quota blocked) | `cursor: not-allowed; opacity: 0.5` |
 | Label | "Sugerir Gráfico" |
 
@@ -211,6 +214,8 @@ Destructive actions in Phase 5:
 ### OCR Tool Page (`/workspace/ocr`)
 
 Pattern: mirrors Phase 4 `/workspace/file-analysis` layout.
+
+Primary visual anchor: the `ImageUploadPanel` drop zone centered in the 800px column; the "Enviar imagem" CTA is the eye terminus.
 
 ```
 .workspace-content                     (padding: 24px, gap: 24px)
