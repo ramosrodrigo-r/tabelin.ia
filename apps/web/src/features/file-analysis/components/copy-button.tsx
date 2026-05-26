@@ -21,8 +21,12 @@ export function CopyButton({ value, disabled, label }: { value: string; disabled
       return;
     }
 
-    await navigator.clipboard.writeText(value);
-    setCopied(true);
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopied(true);
+    } catch {
+      // Clipboard unavailable (non-HTTPS, permission denied) — silently ignore
+    }
   }
 
   const copyLabel = label ?? "Copiar";
