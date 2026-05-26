@@ -94,7 +94,7 @@ function extractSchema(
 /**
  * Parse a file buffer (ArrayBuffer) and return a FileSchema.
  * The raw buffer is never stored — it is consumed in this call and discarded.
- * No console.log of buffer contents or cell values (PRIV-02).
+ * Raw buffer is not logged — no content disclosure (PRIV-02 / T-04-01-02).
  *
  * @param buffer - The raw file bytes as ArrayBuffer
  * @param mimeType - "csv" or "xlsx"
