@@ -74,8 +74,8 @@ model ToolRequest {
   toolKind        String
   mode            String
   platform        String
-  formulaLanguage String
-  separator       String
+  formulaLanguage String?
+  separator       String?
   status          String
   latencyMs       Int?
   providerModel   String?
