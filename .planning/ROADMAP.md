@@ -162,8 +162,8 @@ Plans:
 
 **Wave 1** *(paralelo — 05-01 e 05-02 independentes)*
 
-- [ ] 05-01-PLAN.md — Schemas Zod OCR, ocr-processor vision gpt-4o-mini, route POST /api/tools/ocr/process, hook use-image-upload, componentes ImageUploadPanel + OcrResultPanel, page RSC /workspace/ocr, sidebar ativada
-- [ ] 05-02-PLAN.md — Instalar recharts, estender chatStreamEventSchema, estender use-file-chat com LocalChatMessage union + CHART_PROMPT, criar ChartMessage Recharts Client Component, botão "Sugerir Gráfico" no ChatPanel
+- [x] 05-01-PLAN.md — Schemas Zod OCR, ocr-processor vision gpt-4o-mini, route POST /api/tools/ocr/process, hook use-image-upload, componentes ImageUploadPanel + OcrResultPanel, page RSC /workspace/ocr, sidebar ativada
+- [x] 05-02-PLAN.md — Instalar recharts, estender chatStreamEventSchema, estender use-file-chat com LocalChatMessage union + CHART_PROMPT, criar ChartMessage Recharts Client Component, botão "Sugerir Gráfico" no ChatPanel
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
@@ -180,7 +180,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 | 2. Freemium Billing and Entitlements | 3/3 | Complete    | 2026-05-25 |
 | 3. Multi-Tool Generation Suite | 3/3 | Complete    | 2026-05-26 |
 | 4. Spreadsheet File Analysis | 3/3 | Complete   | 2026-05-26 |
-| 5. OCR, Charts, and Launch Hardening | 0/3 | Not started | - |
+| 5. OCR, Charts, and Launch Hardening | 2/3 | In Progress|  |
 
 ## Coverage
 
