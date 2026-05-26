@@ -14,39 +14,40 @@ Brazilian spreadsheet users can describe the outcome they need in Portuguese and
 
 ### Validated
 
-- [x] Phase 1 validated: authenticated users can sign up, sign in, sign out, request password reset, and access a protected workspace.
-- [x] Phase 1 validated: Formula workspace supports Excel, Google Sheets, Airtable, and LibreOffice Calc selectors.
-- [x] Phase 1 validated: formula language is explicit, with Portuguese (Brazil) using `;` and English using `,`.
-- [x] Phase 1 validated: users can generate localized formulas, explain pasted formulas in Portuguese, see assumptions/metadata, and copy validated output.
-- [x] Phase 1 validated: the simple formula path has automated streaming visibility coverage under the 2.5-second target.
+- ✓ Authenticated users can sign up, sign in, sign out, request password reset, and access a protected workspace — Phase 1
+- ✓ Formula workspace supports Excel, Google Sheets, Airtable, and LibreOffice Calc selectors — Phase 1
+- ✓ Formula language is explicit: Portuguese (Brazil) with `;` and English with `,` — Phase 1
+- ✓ Users can generate localized formulas, explain pasted formulas in Portuguese, see assumptions/metadata, and copy output — Phase 1
+- ✓ Simple formula streaming begins within 2.5 seconds — Phase 1
+- ✓ Free-tier quota: 4 tool uses per 12-hour window enforced with reserve/confirm/release pattern — Phase 2
+- ✓ Pro plan with Mercado Pago Checkout Pro (Pix + card), webhook-driven entitlement reconciliation — Phase 2
+- ✓ Inline quota UX: last-use warning, blocked state with upgrade CTA, plan revocation notice — Phase 2
+- ✓ VBA, Google Apps Script, and Airtable Scripts generation — Phase 3
+- ✓ SQL generation (PostgreSQL, MySQL, SQL Server, Oracle, BigQuery) — Phase 3
+- ✓ Regex generation with Brazilian data examples (CPF, CNPJ, CEP) — Phase 3
+- ✓ CSV and XLSX upload (≤5 MB) with schema detection and AI chat — Phase 4
+- ✓ Text pivot tables and executive reports from uploaded spreadsheet data — Phase 4
+- ✓ Privacy cleanup: raw files deleted after chat end; data inaccessible after logout — Phase 4
+- ✓ OCR: PNG/JPEG table image upload → reconstructed rows/columns → copy-ready TSV/CSV — Phase 5
+- ✓ Chart rendering: Sugerir Gráfico → BarChart/LineChart/PieChart with local type toggle — Phase 5
+- ✓ Sidebar navigation: Formula, Scripts, SQL, Regex, File Analysis, OCR all active — Phase 5
+- ✓ E2E smoke test suite (9 suites, Playwright) covering all happy paths — Phase 5
 
 ### Active
 
-- [ ] Generate spreadsheet formulas from Portuguese natural language for Excel, Google Sheets, Airtable, and LibreOffice Calc.
-- [ ] Let users choose formula locale explicitly: Portuguese (Brazil) with `;` separators or English with `,` separators.
-- [ ] Explain pasted formulas step by step in clear Portuguese.
-- [ ] Generate spreadsheet automation scripts for VBA, Google Apps Script, and Airtable Scripts.
-- [ ] Generate SQL queries from text prompts with selectable dialects: PostgreSQL, MySQL, SQL Server, Oracle, and BigQuery.
-- [ ] Generate and explain regular expressions, including Brazilian data examples such as CPF extraction.
-- [ ] Upload `.csv` and `.xlsx` files up to 5 MB and chat against the detected schema.
-- [ ] Produce text pivot tables, chart suggestions/rendering, and executive insight reports from uploaded spreadsheet data.
-- [ ] Upload `.png` and `.jpeg` table images, run OCR, reconstruct rows and columns, and expose copy-ready TSV/CSV output.
-- [ ] Provide a distraction-free workspace with sidebar navigation between Formula, Scripts, SQL, Regex, File Analysis, and OCR tools.
-- [ ] Provide prominent copy buttons for every generated formula, code block, query, regex, or table output, with immediate copied feedback.
-- [ ] Enforce free-tier quotas: 4 tool uses per 12 hours, 10 AI chat messages per 30 days, uploads capped at 5 MB and 5 files per history.
-- [ ] Provide a Pro plan with unlimited tool access, processing priority, support via email/WhatsApp, and advanced table template generation.
-- [ ] Support Brazilian checkout expectations, especially Pix and national card flows.
-- [ ] Start simple-generation streaming within 2.5 seconds for formula requests.
-- [ ] Delete uploaded raw files after chat end or 1 hour of inactivity, and do not use customer data for public model retraining.
+(All MVP requirements validated — see Validated section above)
 
 ### Out of Scope
 
-- Legal or brand-identical cloning of GPTExcel - the project targets functional parity and Brazil-specific user value, not trademark, copy, or visual duplication.
-- Native mobile apps - the first release is web SaaS.
-- Real-time multi-user spreadsheet collaboration - not required for the core formula and analysis workflow.
-- Enterprise SSO, SOC2 procurement flows, and multi-tenant admin consoles - defer until Pro adoption proves demand.
-- Unbounded large-file analytics - v1 remains constrained to 5 MB uploads to control cost, latency, and privacy risk.
-- Training custom foundation models - use commercial LLM APIs with appropriate data privacy settings.
+### Out of Scope
+
+- Legal or brand-identical cloning of GPTExcel — functional parity and Brazil-specific user value, not trademark/visual duplication
+- Native mobile apps — first release is web SaaS
+- Real-time multi-user spreadsheet collaboration — not required for core formula and analysis workflow
+- Enterprise SSO, SOC2 procurement flows, and multi-tenant admin consoles — defer until Pro adoption proves demand
+- Unbounded large-file analytics — v1 capped at 5 MB to control cost, latency, and privacy risk
+- Training custom foundation models — use commercial LLM APIs with appropriate data privacy settings
+- CI pipeline integration for smoke tests — deferred to v2 (tests run locally, T-05-03-SC accepted)
 
 ## Context
 
@@ -74,12 +75,15 @@ The recommended technical direction from the PRD is a web SaaS with a Next.js/Ta
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| Build Brazil-first rather than generic spreadsheet AI | Localization is the main competitive advantage and solves the strongest market pain | Validated in Phase 1 formula workspace |
-| Include formula generation/explanation in the first release | This is the core adoption path and strongest daily-use workflow | Validated in Phase 1 |
-| Include auth, quotas, and payments in the MVP | Monetization and free-tier protection are required by the PRD | Pending |
-| Use vertical MVP phase structure | The project needs usable end-to-end slices quickly, not isolated technical layers | In use; Phase 1 shipped as a vertical auth-to-formula slice |
-| Keep upload limits small at launch | Controls cost, latency, parsing complexity, and corporate data risk | Pending |
-| Use commercial LLM APIs with data privacy controls | Avoids custom model training and aligns with privacy requirements | Server-side OpenAI boundary prepared in Phase 1 |
+| Build Brazil-first rather than generic spreadsheet AI | Localization is the main competitive advantage and solves the strongest market pain | Validated — Phase 1 |
+| Include formula generation/explanation in the first release | This is the core adoption path and strongest daily-use workflow | Validated — Phase 1 |
+| Include auth, quotas, and payments in the MVP | Monetization and free-tier protection are required by the PRD | Validated — Phase 2 |
+| Use vertical MVP phase structure | The project needs usable end-to-end slices quickly, not isolated technical layers | Validated across all 5 phases |
+| Keep upload limits small at launch | Controls cost, latency, parsing complexity, and corporate data risk | Validated — Phase 4 (5 MB cap enforced) |
+| Use commercial LLM APIs with data privacy controls | Avoids custom model training and aligns with privacy requirements | Validated — OpenAI Vision (OCR) + Chat (file analysis) in production |
+| Mercado Pago Checkout Pro for billing | Brazilian Pix/card support without multi-bank complexity | Validated — Phase 2 |
+| Fixture fallback when OPENAI_API_KEY absent | Enables dev/test without real API costs | Validated — Phase 5 (OCR + chart fixtures connected after UAT gap) |
+| Mock AI and billing in E2E smoke tests; use real auth/DB | Isolates flaky external calls while keeping auth/quota paths real | Validated — Phase 5 (9/9 smoke tests pass) |
 
 ## Evolution
 
@@ -99,4 +103,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-05-24 after Phase 1 completion*
+*Last updated: 2026-05-26 after Phase 5 completion — v1.0 milestone complete*

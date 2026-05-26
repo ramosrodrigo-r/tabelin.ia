@@ -59,11 +59,11 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Charts and OCR
 
-- [ ] **CHRT-01**: User can request chart suggestions for uploaded spreadsheet data.
-- [ ] **CHRT-02**: User can render bar, line, and pie charts in the frontend using parsed spreadsheet data.
-- [ ] **OCR-01**: User can upload `.png`, `.jpeg`, or `.jpg` images that contain tables.
-- [ ] **OCR-02**: System reconstructs image tables into structured rows and columns.
-- [ ] **OCR-03**: User can copy reconstructed tables as TSV or CSV for direct paste into Excel.
+- [x] **CHRT-01**: User can request chart suggestions for uploaded spreadsheet data.
+- [x] **CHRT-02**: User can render bar, line, and pie charts in the frontend using parsed spreadsheet data.
+- [x] **OCR-01**: User can upload `.png`, `.jpeg`, or `.jpg` images that contain tables.
+- [x] **OCR-02**: System reconstructs image tables into structured rows and columns.
+- [x] **OCR-03**: User can copy reconstructed tables as TSV or CSV for direct paste into Excel.
 
 ### Privacy, Performance, and Reliability
 
@@ -154,11 +154,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | FILE-03 | Phase 4 | Complete |
 | FILE-04 | Phase 4 | Complete |
 | FILE-05 | Phase 4 | Complete |
-| CHRT-01 | Phase 5 | Pending |
-| CHRT-02 | Phase 5 | Pending |
-| OCR-01 | Phase 5 | Pending |
-| OCR-02 | Phase 5 | Pending |
-| OCR-03 | Phase 5 | Pending |
+| CHRT-01 | Phase 5 | Complete |
+| CHRT-02 | Phase 5 | Complete |
+| OCR-01 | Phase 5 | Complete |
+| OCR-02 | Phase 5 | Complete |
+| OCR-03 | Phase 5 | Complete |
 | PRIV-01 | Phase 4 | Complete |
 | PRIV-02 | Phase 4 | Complete |
 | PRIV-03 | Phase 4 | Complete |
