@@ -1,21 +1,35 @@
+"use client";
+
 import type { LucideIcon } from "lucide-react";
-import { Braces, FileSpreadsheet, FileText, Image, Regex, ScrollText } from "lucide-react";
+import {
+  Braces,
+  FileSpreadsheet,
+  FileText,
+  Image,
+  LayoutTemplate,
+  Regex,
+  ScrollText
+} from "lucide-react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 type NavItem =
-  | { label: string; icon: LucideIcon; href: string; active: true; disabled?: never }
-  | { label: string; icon: LucideIcon; disabled: true; href?: never; active?: never };
+  | { label: string; icon: LucideIcon; href: string; disabled?: never }
+  | { label: string; icon: LucideIcon; disabled: true; href?: never };
 
 const navItems: NavItem[] = [
-  { label: "Formula", icon: FileSpreadsheet, href: "/workspace", active: true },
-  { label: "Scripts", icon: Braces, disabled: true },
-  { label: "SQL", icon: ScrollText, disabled: true },
-  { label: "Regex", icon: Regex, disabled: true },
+  { label: "Formula", icon: FileSpreadsheet, href: "/workspace" },
+  { label: "Scripts", icon: Braces, href: "/workspace/scripts" },
+  { label: "SQL", icon: ScrollText, href: "/workspace/sql" },
+  { label: "Regex", icon: Regex, href: "/workspace/regex" },
+  { label: "Templates", icon: LayoutTemplate, href: "/workspace/templates" },
   { label: "File Analysis", icon: FileText, disabled: true },
   { label: "OCR", icon: Image, disabled: true }
 ];
 
 export function Sidebar() {
+  const pathname = usePathname();
+
   return (
     <aside className="sidebar" aria-label="Ferramentas">
       <div className="sidebar-brand">
@@ -34,14 +48,26 @@ export function Sidebar() {
 
           if (item.disabled) {
             return (
-              <span className="nav-item" data-disabled="true" key={item.label} aria-disabled="true">
+              <span
+                className="nav-item"
+                data-disabled="true"
+                key={item.label}
+                aria-disabled="true"
+              >
                 {content}
               </span>
             );
           }
 
+          // Active state dinâmico: exact match para /workspace (Formula),
+          // startsWith para sub-rotas das demais ferramentas
+          const isActive =
+            item.href === "/workspace"
+              ? pathname === "/workspace"
+              : pathname === item.href || pathname.startsWith(item.href + "/");
+
           return (
-            <Link className="nav-item" data-active={item.active} href={item.href} key={item.label}>
+            <Link className="nav-item" data-active={isActive} href={item.href} key={item.label}>
               {content}
             </Link>
           );
