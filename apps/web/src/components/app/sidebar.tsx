@@ -24,7 +24,7 @@ const navItems: NavItem[] = [
   { label: "Regex", icon: Regex, href: "/workspace/regex" },
   { label: "Templates", icon: LayoutTemplate, href: "/workspace/templates" },
   { label: "File Analysis", icon: FileText, href: "/workspace/file-analysis" },
-  { label: "OCR", icon: Image, disabled: true }
+  { label: "OCR", icon: Image, href: "/workspace/ocr" }
 ];
 
 export function Sidebar() {

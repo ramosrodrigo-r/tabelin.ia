@@ -3,7 +3,7 @@
 import { Check, Copy } from "lucide-react";
 import { useEffect, useState } from "react";
 
-export function CopyButton({ value, disabled }: { value: string; disabled?: boolean }) {
+export function CopyButton({ value, disabled, label }: { value: string; disabled?: boolean; label?: string }) {
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
@@ -25,17 +25,19 @@ export function CopyButton({ value, disabled }: { value: string; disabled?: bool
     setCopied(true);
   }
 
+  const copyLabel = label ?? "Copiar";
+
   return (
     <button
-      aria-label={copied ? "Copiado" : "Copiar resultado"}
+      aria-label={copied ? "Copiado!" : copyLabel}
       className="copy-button"
       disabled={disabled || !value}
       onClick={copy}
-      title={copied ? "Copiado" : "Copiar resultado"}
+      title={copied ? "Copiado!" : copyLabel}
       type="button"
     >
       {copied ? <Check aria-hidden size={16} /> : <Copy aria-hidden size={16} />}
-      <span>{copied ? "Copiado" : "Copiar"}</span>
+      <span>{copied ? "Copiado!" : copyLabel}</span>
     </button>
   );
 }
