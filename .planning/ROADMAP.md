@@ -160,9 +160,14 @@ Plans:
 
 Plans:
 
-- [ ] 05-01: Implement image upload, preprocessing, OCR table reconstruction, and TSV/CSV export.
-- [ ] 05-02: Implement chart suggestions and Chart.js rendering from parsed data.
-- [ ] 05-03: Run launch hardening, E2E smoke tests, and cross-phase acceptance verification.
+**Wave 1** *(paralelo — 05-01 e 05-02 independentes)*
+
+- [ ] 05-01-PLAN.md — Schemas Zod OCR, ocr-processor vision gpt-4o-mini, route POST /api/tools/ocr/process, hook use-image-upload, componentes ImageUploadPanel + OcrResultPanel, page RSC /workspace/ocr, sidebar ativada
+- [ ] 05-02-PLAN.md — Instalar recharts, estender chatStreamEventSchema, estender use-file-chat com LocalChatMessage union + CHART_PROMPT, criar ChartMessage Recharts Client Component, botão "Sugerir Gráfico" no ChatPanel
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 05-03-PLAN.md — Smoke tests E2E Playwright cobrindo todos os happy paths do MVP (auth, formula, quota, checkout, multi-tools, upload+chat, OCR, charts, privacy cleanup)
 
 ## Progress
 
