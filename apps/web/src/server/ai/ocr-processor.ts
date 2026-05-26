@@ -35,16 +35,7 @@ export async function processImageOcr(
   imageBase64: string,
   mimeType: "image/png" | "image/jpeg"
 ): Promise<{ headers: string[]; rows: string[][] }> {
-  if (!process.env.OPENAI_API_KEY) {
-    return {
-      headers: ["Nome", "Valor", "Status"],
-      rows: [
-        ["Alice", "100", "Ativo"],
-        ["Bob", "200", "Inativo"]
-      ]
-    };
-  }
-
+  // createOpenAIClient() throws if OPENAI_API_KEY is absent — no silent fixture fallback
   const openai = createOpenAIClient();
   // NOTA: o modelo configurado via OPENAI_MODEL deve suportar vision (D-02).
   // gpt-4o-mini, gpt-4o e gpt-4-turbo suportam vision. gpt-3.5-turbo nao suporta.
