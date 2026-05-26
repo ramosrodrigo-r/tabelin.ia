@@ -1,20 +1,22 @@
 "use client";
 
-import { chatStreamEventSchema } from "@tabelin/shared";
+import { chatStreamEventSchema, type ChartData } from "@tabelin/shared";
 import { useCallback, useState } from "react";
 
 export type ChatStatus = "idle" | "loading" | "streaming" | "complete" | "error";
 
-export type LocalChatMessage = {
-  role: "user" | "assistant";
-  content: string;
-};
+export type LocalChatMessage =
+  | { role: "user" | "assistant"; type: "text"; content: string }
+  | { role: "assistant"; type: "chart"; chartData: ChartData };
 
 const PIVOT_PROMPT =
   "Gere um resumo no estilo tabela pivot dos dados. Use Markdown com tabelas e agregacoes relevantes (totais, medias, contagens por categoria).";
 
 const REPORT_PROMPT =
   "Gere um relatorio executivo dos dados. Use Markdown com titulos, metricas chave, tendencias e insights principais em portugues.";
+
+const CHART_PROMPT =
+  "Analise os dados e retorne APENAS um objeto JSON (sem markdown, sem texto extra, sem codigo) com os campos: chartType (\"bar\", \"line\" ou \"pie\"), title (string descritiva do grafico), xKey (nome da coluna para eixo X), yKey (nome da coluna numerica para eixo Y), rows (array de objetos com os dados). Exemplo: {\"chartType\":\"bar\",\"title\":\"Vendas por Produto\",\"xKey\":\"Produto\",\"yKey\":\"Vendas\",\"rows\":[{\"Produto\":\"A\",\"Vendas\":100}]}";
 
 export function useFileChat() {
   const [messages, setMessages] = useState<LocalChatMessage[]>([]);
@@ -31,7 +33,7 @@ export function useFileChat() {
     setLastFreeUse(false);
 
     // Optimistic user message
-    setMessages((prev) => [...prev, { role: "user", content: message }]);
+    setMessages((prev) => [...prev, { role: "user", type: "text", content: message }]);
 
     const response = await fetch("/api/tools/file-analysis/chat", {
       method: "POST",
@@ -81,7 +83,36 @@ export function useFileChat() {
           setLastFreeUse(event.lastFreeUse);
         }
         if (event.type === "complete") {
-          setMessages((prev) => [...prev, { role: "assistant", content: event.content }]);
+          // Tentar detectar JSON de grafico na resposta do AI
+          try {
+            const parsedObj = JSON.parse(event.content) as Record<string, unknown>;
+            if (
+              parsedObj.chartType &&
+              parsedObj.xKey &&
+              parsedObj.yKey &&
+              Array.isArray(parsedObj.rows)
+            ) {
+              setMessages((prev) => [
+                ...prev,
+                {
+                  role: "assistant",
+                  type: "chart",
+                  chartData: parsedObj as ChartData
+                }
+              ]);
+            } else {
+              setMessages((prev) => [
+                ...prev,
+                { role: "assistant", type: "text", content: event.content }
+              ]);
+            }
+          } catch {
+            // SyntaxError no parse — tratar como mensagem de texto normal
+            setMessages((prev) => [
+              ...prev,
+              { role: "assistant", type: "text", content: event.content }
+            ]);
+          }
           setDraft("");
           setStatus("complete");
         }
@@ -94,8 +125,15 @@ export function useFileChat() {
   }, []);
 
   const sendQuickAction = useCallback(
-    (uploadedFileId: string, promptType: "pivot" | "report") => {
-      const prompt = promptType === "pivot" ? PIVOT_PROMPT : REPORT_PROMPT;
+    (uploadedFileId: string, promptType: "pivot" | "report" | "chart") => {
+      let prompt: string;
+      if (promptType === "pivot") {
+        prompt = PIVOT_PROMPT;
+      } else if (promptType === "report") {
+        prompt = REPORT_PROMPT;
+      } else {
+        prompt = CHART_PROMPT;
+      }
       void submit(uploadedFileId, prompt);
     },
     [submit]

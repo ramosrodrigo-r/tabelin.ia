@@ -5,6 +5,7 @@ import { Send } from "lucide-react";
 import { useRef, useState } from "react";
 
 import { useFileChat } from "../hooks/use-file-chat";
+import { ChartMessage } from "./chart-message";
 import { ChatMessage } from "./chat-message";
 import { SchemaPreview } from "./schema-preview";
 
@@ -78,14 +79,18 @@ export function ChatPanel({ uploadedFileId, schema, onNewFile }: Props) {
         <SchemaPreview schema={schema} />
 
         {/* Rendered messages */}
-        {chat.messages.map((msg, idx) => (
-          <ChatMessage
-            content={msg.content}
-            isStreaming={false}
-            key={idx}
-            role={msg.role}
-          />
-        ))}
+        {chat.messages.map((msg, idx) =>
+          msg.type === "chart" ? (
+            <ChartMessage data={msg.chartData} key={idx} />
+          ) : (
+            <ChatMessage
+              content={msg.content}
+              isStreaming={false}
+              key={idx}
+              role={msg.role}
+            />
+          )
+        )}
 
         {/* Streaming draft */}
         {streaming && chat.draft ? (
@@ -206,6 +211,25 @@ export function ChatPanel({ uploadedFileId, schema, onNewFile }: Props) {
           type="button"
         >
           Relatorio Executivo
+        </button>
+        <button
+          aria-label="Sugerir grafico"
+          disabled={streaming || chat.quotaBlocked}
+          onClick={() => chat.sendQuickAction(uploadedFileId, "chart")}
+          style={{
+            border: "1px solid var(--border)",
+            borderRadius: "6px",
+            background: "#fff",
+            padding: "4px 16px",
+            fontSize: "12px",
+            fontWeight: 650,
+            color: "var(--text)",
+            cursor: streaming || chat.quotaBlocked ? "not-allowed" : "pointer",
+            opacity: streaming || chat.quotaBlocked ? 0.5 : 1
+          }}
+          type="button"
+        >
+          Sugerir Gráfico
         </button>
       </div>
     </div>
