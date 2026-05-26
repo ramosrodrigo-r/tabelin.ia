@@ -35,7 +35,15 @@ export const chatStreamEventSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("delta"), text: z.string() }),
   z.object({ type: z.literal("quota_warning"), lastFreeUse: z.boolean() }),
   z.object({ type: z.literal("complete"), content: z.string() }),
-  z.object({ type: z.literal("error"), message: z.string() })
+  z.object({ type: z.literal("error"), message: z.string() }),
+  z.object({
+    type: z.literal("chart_data"),
+    chartType: z.enum(["bar", "line", "pie"]),
+    title: z.string(),
+    xKey: z.string(),
+    yKey: z.string(),
+    rows: z.array(z.record(z.string(), z.union([z.string(), z.number()])))
+  })
 ]);
 
 export type FileSchemaColumn = z.infer<typeof fileSchemaColumnSchema>;

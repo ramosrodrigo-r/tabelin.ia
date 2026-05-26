@@ -14,3 +14,6 @@ export * from "./template/fixtures";
 // Fase 4: file analysis
 export * from "./file-analysis/schema";
 export * from "./file-analysis/fixtures";
+// Fase 5: OCR e Charts
+export * from "./ocr/schema";
+export * from "./ocr/fixtures";
