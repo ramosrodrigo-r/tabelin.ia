@@ -1,6 +1,6 @@
 import "server-only";
 
-import type { FileSchema } from "@tabelin/shared";
+import { chartDataFixture, type FileSchema } from "@tabelin/shared";
 
 import { createOpenAIClient, getOpenAIModel } from "./openai-client";
 
@@ -72,8 +72,15 @@ ${schemaText}
 /**
  * Create a fixture ReadableStream for when OPENAI_API_KEY is absent.
  * Returns a complete event with a deterministic placeholder response.
+ *
+ * When the userMessage contains "chartType" (unique substring of CHART_PROMPT),
+ * returns chartDataFixture as JSON so ChartMessage renders correctly in dev mode.
  */
-function createFixtureStream(schema: FileSchema, lastFreeUse?: boolean): ReadableStream<Uint8Array> {
+function createFixtureStream(
+  schema: FileSchema,
+  userMessage: string,
+  lastFreeUse?: boolean
+): ReadableStream<Uint8Array> {
   const encoder = new TextEncoder();
 
   const events: object[] = [];
@@ -82,7 +89,11 @@ function createFixtureStream(schema: FileSchema, lastFreeUse?: boolean): Readabl
     events.push({ type: "quota_warning", lastFreeUse: true });
   }
 
-  const content = `Arquivo analisado (modo fixture). Schema detectado: ${schema.columns.length} colunas — ${schema.columns.map((c) => c.name).join(", ")}.`;
+  const isChartRequest = userMessage.includes("chartType");
+  const content = isChartRequest
+    ? JSON.stringify(chartDataFixture)
+    : `Arquivo analisado (modo fixture). Schema detectado: ${schema.columns.length} colunas — ${schema.columns.map((c) => c.name).join(", ")}.`;
+
   events.push({ type: "delta", text: content });
   events.push({ type: "complete", content });
 
@@ -112,7 +123,7 @@ export function buildFileChatStream(
   lastFreeUse?: boolean
 ): ReadableStream<Uint8Array> {
   if (!process.env.OPENAI_API_KEY) {
-    return createFixtureStream(schema, lastFreeUse);
+    return createFixtureStream(schema, userMessage, lastFreeUse);
   }
 
   const encoder = new TextEncoder();
