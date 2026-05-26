@@ -135,7 +135,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 04-02-PLAN.md — Route handlers de upload e chat, AI stream, hooks de estado, todos os componentes de UI, página RSC /workspace/file-analysis
+- [x] 04-02-PLAN.md — Route handlers de upload e chat, AI stream, hooks de estado, todos os componentes de UI, página RSC /workspace/file-analysis
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
@@ -174,7 +174,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 | 1. Localized Formula Workspace | 3/3 | Complete    | 2026-05-24 |
 | 2. Freemium Billing and Entitlements | 3/3 | Complete    | 2026-05-25 |
 | 3. Multi-Tool Generation Suite | 3/3 | Complete    | 2026-05-26 |
-| 4. Spreadsheet File Analysis | 1/3 | In Progress|  |
+| 4. Spreadsheet File Analysis | 2/3 | In Progress|  |
 | 5. OCR, Charts, and Launch Hardening | 0/3 | Not started | - |
 
 ## Coverage

@@ -53,9 +53,9 @@ Requirements for initial release. Each maps to roadmap phases.
 
 - [x] **FILE-01**: User can upload `.csv` and `.xlsx` files up to 5 MB.
 - [x] **FILE-02**: System extracts sheet names, headers, inferred column types, and representative sample rows.
-- [ ] **FILE-03**: User can chat against the uploaded file's detected schema and sample data.
-- [ ] **FILE-04**: User can request text pivot-table style summaries from uploaded spreadsheet data.
-- [ ] **FILE-05**: User can request executive insight reports from uploaded spreadsheet data.
+- [x] **FILE-03**: User can chat against the uploaded file's detected schema and sample data.
+- [x] **FILE-04**: User can request text pivot-table style summaries from uploaded spreadsheet data.
+- [x] **FILE-05**: User can request executive insight reports from uploaded spreadsheet data.
 
 ### Charts and OCR
 
@@ -70,7 +70,7 @@ Requirements for initial release. Each maps to roadmap phases.
 - [x] **PRIV-01**: Uploaded raw files are deleted when the chat ends or after 1 hour of inactivity, whichever comes first.
 - [x] **PRIV-02**: Raw uploaded file contents are not written to application logs.
 - [ ] **PRIV-03**: The product documents that customer data is not used for public model retraining by selected commercial AI providers unless explicitly opted in.
-- [ ] **PRIV-04**: Provider file uploads use available expiration controls when raw files must be sent to a provider.
+- [x] **PRIV-04**: Provider file uploads use available expiration controls when raw files must be sent to a provider.
 - [x] **PERF-01**: Simple formula generation begins streaming visible output within 2.5 seconds under normal provider latency.
 - [x] **RELY-01**: AI outputs are validated against structured schemas before the UI presents copy-ready content.
 
@@ -151,9 +151,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SAFE-01 | Phase 3 | Complete |
 | FILE-01 | Phase 4 | Complete |
 | FILE-02 | Phase 4 | Complete |
-| FILE-03 | Phase 4 | Pending |
-| FILE-04 | Phase 4 | Pending |
-| FILE-05 | Phase 4 | Pending |
+| FILE-03 | Phase 4 | Complete |
+| FILE-04 | Phase 4 | Complete |
+| FILE-05 | Phase 4 | Complete |
 | CHRT-01 | Phase 5 | Pending |
 | CHRT-02 | Phase 5 | Pending |
 | OCR-01 | Phase 5 | Pending |
@@ -162,7 +162,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PRIV-01 | Phase 4 | Complete |
 | PRIV-02 | Phase 4 | Complete |
 | PRIV-03 | Phase 4 | Pending |
-| PRIV-04 | Phase 4 | Pending |
+| PRIV-04 | Phase 4 | Complete |
 | PERF-01 | Phase 1 | Complete |
 | RELY-01 | Phase 1 | Complete |
 | PRO-01 | Phase 3 | Complete |
