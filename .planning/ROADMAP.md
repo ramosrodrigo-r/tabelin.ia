@@ -104,7 +104,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 03-02-PLAN.md — Server AI streams (scripts, sql, regex, template) e route handlers de API com quota + Pro gate
+- [x] 03-02-PLAN.md — Server AI streams (scripts, sql, regex, template) e route handlers de API com quota + Pro gate
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
@@ -165,7 +165,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 |-------|----------------|--------|-----------|
 | 1. Localized Formula Workspace | 3/3 | Complete    | 2026-05-24 |
 | 2. Freemium Billing and Entitlements | 3/3 | Complete    | 2026-05-25 |
-| 3. Multi-Tool Generation Suite | 1/3 | In Progress|  |
+| 3. Multi-Tool Generation Suite | 2/3 | In Progress|  |
 | 4. Spreadsheet File Analysis | 0/3 | Not started | - |
 | 5. OCR, Charts, and Launch Hardening | 0/3 | Not started | - |
 
