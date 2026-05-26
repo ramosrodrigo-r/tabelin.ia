@@ -128,7 +128,7 @@ New components for Phase 5. Each must match the visual pattern of its Phase 4 co
 | Recharts grid | `CartesianGrid strokeDasharray="3 3"` with `stroke: var(--border)` | Subtle grid lines matching existing border token |
 | Recharts primary color | `fill="var(--primary)"` (bars), `stroke="var(--primary)"` (lines) | Consistent with accent token |
 | Recharts pie colors | `["var(--primary)", "#0ea5e9", "#f59e0b", "#10b981", "#8b5cf6"]` | Primary first, then semantic-neutral palette |
-| Chart type toggle row | `display: flex; gap: 6px; margin-top: 8px` | Buttons: "Barras", "Linhas", "Pizza" |
+| Chart type toggle row | `display: flex; gap: 8px; margin-top: 8px` | Buttons: "Barras", "Linhas", "Pizza" |
 | Chart type button (inactive) | `border: 1px solid var(--border)`, `border-radius: 6px`, `background: #fff`, `color: var(--text)`, `padding: 2px 12px`, `font-size: 12px` | Ghost state |
 | Chart type button (active) | `background: var(--primary)`, `color: #fff` | Filled state — accent token |
 | Recharts axis ticks | `tick={{ fontSize: 12 }}` on both `XAxis` and `YAxis` | Unified with label/caption tier (12px) |
