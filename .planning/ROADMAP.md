@@ -131,7 +131,7 @@ Plans:
 
 **Wave 1**
 
-- [ ] 04-01-PLAN.md — Instalar libs (csv-parse, xlsx, node-cron), modelos Prisma (UploadedFile + ChatMessage), db push, Zod contracts, file-parser e file-repository
+- [x] 04-01-PLAN.md — Instalar libs (csv-parse, xlsx, node-cron), modelos Prisma (UploadedFile + ChatMessage), db push, Zod contracts, file-parser e file-repository
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
@@ -174,7 +174,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 | 1. Localized Formula Workspace | 3/3 | Complete    | 2026-05-24 |
 | 2. Freemium Billing and Entitlements | 3/3 | Complete    | 2026-05-25 |
 | 3. Multi-Tool Generation Suite | 3/3 | Complete    | 2026-05-26 |
-| 4. Spreadsheet File Analysis | 0/3 | Not started | - |
+| 4. Spreadsheet File Analysis | 1/3 | In Progress|  |
 | 5. OCR, Charts, and Launch Hardening | 0/3 | Not started | - |
 
 ## Coverage
