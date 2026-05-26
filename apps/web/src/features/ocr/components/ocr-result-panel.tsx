@@ -37,7 +37,7 @@ export function OcrResultPanel({ result, onNewImage }: Props) {
   return (
     <div
       className="tool-panel"
-      role="img"
+      role="region"
       aria-label="Resultado da extracao de tabela por OCR"
     >
       {/* Heading row com botao "Nova imagem" */}
