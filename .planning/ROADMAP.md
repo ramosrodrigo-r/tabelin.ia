@@ -16,7 +16,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 1: Localized Formula Workspace** - Authenticated workspace with Brazilian formula generation, explanation, streaming, and copy-ready output. (completed 2026-05-24)
 - [x] **Phase 2: Freemium Billing and Entitlements** - Usage limits, Pix/card checkout, and Pro plan state. (completed 2026-05-25)
 - [x] **Phase 3: Multi-Tool Generation Suite** - Scripts, SQL, regex, safety warnings, and Pro templates. (completed 2026-05-26)
-- [ ] **Phase 4: Spreadsheet File Analysis** - CSV/XLSX upload, schema chat, reports, and privacy lifecycle.
+- [x] **Phase 4: Spreadsheet File Analysis** - CSV/XLSX upload, schema chat, reports, and privacy lifecycle. (completed 2026-05-26)
 - [ ] **Phase 5: OCR, Charts, and Launch Hardening** - Image-to-table OCR, chart rendering, and final launch readiness.
 
 ## Phase Details
@@ -139,7 +139,7 @@ Plans:
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 04-03-PLAN.md — Cron de limpeza automática, instrumentation.ts, sidebar ativado, documentação de privacidade (PRIV-03)
+- [x] 04-03-PLAN.md — Cron de limpeza automática, instrumentation.ts, sidebar ativado, documentação de privacidade (PRIV-03)
 
 ### Phase 5: OCR, Charts, and Launch Hardening
 
@@ -174,7 +174,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 | 1. Localized Formula Workspace | 3/3 | Complete    | 2026-05-24 |
 | 2. Freemium Billing and Entitlements | 3/3 | Complete    | 2026-05-25 |
 | 3. Multi-Tool Generation Suite | 3/3 | Complete    | 2026-05-26 |
-| 4. Spreadsheet File Analysis | 2/3 | In Progress|  |
+| 4. Spreadsheet File Analysis | 3/3 | Complete   | 2026-05-26 |
 | 5. OCR, Charts, and Launch Hardening | 0/3 | Not started | - |
 
 ## Coverage

@@ -69,7 +69,7 @@ Requirements for initial release. Each maps to roadmap phases.
 
 - [x] **PRIV-01**: Uploaded raw files are deleted when the chat ends or after 1 hour of inactivity, whichever comes first.
 - [x] **PRIV-02**: Raw uploaded file contents are not written to application logs.
-- [ ] **PRIV-03**: The product documents that customer data is not used for public model retraining by selected commercial AI providers unless explicitly opted in.
+- [x] **PRIV-03**: The product documents that customer data is not used for public model retraining by selected commercial AI providers unless explicitly opted in.
 - [x] **PRIV-04**: Provider file uploads use available expiration controls when raw files must be sent to a provider.
 - [x] **PERF-01**: Simple formula generation begins streaming visible output within 2.5 seconds under normal provider latency.
 - [x] **RELY-01**: AI outputs are validated against structured schemas before the UI presents copy-ready content.
@@ -161,7 +161,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | OCR-03 | Phase 5 | Pending |
 | PRIV-01 | Phase 4 | Complete |
 | PRIV-02 | Phase 4 | Complete |
-| PRIV-03 | Phase 4 | Pending |
+| PRIV-03 | Phase 4 | Complete |
 | PRIV-04 | Phase 4 | Complete |
 | PERF-01 | Phase 1 | Complete |
 | RELY-01 | Phase 1 | Complete |
