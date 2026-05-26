@@ -1,6 +1,6 @@
 "use client";
 
-import { chatStreamEventSchema, type ChartData } from "@tabelin/shared";
+import { chatStreamEventSchema, chartDataSchema, type ChartData } from "@tabelin/shared";
 import { useCallback, useState } from "react";
 
 export type ChatStatus = "idle" | "loading" | "streaming" | "complete" | "error";
@@ -67,60 +67,62 @@ export function useFileChat() {
     const decoder = new TextDecoder();
     let buffer = "";
 
-    while (true) {
-      const { value, done } = await reader.read();
-      if (done) break;
-      buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split("\n");
-      buffer = lines.pop() ?? "";
-      for (const line of lines) {
-        if (!line.trim()) continue;
-        const event = chatStreamEventSchema.parse(JSON.parse(line));
-        if (event.type === "delta") {
-          setDraft((current) => `${current}${event.text}`);
-        }
-        if (event.type === "quota_warning") {
-          setLastFreeUse(event.lastFreeUse);
-        }
-        if (event.type === "complete") {
-          // Tentar detectar JSON de grafico na resposta do AI
-          try {
-            const parsedObj = JSON.parse(event.content) as Record<string, unknown>;
-            if (
-              parsedObj.chartType &&
-              parsedObj.xKey &&
-              parsedObj.yKey &&
-              Array.isArray(parsedObj.rows)
-            ) {
-              setMessages((prev) => [
-                ...prev,
-                {
-                  role: "assistant",
-                  type: "chart",
-                  chartData: parsedObj as ChartData
-                }
-              ]);
-            } else {
+    try {
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() ?? "";
+        for (const line of lines) {
+          if (!line.trim()) continue;
+          let rawObj: unknown;
+          try { rawObj = JSON.parse(line); } catch { continue; }
+          const parsed = chatStreamEventSchema.safeParse(rawObj);
+          if (!parsed.success) continue;
+          const event = parsed.data;
+          if (event.type === "delta") {
+            setDraft((current) => `${current}${event.text}`);
+          }
+          if (event.type === "quota_warning") {
+            setLastFreeUse(event.lastFreeUse);
+          }
+          if (event.type === "complete") {
+            // Tentar detectar JSON de grafico na resposta do AI
+            let chartPlaced = false;
+            try {
+              const parsedObj = JSON.parse(event.content) as Record<string, unknown>;
+              const chartValidation = chartDataSchema.safeParse(parsedObj);
+              if (chartValidation.success) {
+                setMessages((prev) => [
+                  ...prev,
+                  { role: "assistant", type: "chart", chartData: chartValidation.data }
+                ]);
+                chartPlaced = true;
+              }
+            } catch {
+              // SyntaxError no parse — tratar como mensagem de texto normal
+            }
+            if (!chartPlaced) {
               setMessages((prev) => [
                 ...prev,
                 { role: "assistant", type: "text", content: event.content }
               ]);
             }
-          } catch {
-            // SyntaxError no parse — tratar como mensagem de texto normal
-            setMessages((prev) => [
-              ...prev,
-              { role: "assistant", type: "text", content: event.content }
-            ]);
+            setDraft("");
+            setStatus("complete");
           }
-          setDraft("");
-          setStatus("complete");
-        }
-        if (event.type === "error") {
-          setError(event.message);
-          setStatus("error");
+          if (event.type === "error") {
+            setError(event.message);
+            setStatus("error");
+          }
         }
       }
+    } catch {
+      setStatus("error");
+      setError("Nao foi possivel gerar a resposta. Tente novamente.");
+    } finally {
+      reader.cancel().catch(() => undefined);
     }
   }, []);
 
