@@ -112,7 +112,7 @@ Plans:
 
 ### Phase 4: Spreadsheet File Analysis
 
-**Goal**: Users can upload small spreadsheets, chat against detected structure, generate pivot-style summaries and reports, and trust the raw-file privacy lifecycle.
+**Goal**: As a usuário logado, I want to fazer upload de planilhas, conversar com os dados e gerar relatórios, so that possa analisar dados e criar relatórios sem depender de ferramentas externas.
 **Mode:** mvp
 **Depends on**: Phase 3
 **Requirements**: FILE-01, FILE-02, FILE-03, FILE-04, FILE-05, PRIV-01, PRIV-02, PRIV-03, PRIV-04
