@@ -129,9 +129,17 @@ Plans:
 
 Plans:
 
-- [ ] 04-01: Build upload validation, temporary storage, parsers, and file metadata model.
-- [ ] 04-02: Implement schema-aware file chat, pivot summaries, and reports.
-- [ ] 04-03: Implement cleanup lifecycle, privacy documentation, provider expiration controls, and verification.
+**Wave 1**
+
+- [ ] 04-01-PLAN.md — Instalar libs (csv-parse, xlsx, node-cron), modelos Prisma (UploadedFile + ChatMessage), db push, Zod contracts, file-parser e file-repository
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 04-02-PLAN.md — Route handlers de upload e chat, AI stream, hooks de estado, todos os componentes de UI, página RSC /workspace/file-analysis
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
+- [ ] 04-03-PLAN.md — Cron de limpeza automática, instrumentation.ts, sidebar ativado, documentação de privacidade (PRIV-03)
 
 ### Phase 5: OCR, Charts, and Launch Hardening
 
