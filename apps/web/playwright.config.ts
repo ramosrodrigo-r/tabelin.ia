@@ -4,7 +4,7 @@ export default defineConfig({
   testDir: "./tests/e2e",
   timeout: 30_000,
   use: {
-    baseURL: "http://127.0.0.1:3000",
+    baseURL: "http://localhost:3000",
     trace: "on-first-retry"
   },
   projects: [
@@ -14,8 +14,8 @@ export default defineConfig({
     }
   ],
   webServer: {
-    command: "corepack pnpm dev --hostname 127.0.0.1 --port 3000",
-    url: "http://127.0.0.1:3000",
+    command: "corepack pnpm dev --port 3000",
+    url: "http://localhost:3000",
     reuseExistingServer: !process.env.CI,
     timeout: 120_000
   }

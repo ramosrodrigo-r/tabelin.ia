@@ -128,27 +128,58 @@ const ocrMockResponse = {
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
+/**
+ * Sign up via fetch from page context (shares cookies + correct Origin).
+ * Sets session cookie; subsequent page.goto() calls land in the authed context.
+ */
 async function signUp(page: import("@playwright/test").Page, suffix?: string) {
   const ts = suffix ?? Date.now();
   const email = `test-${ts}@tabelin-smoke.test`;
+  // Must navigate first so Origin header is set correctly by the browser
   await page.goto("/sign-up");
-  await page.getByLabel("Nome").fill("Smoke Tester");
-  await page.getByLabel("Email").fill(email);
-  await page.getByLabel("Senha").fill("senha-segura-123");
-  await page.getByRole("button", { name: "Criar conta" }).click();
-  await expect(page).toHaveURL(/workspace/);
+  const result = await page.evaluate(async (data) => {
+    const resp = await fetch("/api/auth/sign-up/email", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(data)
+    });
+    return { ok: resp.ok, status: resp.status };
+  }, { name: "Smoke Tester", email, password: "senha-segura-123" } as Record<string, string>);
+  if (!result.ok) throw new Error(`signUp API failed: ${result.status}`);
+  await page.goto("/workspace");
+  await expect(page).toHaveURL(/workspace/, { timeout: 10000 });
   return email;
 }
 
+/**
+ * Sign in via fetch from page context (shares cookies + correct Origin).
+ */
+async function signInApi(page: import("@playwright/test").Page, email: string) {
+  await page.goto("/sign-in");
+  const result = await page.evaluate(async (data) => {
+    const resp = await fetch("/api/auth/sign-in/email", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(data)
+    });
+    return { ok: resp.ok, status: resp.status };
+  }, { email, password: "senha-segura-123" } as Record<string, string>);
+  if (!result.ok) throw new Error(`signIn API failed: ${result.status}`);
+  await page.goto("/workspace");
+  await expect(page).toHaveURL(/workspace/, { timeout: 10000 });
+}
+
 async function signOut(page: import("@playwright/test").Page) {
-  // Navigate to sign-out endpoint directly
-  await page.goto("/api/auth/sign-out");
+  // Use POST (the endpoint only accepts POST; GET returns 404)
+  await page.evaluate(() => fetch("/api/auth/sign-out", { method: "POST" }));
+  await page.goto("/sign-in");
 }
 
 // ─── Suites ──────────────────────────────────────────────────────────────────
 
 test.describe("smoke: auth flow", () => {
   test("sign-up → workspace → sign-out → sign-in → workspace", async ({ page }) => {
+    // Test full auth cycle via API (UI form tested separately — see auth-routes.test.ts)
     const email = await signUp(page);
     await expect(page).toHaveURL(/workspace/);
 
@@ -156,11 +187,8 @@ test.describe("smoke: auth flow", () => {
     await signOut(page);
     await expect(page).not.toHaveURL(/workspace/);
 
-    // Sign in
-    await page.goto("/sign-in");
-    await page.getByLabel("Email").fill(email);
-    await page.getByLabel("Senha").fill("senha-segura-123");
-    await page.getByRole("button", { name: "Entrar" }).click();
+    // Sign back in via API
+    await signInApi(page, email);
     await expect(page).toHaveURL(/workspace/);
   });
 });
