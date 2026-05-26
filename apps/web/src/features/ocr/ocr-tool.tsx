@@ -21,15 +21,9 @@ export function OcrTool({ entitlement: _entitlement }: Props) {
 
   function handleUpload(file: File) {
     setUiState("processing");
-    void (async () => {
-      await imageUploadHook.upload(file);
-      if (imageUploadHook.result) {
-        setResult(imageUploadHook.result);
-        setUiState("complete");
-      } else if (imageUploadHook.status === "error" || imageUploadHook.quotaBlocked) {
-        setUiState("error");
-      }
-    })();
+    // State transitions are driven by hook state changes detected in the
+    // render-time derived checks below — post-await reads would see stale closure values.
+    void imageUploadHook.upload(file);
   }
 
   // React to hook state changes
