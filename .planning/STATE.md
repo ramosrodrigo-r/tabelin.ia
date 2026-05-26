@@ -1,15 +1,15 @@
 ---
 gsd_state_version: 1.0
 milestone: v1.0
-milestone_name: milestone
-status: milestone_complete
-stopped_at: Milestone complete (Phase 05 was final phase)
-last_updated: 2026-05-26T23:22:48.504Z
-last_activity: 2026-05-26 -- Phase 05 UAT complete, gap closure applied, v1.0 milestone complete
+milestone_name: MVP
+status: archived
+stopped_at: v1.0 milestone archived — ready for v2 planning
+last_updated: 2026-05-26T23:59:00.000Z
+last_activity: 2026-05-26 — v1.0 milestone closed, archived to milestones/, git tag v1.0 created
 progress:
   total_phases: 5
   completed_phases: 5
-  total_plans: 15
+  total_plans: 16
   completed_plans: 16
   percent: 100
 ---
@@ -18,10 +18,10 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-05-26)
+See: .planning/PROJECT.md (updated 2026-05-26 after v1.0 milestone)
 
 **Core value:** Brazilian spreadsheet users can describe the outcome they need in Portuguese and quickly receive correct, copy-ready formulas, code, queries, or structured table outputs that fit their actual tools.
-**Current focus:** v1.0 milestone complete — all 5 phases shipped
+**Current focus:** v1.0 MVP archived — planning v2 via `/gsd:new-milestone`
 
 ## Current Position
 
@@ -111,6 +111,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-05-26T23:25:00.000Z
-Stopped at: v1.0 milestone complete — UAT Phase 05 finalizado, 9/9 testes passando, gap closure aplicado, PROJECT.md evoluído
+Last session: 2026-05-26T23:59:00.000Z
+Stopped at: v1.0 milestone archived — ROADMAP.md collapsed, REQUIREMENTS.md archived, MILESTONES.md created, git tag v1.0 created.
 Resume file: None
