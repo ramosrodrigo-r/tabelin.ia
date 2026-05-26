@@ -64,7 +64,7 @@ Inherits existing body baseline from `globals.css`. No new font sizes or weights
 
 Note: weight 650 is already used throughout the project for labels and headings. Body text uses 400. These are the only two declared weights.
 
-Monospace exception: chat messages that contain code blocks or table Markdown are rendered in `ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace` at 13px — inherits `.output-box pre` rule from globals.css.
+Monospace exception: chat messages that contain code blocks or table Markdown are rendered in `ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace` — inherits the preexisting `.output-box pre` CSS rule from globals.css. **This phase declares no new monospace font size.** No new CSS is written; the existing rule applies automatically to `<pre>` elements inside assistant chat bubbles.
 
 ---
 
@@ -131,7 +131,7 @@ States:
 
 Structure:
 - Heading: "Arquivo com múltiplas abas — escolha qual analisar" (14px, `--muted`)
-- Row of chip buttons: one per sheet name. Chip style: `border: 1px solid var(--border)`, `border-radius: 6px`, `background: #fff`, `padding: 6px 12px`, `font-size: 14px`, `--text`
+- Row of chip buttons: one per sheet name. Chip style: `border: 1px solid var(--border)`, `border-radius: 6px`, `background: #fff`, `padding: 4px 12px`, `font-size: 14px`, `--text`
 - Selected chip: `border-color: var(--primary)`, `color: var(--primary)`, `font-weight: 650`
 - "Confirmar aba" primary button: appears after a chip is selected
 
@@ -199,7 +199,7 @@ Structure:
 ```
 [ textarea (flex-grow) ] [ Enviar button ]
 ```
-- `textarea`: `border: 1px solid var(--border)`, `border-radius: 6px`, `padding: 10px 12px`, `resize: none`, `rows={2}`, font inherited, placeholder "Faça uma pergunta sobre os dados..."
+- `textarea`: `border: 1px solid var(--border)`, `border-radius: 6px`, `padding: 8px 12px`, `resize: none`, `rows={2}`, font inherited, placeholder "Faça uma pergunta sobre os dados..."
 - On focus: `outline: 2px solid var(--primary)` (inherits focus-visible rule)
 - "Enviar" button: `.primary-button`, min-height 40px, contains `Send` lucide icon (16px) + "Enviar" label, disabled when: no text, uploading, or streaming
 
@@ -214,7 +214,7 @@ Two chips, fixed after upload (D-10):
 | Pivot | "Resumo Pivô" | Sends pre-built pivot prompt to chat route |
 | Report | "Relatório Executivo" | Sends pre-built executive report prompt to chat route |
 
-Chip style: `border: 1px solid var(--border)`, `border-radius: 6px`, `background: #fff`, `padding: 6px 16px`, `font-size: 13px`, `font-weight: 650`, `color: var(--text)` — secondary button style, visually distinct from but not competing with the primary "Enviar" button (D-10: "visually destacados but not intrusive").
+Chip style: `border: 1px solid var(--border)`, `border-radius: 6px`, `background: #fff`, `padding: 4px 16px`, `font-size: 12px`, `font-weight: 650`, `color: var(--text)` — secondary button style, visually distinct from but not competing with the primary "Enviar" button (D-10: "visually destacados but not intrusive").
 
 On click: chip triggers `onSendQuickAction(prompt)` — same handler as chat input submit. Chip is disabled during streaming.
 
