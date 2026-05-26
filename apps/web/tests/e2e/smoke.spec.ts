@@ -495,8 +495,6 @@ test.describe("smoke: privacy cleanup", () => {
     // Unauthenticated user is redirected to sign-in — workspace URL not accessible
     await expect(page).not.toHaveURL(/workspace\/file-analysis.*fileId/);
     // Uploaded data should not be visible (either redirected or clean state)
-    await expect(page.getByText("Alice")).not.toBeVisible({ timeout: 5_000 }).catch(() => {
-      // File data not visible — privacy verified
-    });
+    await expect(page.getByText("Alice")).not.toBeVisible({ timeout: 5_000 });
   });
 });
