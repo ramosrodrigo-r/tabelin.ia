@@ -683,17 +683,11 @@ export function useRegexStream() {
 
 ---
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **VBA language support no Shiki**
-   - O que sabemos: Shiki 4.1.0 suporta ~200 linguagens via bundles. VBA (`vba`) está na lista de linguagens suportadas segundo documentação, mas pode não estar no fine-grained bundle padrão.
-   - O que não está claro: se `react-shiki` inclui VBA no bundle default ou se requer import explícito.
-   - Recomendação: No Wave 0, executar `import { bundledLanguages } from 'shiki'` e verificar se `"vba"` está presente. Se não, usar `"vb"` ou `<pre>` simples para VBA.
+1. **VBA language support no Shiki** — RESOLVED: Plan 03-03 Task 1 inclui verificação explícita via `node -e "const { bundledLanguages } = require('shiki'); console.log('vba' in bundledLanguages)"` no Passo 0. A constante `SCRIPT_HIGHLIGHT_LANG` no shared schema mapeia `vba → 'vba'` com fallback para `'plaintext'` se ausente no bundle.
 
-2. **Prisma db push vs migrate**
-   - O que sabemos: não há pasta `prisma/migrations` — o projeto usa `prisma db push`. Mudança de `String` para `String?` é compatível backward no PostgreSQL (NULL para linhas existentes).
-   - O que não está claro: se há um ambiente de staging/prod que exige migration files.
-   - Recomendação: Executar `pnpm prisma db push` e verificar que o schema é aplicado corretamente antes dos novos route handlers.
+2. **Prisma db push vs migrate** — RESOLVED: Confirmado que o projeto usa `prisma db push` (sem pasta `prisma/migrations`). Plan 03-01 Task 1 inclui `[BLOCKING]` task com `npx prisma db push` para tornar `formulaLanguage` e `separator` anuláveis (`String?`). Mudança não-destrutiva, sem risco para dados existentes.
 
 ---
 
