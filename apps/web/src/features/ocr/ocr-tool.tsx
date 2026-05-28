@@ -3,6 +3,8 @@
 import type { OcrResponse, UserEntitlement } from "@tabelin/shared";
 import { useState } from "react";
 
+import { ToolNav } from "@/components/app/tool-nav";
+
 import { useImageUpload } from "./hooks/use-image-upload";
 import { ImageUploadPanel } from "./components/image-upload-panel";
 import { OcrResultPanel } from "./components/ocr-result-panel";
@@ -43,7 +45,7 @@ export function OcrTool({ entitlement: _entitlement }: Props) {
   }
 
   return (
-    <>
+    <div className="tool-stack" aria-label="OCR workspace">
       {uiState === "idle" || uiState === "error" ? (
         <ImageUploadPanel
           error={imageUploadHook.error}
@@ -59,6 +61,8 @@ export function OcrTool({ entitlement: _entitlement }: Props) {
           result={result}
         />
       ) : null}
-    </>
+
+      <ToolNav />
+    </div>
   );
 }

@@ -37,7 +37,7 @@ export function FormulaOutputPanel({
   const completeText = copyValue(result);
 
   return (
-    <section className="tool-panel formula-panel output-panel" aria-label="Resultado">
+    <section className="output-panel" aria-label="Resultado">
       <div className="output-header">
         <div>
           <h2>Resultado</h2>

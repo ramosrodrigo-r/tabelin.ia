@@ -2,6 +2,9 @@
 
 import type { UserEntitlement } from "@tabelin/shared";
 import { useState } from "react";
+
+import { ToolNav } from "@/components/app/tool-nav";
+
 import { RegexInputPanel } from "./components/regex-input-panel";
 import { RegexOutputPanel } from "./components/regex-output-panel";
 import { type RegexMode, useRegexStream } from "./hooks/use-regex-stream";
@@ -16,14 +19,17 @@ export function RegexTool({ entitlement }: { entitlement: UserEntitlement }) {
 
   async function submit() {
     if (!text.trim()) {
-      setValidationError(mode === "generate" ? "Descreva o padrao antes de gerar." : "Cole uma expressao regular antes de explicar.");
+      setValidationError(
+        mode === "generate"
+          ? "Descreva o padrao antes de gerar."
+          : "Cole uma expressao regular antes de explicar."
+      );
       return;
     }
     setValidationError("");
     await stream.submit({ mode, text });
   }
 
-  // Reset state when switching modes
   function handleModeChange(newMode: RegexMode) {
     setMode(newMode);
     setText("");
@@ -31,7 +37,7 @@ export function RegexTool({ entitlement }: { entitlement: UserEntitlement }) {
   }
 
   return (
-    <section className="tool-grid" aria-label="Regex workspace">
+    <div className="tool-stack" aria-label="Regex workspace">
       <RegexInputPanel
         mode={mode}
         text={text}
@@ -44,6 +50,9 @@ export function RegexTool({ entitlement }: { entitlement: UserEntitlement }) {
         onTextChange={setText}
         onSubmit={submit}
       />
+
+      <ToolNav />
+
       <RegexOutputPanel
         status={stream.status}
         draft={stream.draft}
@@ -53,6 +62,6 @@ export function RegexTool({ entitlement }: { entitlement: UserEntitlement }) {
         error={stream.error}
         onRetry={submit}
       />
-    </section>
+    </div>
   );
 }

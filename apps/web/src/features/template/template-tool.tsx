@@ -2,6 +2,9 @@
 
 import type { UserEntitlement } from "@tabelin/shared";
 import { useState } from "react";
+
+import { ToolNav } from "@/components/app/tool-nav";
+
 import { TemplateInputPanel } from "./components/template-input-panel";
 import { TemplateOutputPanel } from "./components/template-output-panel";
 import { useTemplateStream } from "./hooks/use-template-stream";
@@ -23,7 +26,7 @@ export function TemplateTool({ entitlement }: { entitlement: UserEntitlement }) 
   }
 
   return (
-    <section className="tool-grid" aria-label="Templates workspace">
+    <div className="tool-stack" aria-label="Templates workspace">
       <TemplateInputPanel
         text={text}
         validationError={validationError}
@@ -35,6 +38,9 @@ export function TemplateTool({ entitlement }: { entitlement: UserEntitlement }) 
         onTextChange={setText}
         onSubmit={submit}
       />
+
+      <ToolNav />
+
       <TemplateOutputPanel
         status={stream.status}
         draft={stream.draft}
@@ -44,6 +50,6 @@ export function TemplateTool({ entitlement }: { entitlement: UserEntitlement }) 
         error={stream.error}
         onRetry={submit}
       />
-    </section>
+    </div>
   );
 }

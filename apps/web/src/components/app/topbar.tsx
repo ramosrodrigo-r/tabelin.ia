@@ -28,10 +28,7 @@ export function Topbar({
 
   return (
     <header className="topbar">
-      <div className="topbar-title">
-        <strong>Formula</strong>
-        <span>Saida localizada para Excel, Sheets, Airtable e LibreOffice.</span>
-      </div>
+      <strong className="topbar-brand">Tabelin.IA</strong>
       <div className="topbar-actions">
         {isPro ? (
           <span className="pro-badge" title="Plano Pro ativo">
@@ -60,7 +57,13 @@ export function Topbar({
                       Email prioritario
                     </a>
                     {supportLinks.whatsAppHref ? (
-                      <a href={supportLinks.whatsAppHref} className="menu-item" target="_blank" rel="noopener noreferrer" role="menuitem">
+                      <a
+                        href={supportLinks.whatsAppHref}
+                        className="menu-item"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        role="menuitem"
+                      >
                         <MessageCircle aria-hidden size={16} />
                         WhatsApp
                       </a>

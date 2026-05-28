@@ -4,6 +4,8 @@ import type { UserEntitlement } from "@tabelin/shared";
 import type { ScriptType } from "@tabelin/shared";
 import { useState } from "react";
 
+import { ToolNav } from "@/components/app/tool-nav";
+
 import { ScriptsInputPanel } from "./components/scripts-input-panel";
 import { ScriptsOutputPanel } from "./components/scripts-output-panel";
 import { useScriptsStream } from "./hooks/use-scripts-stream";
@@ -26,7 +28,7 @@ export function ScriptsTool({ entitlement }: { entitlement: UserEntitlement }) {
   }
 
   return (
-    <section className="tool-grid" aria-label="Scripts workspace">
+    <div className="tool-stack" aria-label="Scripts workspace">
       <ScriptsInputPanel
         scriptType={scriptType}
         text={text}
@@ -39,6 +41,9 @@ export function ScriptsTool({ entitlement }: { entitlement: UserEntitlement }) {
         onTextChange={setText}
         onSubmit={submit}
       />
+
+      <ToolNav />
+
       <ScriptsOutputPanel
         status={stream.status}
         draft={stream.draft}
@@ -48,6 +53,6 @@ export function ScriptsTool({ entitlement }: { entitlement: UserEntitlement }) {
         error={stream.error}
         onRetry={submit}
       />
-    </section>
+    </div>
   );
 }

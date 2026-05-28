@@ -3,6 +3,8 @@
 import type { FileSchema, UserEntitlement } from "@tabelin/shared";
 import { useState } from "react";
 
+import { ToolNav } from "@/components/app/tool-nav";
+
 import { useFileUpload } from "./hooks/use-file-upload";
 import { ChatPanel } from "./components/chat-panel";
 import { FileUploadPanel } from "./components/file-upload-panel";
@@ -66,7 +68,7 @@ export function FileAnalysisTool({ entitlement: _entitlement }: Props) {
   }
 
   return (
-    <>
+    <div className="tool-stack" aria-label="File analysis workspace">
       {uiState === "idle" ? (
         <FileUploadPanel
           activeFile={false}
@@ -91,6 +93,8 @@ export function FileAnalysisTool({ entitlement: _entitlement }: Props) {
           uploadedFileId={uploadedFileId}
         />
       ) : null}
-    </>
+
+      <ToolNav />
+    </div>
   );
 }

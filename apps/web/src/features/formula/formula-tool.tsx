@@ -3,6 +3,8 @@
 import type { FormulaLanguage, FormulaPlatform, UserEntitlement } from "@tabelin/shared";
 import { useState } from "react";
 
+import { ToolNav } from "@/components/app/tool-nav";
+
 import { FormulaInputPanel } from "./components/formula-input-panel";
 import { FormulaOutputPanel } from "./components/formula-output-panel";
 import { type FormulaMode, useFormulaStream } from "./hooks/use-formula-stream";
@@ -25,21 +27,20 @@ export function FormulaTool({ entitlement }: { entitlement: UserEntitlement }) {
     }
 
     if (!text.trim()) {
-      setValidationError(mode === "generate" ? "Descreva a tarefa da planilha antes de gerar." : "Cole uma formula antes de explicar.");
+      setValidationError(
+        mode === "generate"
+          ? "Descreva a tarefa da planilha antes de gerar."
+          : "Cole uma formula antes de explicar."
+      );
       return;
     }
 
     setValidationError("");
-    await stream.submit({
-      mode,
-      platform,
-      formulaLanguage,
-      text
-    });
+    await stream.submit({ mode, platform, formulaLanguage, text });
   }
 
   return (
-    <>
+    <div className="tool-stack" aria-label="Formula workspace">
       {showRevokedNotice ? (
         <div className="revoked-notice">
           <p>Seu plano Pro foi cancelado. Voce retornou ao plano gratuito com 4 usos a cada 12 horas.</p>
@@ -48,34 +49,35 @@ export function FormulaTool({ entitlement }: { entitlement: UserEntitlement }) {
           </button>
         </div>
       ) : null}
-      <section className="tool-grid" aria-label="Formula workspace">
-        <FormulaInputPanel
-          mode={mode}
-          platform={platform}
-          formulaLanguage={formulaLanguage}
-          text={text}
-          validationError={validationError}
-          pending={pending}
-          isPro={isPro}
-          quotaBlocked={stream.quotaBlocked}
-          lastFreeUse={stream.lastFreeUse}
-          onModeChange={setMode}
-          onPlatformChange={setPlatform}
-          onLanguageChange={setFormulaLanguage}
-          onTextChange={setText}
-          onSubmit={submit}
-        />
-        <FormulaOutputPanel
-          status={stream.status}
-          draft={stream.draft}
-          result={stream.result}
-          metadata={stream.metadata}
-          warnings={stream.warnings}
-          error={stream.error}
-          onRetry={submit}
-        />
-      </section>
-    </>
+
+      <FormulaInputPanel
+        mode={mode}
+        platform={platform}
+        formulaLanguage={formulaLanguage}
+        text={text}
+        validationError={validationError}
+        pending={pending}
+        isPro={isPro}
+        quotaBlocked={stream.quotaBlocked}
+        lastFreeUse={stream.lastFreeUse}
+        onModeChange={setMode}
+        onPlatformChange={setPlatform}
+        onLanguageChange={setFormulaLanguage}
+        onTextChange={setText}
+        onSubmit={submit}
+      />
+
+      <ToolNav />
+
+      <FormulaOutputPanel
+        status={stream.status}
+        draft={stream.draft}
+        result={stream.result}
+        metadata={stream.metadata}
+        warnings={stream.warnings}
+        error={stream.error}
+        onRetry={submit}
+      />
+    </div>
   );
 }
-

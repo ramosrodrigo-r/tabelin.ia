@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { SCRIPT_TYPES } from "@tabelin/shared";
 import type { ScriptType } from "@tabelin/shared";
-import { Wand2 } from "lucide-react";
+
+import { ChatInput } from "@/components/app/chat-input";
 
 export function ScriptsInputPanel({
   scriptType,
@@ -15,7 +16,7 @@ export function ScriptsInputPanel({
   lastFreeUse,
   onScriptTypeChange,
   onTextChange,
-  onSubmit
+  onSubmit,
 }: {
   scriptType: ScriptType;
   text: string;
@@ -30,81 +31,76 @@ export function ScriptsInputPanel({
 }) {
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
 
+  const options = (
+    <div className="chat-options-row">
+      <div className="chat-mode-tabs" role="group" aria-label="Tipo de script">
+        {SCRIPT_TYPES.map((item) => (
+          <button
+            key={item.id}
+            type="button"
+            aria-pressed={scriptType === item.id}
+            className="chat-mode-tab"
+            onClick={() => onScriptTypeChange(item.id)}
+          >
+            {item.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+
   return (
-    <section className="tool-panel" aria-label="Entrada do script">
-      <div className="field-stack">
-        <fieldset className="segmented-field">
-          <legend>Tipo de script</legend>
-          <div className="segmented-control">
-            {SCRIPT_TYPES.map((item) => (
-              <button
-                aria-pressed={scriptType === item.id}
-                className="segment-button"
-                key={item.id}
-                onClick={() => onScriptTypeChange(item.id)}
-                type="button"
-              >
-                {item.label}
-              </button>
-            ))}
-          </div>
-        </fieldset>
+    <section aria-label="Entrada do script">
+      <ChatInput
+        id="scripts-prompt"
+        label="Descricao da automacao"
+        value={text}
+        onChange={onTextChange}
+        onSubmit={onSubmit}
+        placeholder="Quero copiar os dados da aba Vendas para a aba Relatorio ao clicar no botao."
+        pending={pending}
+        disabled={quotaBlocked}
+        submitLabel={pending ? "Gerando..." : "Gerar script"}
+        options={options}
+      />
 
-        <div className="field">
-          <label htmlFor="scripts-prompt">Descricao da automacao</label>
-          <textarea
-            id="scripts-prompt"
-            minLength={3}
-            onChange={(event) => onTextChange(event.target.value)}
-            placeholder="Quero copiar os dados da aba Vendas para a aba Relatorio ao clicar no botao."
-            rows={8}
-            value={text}
-          />
+      {validationError ? <div className="form-error mt-2">{validationError}</div> : null}
+
+      {!isPro && lastFreeUse && !quotaBlocked ? (
+        <div className="quota-warning mt-2">
+          Este e seu ultimo uso gratuito. Assine Pro para acesso ilimitado.
         </div>
+      ) : null}
 
-        {validationError ? <div className="form-error">{validationError}</div> : null}
-
-        {!isPro && lastFreeUse && !quotaBlocked ? (
-          <div className="quota-warning">Este e seu ultimo uso gratuito. Assine Pro para acesso ilimitado.</div>
-        ) : null}
-
-        {!isPro && quotaBlocked ? (
-          <div className="quota-blocked">
-            <p>Voce atingiu o limite de 4 usos gratuitos. Experimente novamente mais tarde ou assine Pro para acesso ilimitado.</p>
-            {checkoutError ? <p className="form-error">{checkoutError}</p> : null}
-            <button
-              className="primary-button"
-              type="button"
-              onClick={async () => {
-                setCheckoutError(null);
-                const response = await fetch("/api/billing/checkout", {
-                  method: "POST",
-                  headers: { "content-type": "application/json" },
-                  body: JSON.stringify({ cycle: "monthly" })
-                });
-                if (response.ok) {
-                  const data = await response.json();
-                  window.location.href = data.checkoutUrl;
-                } else {
-                  setCheckoutError("Nao foi possivel iniciar o checkout. Tente novamente.");
-                }
-              }}
-            >
-              Assinar Pro
-            </button>
-          </div>
-        ) : (
+      {!isPro && quotaBlocked ? (
+        <div className="quota-blocked mt-2">
+          <p>
+            Voce atingiu o limite de 4 usos gratuitos. Experimente novamente mais tarde ou assine Pro
+            para acesso ilimitado.
+          </p>
+          {checkoutError ? <p className="form-error">{checkoutError}</p> : null}
           <button
             className="primary-button"
-            disabled={pending || quotaBlocked}
-            onClick={onSubmit}
             type="button"
+            onClick={async () => {
+              setCheckoutError(null);
+              const response = await fetch("/api/billing/checkout", {
+                method: "POST",
+                headers: { "content-type": "application/json" },
+                body: JSON.stringify({ cycle: "monthly" }),
+              });
+              if (response.ok) {
+                const data = await response.json();
+                window.location.href = data.checkoutUrl;
+              } else {
+                setCheckoutError("Nao foi possivel iniciar o checkout. Tente novamente.");
+              }
+            }}
           >
-            <Wand2 aria-hidden size={16} />
-            {pending ? "Gerando..." : "Gerar script"}
+            Assinar Pro
           </button>
-        )}
-      </div>
+        </div>
+      ) : null}
     </section>
   );
 }

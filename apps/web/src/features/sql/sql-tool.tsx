@@ -4,6 +4,8 @@ import type { UserEntitlement } from "@tabelin/shared";
 import type { SqlDialect } from "@tabelin/shared";
 import { useState } from "react";
 
+import { ToolNav } from "@/components/app/tool-nav";
+
 import { SqlInputPanel } from "./components/sql-input-panel";
 import { SqlOutputPanel } from "./components/sql-output-panel";
 import { useSqlStream } from "./hooks/use-sql-stream";
@@ -26,7 +28,7 @@ export function SqlTool({ entitlement }: { entitlement: UserEntitlement }) {
   }
 
   return (
-    <section className="tool-grid" aria-label="SQL workspace">
+    <div className="tool-stack" aria-label="SQL workspace">
       <SqlInputPanel
         dialect={dialect}
         text={text}
@@ -39,6 +41,9 @@ export function SqlTool({ entitlement }: { entitlement: UserEntitlement }) {
         onTextChange={setText}
         onSubmit={submit}
       />
+
+      <ToolNav />
+
       <SqlOutputPanel
         status={stream.status}
         draft={stream.draft}
@@ -48,6 +53,6 @@ export function SqlTool({ entitlement }: { entitlement: UserEntitlement }) {
         error={stream.error}
         onRetry={submit}
       />
-    </section>
+    </div>
   );
 }
