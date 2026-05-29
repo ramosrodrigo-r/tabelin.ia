@@ -1,10 +1,11 @@
 ---
 phase: 7
 slug: frontend-history
-status: draft
+status: approved
 shadcn_initialized: false
 preset: none
 created: 2026-05-29
+reviewed_at: 2026-05-29
 ---
 
 # Phase 7 — UI Design Contract
