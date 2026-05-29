@@ -6,6 +6,7 @@ import { createSqlEventStream, resolveSqlPayload } from "@/server/ai/sql-stream"
 import { getSessionFromCookieHeader } from "@/server/auth/session";
 import { recordToolRequest } from "@/server/tools/tool-repository";
 import { confirmToolUse, releaseToolUse, reserveToolUse } from "@/server/usage/quota-service";
+import { saveConversationExchange } from "@/server/tools/conversation-repository";
 
 export async function POST(request: Request) {
   const user = getSessionFromCookieHeader(request.headers.get("cookie"));
@@ -36,6 +37,15 @@ export async function POST(request: Request) {
       status: "success",
       latencyMs: Math.round(performance.now() - startedAt),
       providerModel: payload.metadata.providerModel
+    });
+    // NOVO — Phase 6
+    await saveConversationExchange({
+      userId: user.id,
+      toolKind: "sql",
+      mode: "generate",
+      dialect: parsed.data.dialect,
+      userPrompt: parsed.data.prompt,
+      assistantPayload: payload
     });
     return new Response(createSqlEventStream(payload, quotaCheck.lastFreeUse), {
       headers: { "content-type": "application/x-ndjson; charset=utf-8", "cache-control": "no-store" }

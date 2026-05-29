@@ -6,6 +6,7 @@ import { createFormulaEventStream, resolveFormulaPayload } from "@/server/ai/for
 import { getSessionFromCookieHeader } from "@/server/auth/session";
 import { recordFormulaToolRequest } from "@/server/tools/formula-repository";
 import { reserveToolUse, confirmToolUse, releaseToolUse } from "@/server/usage/quota-service";
+import { saveConversationExchange } from "@/server/tools/conversation-repository";
 
 export async function POST(request: Request) {
   const user = getSessionFromCookieHeader(request.headers.get("cookie"));
@@ -43,6 +44,16 @@ export async function POST(request: Request) {
       metadata: payload.metadata,
       status: "success",
       latencyMs: Math.round(performance.now() - startedAt)
+    });
+    // NOVO — Phase 6
+    await saveConversationExchange({
+      userId: user.id,
+      toolKind: "formula",
+      mode: "generate",
+      platform: parsed.data.platform,
+      dialect: parsed.data.formulaLanguage,
+      userPrompt: parsed.data.prompt,
+      assistantPayload: payload
     });
 
     return new Response(createFormulaEventStream(payload, quotaCheck.lastFreeUse), {
