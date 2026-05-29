@@ -39,7 +39,10 @@ Full details: `.planning/milestones/v1.0-ROADMAP.md`
   2. O banco nunca acumula mais de 50 exchanges por usuário por tool — exchanges antigos são descartados automaticamente
   3. Ao deletar uma conta de usuário, todos os seus exchanges são removidos em cascade sem registros órfãos
   4. Endpoints CRUD de conversations respondem com os dados corretos e retornam erro 401 para requisições não autenticadas
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+- [ ] 06-01-PLAN.md — Schema Prisma, schema push e conversation-repository.ts
+- [ ] 06-02-PLAN.md — Integração do save nos 7 route handlers de tools
 
 ### Phase 7: Frontend History
 **Goal**: Usuário vê automaticamente o histórico de trocas anteriores ao abrir um workspace e pode iniciar uma conversa limpa
@@ -71,6 +74,6 @@ Full details: `.planning/milestones/v1.0-ROADMAP.md`
 | 3. Multi-Tool Generation Suite | v1.0 | 3/3 | Complete | 2026-05-26 |
 | 4. Spreadsheet File Analysis | v1.0 | 3/3 | Complete | 2026-05-26 |
 | 5. OCR, Charts, and Launch Hardening | v1.0 | 4/4 | Complete | 2026-05-26 |
-| 6. Persistence Layer | v1.1 | 0/? | Not started | - |
+| 6. Persistence Layer | v1.1 | 0/2 | Planned | - |
 | 7. Frontend History | v1.1 | 0/? | Not started | - |
 | 8. Multi-turn LLM Context | v1.1 | 0/? | Not started | - |
