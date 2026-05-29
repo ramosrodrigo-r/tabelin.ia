@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Conversas Persistentes
 status: executing
-last_updated: "2026-05-29T22:10:00.000Z"
+last_updated: "2026-05-29T22:30:00.000Z"
 last_activity: 2026-05-29
 progress:
   total_phases: 3
   completed_phases: 1
   total_plans: 6
-  completed_plans: 4
-  percent: 44
+  completed_plans: 5
+  percent: 55
 ---
 
 # Project State
@@ -25,11 +25,11 @@ See: .planning/PROJECT.md (updated 2026-05-26 after v1.0 milestone)
 ## Current Position
 
 Phase: 07 (frontend-history) — EXECUTING
-Plan: 3 of 4
+Plan: 4 of 4
 Status: Ready to execute
 Last activity: 2026-05-29
 
-Progress: [██████░░░░] 60%
+Progress: [███████░░░] 70%
 
 ## Performance Metrics
 
@@ -58,6 +58,7 @@ Recent decisions affecting current work:
 - Post-v1.0: Tokens do chat input migrados de dark para light theme
 - v1.1 planning: PRIV-01 (cascade delete) absorvido na Phase 6 como DDL constraint — não requer fase separada
 - 07-02: params como Promise (Next.js 15), falha silenciosa no DELETE (D-10), file-analysis excluído do enum (D-07)
+- 07-03: prefetch server-side de exchanges nos 5 server components; initialExchanges prop passada (TypeScript resolverá no Plano 04)
 
 ### Pending Todos
 
@@ -82,6 +83,6 @@ Items acknowledged and carried forward:
 
 ## Session Continuity
 
-Last session: 2026-05-29T22:10:00.000Z
-Stopped at: Completed 07-02-PLAN.md — DELETE /api/conversations/[tool] + Topbar Nova conversa
+Last session: 2026-05-29T22:30:00.000Z
+Stopped at: Completed 07-03-PLAN.md — Prefetch de exchanges nos 5 server components de page.tsx
 Resume file: None

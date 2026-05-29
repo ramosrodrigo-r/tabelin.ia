@@ -72,7 +72,7 @@ Full details: `.planning/milestones/v1.0-ROADMAP.md`
 **Wave 2** *(parallel — sem conflito de arquivos)*
 
 - [x] 07-02-PLAN.md — DELETE /api/conversations/[tool] + botão "Nova conversa" no Topbar
-- [ ] 07-03-PLAN.md — Prefetch server-side de exchanges nos 5 pages de tool de texto
+- [x] 07-03-PLAN.md — Prefetch server-side de exchanges nos 5 pages de tool de texto
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
@@ -101,5 +101,5 @@ Full details: `.planning/milestones/v1.0-ROADMAP.md`
 | 4. Spreadsheet File Analysis | v1.0 | 3/3 | Complete | 2026-05-26 |
 | 5. OCR, Charts, and Launch Hardening | v1.0 | 4/4 | Complete | 2026-05-26 |
 | 6. Persistence Layer | v1.1 | 2/2 | Complete    | 2026-05-29 |
-| 7. Frontend History | v1.1 | 2/4 | In Progress|  |
+| 7. Frontend History | v1.1 | 3/4 | In Progress|  |
 | 8. Multi-turn LLM Context | v1.1 | 0/? | Not started | - |
