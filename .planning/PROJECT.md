@@ -42,6 +42,8 @@ Brazilian spreadsheet users can describe the outcome they need in Portuguese and
 - ✓ Chart rendering: Sugerir Gráfico → BarChart/LineChart/PieChart with local type toggle — Phase 5
 - ✓ Sidebar navigation: Formula, Scripts, SQL, Regex, File Analysis, OCR all active — Phase 5
 - ✓ E2E smoke test suite (9 suites, Playwright) covering all happy paths — Phase 5
+- ✓ Every AI exchange (user prompt + assistant response) persisted to PostgreSQL per userId+toolKind with 50-exchange cap — Phase 6
+- ✓ Cascade deletion of conversation history on user account removal (PRIV-01) — Phase 6
 
 ### Active
 
@@ -116,4 +118,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-05-26 after Phase 5 completion — v1.0 milestone complete*
+*Last updated: 2026-05-29 after Phase 6 completion — persistence layer complete, conversation history write-path done*
