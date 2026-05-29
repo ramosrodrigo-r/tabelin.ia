@@ -1,17 +1,16 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.0
-milestone_name: MVP
-status: archived
-stopped_at: v1.0 milestone archived — ready for v2 planning
-last_updated: 2026-05-26T23:59:00.000Z
-last_activity: 2026-05-26 — v1.0 milestone closed, archived to milestones/, git tag v1.0 created
+milestone: v1.1
+milestone_name: Conversas Persistentes
+status: planning
+last_updated: "2026-05-29T14:18:40.196Z"
+last_activity: 2026-05-29
 progress:
-  total_phases: 5
-  completed_phases: 5
-  total_plans: 16
-  completed_plans: 16
-  percent: 100
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
@@ -25,12 +24,10 @@ See: .planning/PROJECT.md (updated 2026-05-26 after v1.0 milestone)
 
 ## Current Position
 
-Phase: 05
-Plan: Not started
-Status: Milestone complete
-Last activity: 2026-05-26
-
-Progress: [██████████] 100%
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-05-29 — Milestone v1.1 started
 
 ## Performance Metrics
 

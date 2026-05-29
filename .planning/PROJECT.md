@@ -10,6 +10,16 @@ The product is inspired by the capabilities of GPTExcel, but the product definit
 
 Brazilian spreadsheet users can describe the outcome they need in Portuguese and quickly receive correct, copy-ready formulas, code, queries, or structured table outputs that fit their actual tools.
 
+## Current Milestone: v1.1 Conversas Persistentes
+
+**Goal:** Transformar o chat-thread visual em experiência multi-turn real — histórico salvo no banco e contexto passado ao LLM em cada nova mensagem.
+
+**Target features:**
+- Histórico de conversas por tool salvo no banco (por usuário)
+- Recarregamento do histórico ao abrir o workspace
+- Multi-turn no backend: exchanges anteriores enviados ao LLM como contexto
+- Truncagem de contexto (últimas N trocas) para controlar tokens
+
 ## Requirements
 
 ### Validated
