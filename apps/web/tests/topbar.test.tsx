@@ -11,6 +11,7 @@ vi.mock("next/navigation", () => ({
   useRouter: () => ({
     push: vi.fn(),
   }),
+  usePathname: () => "/workspace",
 }));
 
 const user: SessionUser = {
