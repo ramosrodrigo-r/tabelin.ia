@@ -46,8 +46,14 @@
 
 ## Traceability
 
-| Requirement | Phase |
-|-------------|-------|
-| HIST-01 — HIST-05 | TBD |
-| MULTI-01 — MULTI-03 | TBD |
-| PRIV-01 | TBD |
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| HIST-01 | Phase 6 | Pending |
+| HIST-02 | Phase 6 | Pending |
+| HIST-04 | Phase 6 | Pending |
+| PRIV-01 | Phase 6 | Pending |
+| HIST-03 | Phase 7 | Pending |
+| HIST-05 | Phase 7 | Pending |
+| MULTI-01 | Phase 8 | Pending |
+| MULTI-02 | Phase 8 | Pending |
+| MULTI-03 | Phase 8 | Pending |
