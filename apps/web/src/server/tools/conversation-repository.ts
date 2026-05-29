@@ -58,3 +58,26 @@ export async function saveConversationExchange(input: {
     return null;
   }
 }
+
+export async function findConversationExchanges(userId: string, toolKind: string) {
+  try {
+    return await prisma.conversationExchange.findMany({
+      where: { userId, toolKind },
+      orderBy: { createdAt: "asc" },
+    });
+  } catch (err) {
+    console.warn("ConversationExchange read skipped.", err);
+    return [];
+  }
+}
+
+export async function deleteConversationExchanges(userId: string, toolKind: string) {
+  try {
+    return await prisma.conversationExchange.deleteMany({
+      where: { userId, toolKind },
+    });
+  } catch (err) {
+    console.warn("ConversationExchange delete skipped.", err);
+    return null;
+  }
+}
