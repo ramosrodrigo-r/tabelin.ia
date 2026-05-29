@@ -12,9 +12,9 @@
 
 - [x] **HIST-01**: Usuário pode fechar e reabrir um workspace de tool e ver as trocas anteriores (exchanges salvos no banco por usuário + tipo de tool)
 - [x] **HIST-02**: Cada exchange salva os metadados do tool junto com a resposta (plataforma, dialeto, modo) para renderização correta no reload
-- [ ] **HIST-03**: Usuário vê o histórico de trocas populado automaticamente ao abrir o workspace
+- [x] **HIST-03**: Usuário vê o histórico de trocas populado automaticamente ao abrir o workspace
 - [x] **HIST-04**: Histórico limitado às últimas 50 trocas por usuário por tool; exchanges mais antigos são descartados
-- [ ] **HIST-05**: Usuário pode limpar o histórico de um tool individual ("Nova conversa")
+- [x] **HIST-05**: Usuário pode limpar o histórico de um tool individual ("Nova conversa")
 
 **Scope:** Fórmula, SQL, Regex, Scripts, Template, File Analysis
 
@@ -52,8 +52,8 @@
 | HIST-02 | Phase 6 | Complete |
 | HIST-04 | Phase 6 | Complete |
 | PRIV-01 | Phase 6 | Complete |
-| HIST-03 | Phase 7 | Pending |
-| HIST-05 | Phase 7 | Pending |
+| HIST-03 | Phase 7 | Complete |
+| HIST-05 | Phase 7 | Complete |
 | MULTI-01 | Phase 8 | Pending |
 | MULTI-02 | Phase 8 | Pending |
 | MULTI-03 | Phase 8 | Pending |

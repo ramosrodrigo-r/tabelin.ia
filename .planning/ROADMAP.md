@@ -67,7 +67,7 @@ Full details: `.planning/milestones/v1.0-ROADMAP.md`
 
 **Wave 1**
 
-- [ ] 07-01-PLAN.md — findConversationExchanges + deleteConversationExchanges no repository
+- [x] 07-01-PLAN.md — findConversationExchanges + deleteConversationExchanges no repository
 
 **Wave 2** *(parallel — sem conflito de arquivos)*
 
@@ -101,5 +101,5 @@ Full details: `.planning/milestones/v1.0-ROADMAP.md`
 | 4. Spreadsheet File Analysis | v1.0 | 3/3 | Complete | 2026-05-26 |
 | 5. OCR, Charts, and Launch Hardening | v1.0 | 4/4 | Complete | 2026-05-26 |
 | 6. Persistence Layer | v1.1 | 2/2 | Complete    | 2026-05-29 |
-| 7. Frontend History | v1.1 | 0/4 | Not started | - |
+| 7. Frontend History | v1.1 | 1/4 | In Progress|  |
 | 8. Multi-turn LLM Context | v1.1 | 0/? | Not started | - |
