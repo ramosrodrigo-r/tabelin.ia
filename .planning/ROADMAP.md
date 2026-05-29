@@ -87,6 +87,6 @@ Full details: `.planning/milestones/v1.0-ROADMAP.md`
 | 3. Multi-Tool Generation Suite | v1.0 | 3/3 | Complete | 2026-05-26 |
 | 4. Spreadsheet File Analysis | v1.0 | 3/3 | Complete | 2026-05-26 |
 | 5. OCR, Charts, and Launch Hardening | v1.0 | 4/4 | Complete | 2026-05-26 |
-| 6. Persistence Layer | v1.1 | 2/2 | Complete   | 2026-05-29 |
+| 6. Persistence Layer | v1.1 | 2/2 | Complete    | 2026-05-29 |
 | 7. Frontend History | v1.1 | 0/? | Not started | - |
 | 8. Multi-turn LLM Context | v1.1 | 0/? | Not started | - |
