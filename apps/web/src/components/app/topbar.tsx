@@ -18,7 +18,9 @@ function useWorkspaceToolKind(): string | undefined {
   if (/\/workspace\/regex(\/|$)/.test(pathname)) return "regex";
   if (/\/workspace\/scripts(\/|$)/.test(pathname)) return "script";
   if (/\/workspace\/templates(\/|$)/.test(pathname)) return "template";
-  if (/\/workspace(\/|$)/.test(pathname)) return "formula";
+  // Formula é a raiz exata /workspace — NÃO usar prefixo, senão captura
+  // /workspace/file-analysis e /workspace/ocr (efêmeros, sem histórico — D-07).
+  if (/\/workspace\/?$/.test(pathname)) return "formula";
   return undefined;
 }
 
