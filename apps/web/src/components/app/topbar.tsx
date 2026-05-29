@@ -1,19 +1,33 @@
 "use client";
 
 import { LogOut, Mail, MessageCircle, Sparkles } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
+import { useInvokeNewConversation } from "@/components/app/workspace-conversation-context";
 import type { SessionUser } from "@/server/auth/session";
 import type { SupportLinks } from "@/server/support/support-config";
 import type { UserEntitlement } from "@tabelin/shared";
+
+/** Deriva o toolKind canônico a partir da URL do workspace atual. */
+function useWorkspaceToolKind(): string | undefined {
+  const pathname = usePathname();
+  if (!pathname) return undefined;
+  // Rotas: /workspace (formula), /workspace/sql, /workspace/regex, /workspace/scripts, /workspace/templates
+  if (/\/workspace\/sql(\/|$)/.test(pathname)) return "sql";
+  if (/\/workspace\/regex(\/|$)/.test(pathname)) return "regex";
+  if (/\/workspace\/scripts(\/|$)/.test(pathname)) return "script";
+  if (/\/workspace\/templates(\/|$)/.test(pathname)) return "template";
+  if (/\/workspace(\/|$)/.test(pathname)) return "formula";
+  return undefined;
+}
 
 export function Topbar({
   user,
   entitlement,
   supportLinks,
-  toolKind,
-  onNewConversation,
+  toolKind: toolKindProp,
+  onNewConversation: onNewConversationProp,
 }: {
   user: SessionUser;
   entitlement: UserEntitlement;
@@ -27,6 +41,14 @@ export function Topbar({
   const newConvTriggerRef = useRef<HTMLButtonElement>(null);
   const newConvContainerRef = useRef<HTMLDivElement>(null);
   const isPro = entitlement.plan === "pro" && entitlement.status === "active";
+
+  // Deriva toolKind da rota atual — usa prop legada se fornecida (compatibilidade futura)
+  const toolKindFromPath = useWorkspaceToolKind();
+  const toolKind = toolKindProp ?? toolKindFromPath;
+
+  // Invoca o callback registrado pelo tool component ativo via contexto
+  const invokeNewConversation = useInvokeNewConversation();
+  const onNewConversation = onNewConversationProp ?? invokeNewConversation ?? undefined;
 
   async function signOut() {
     await fetch("/api/auth/sign-out", { method: "POST" });
