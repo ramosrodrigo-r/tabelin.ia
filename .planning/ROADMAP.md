@@ -31,38 +31,51 @@ Full details: `.planning/milestones/v1.0-ROADMAP.md`
 ## Phase Details
 
 ### Phase 6: Persistence Layer
+
 **Goal**: Exchanges de todos os tools são salvos no banco e recuperáveis por usuário, com cascade delete ao excluir conta
 **Depends on**: Phase 5 (v1.0 complete)
 **Requirements**: HIST-01, HIST-02, HIST-04, PRIV-01
 **Success Criteria** (what must be TRUE):
+
   1. Após enviar uma mensagem em qualquer tool, um registro de exchange existe no banco com o conteúdo e metadados corretos (plataforma, dialeto, modo)
   2. O banco nunca acumula mais de 50 exchanges por usuário por tool — exchanges antigos são descartados automaticamente
   3. Ao deletar uma conta de usuário, todos os seus exchanges são removidos em cascade sem registros órfãos
   4. Endpoints CRUD de conversations respondem com os dados corretos e retornam erro 401 para requisições não autenticadas
-**Plans**: 2 plans
-Plans:
+
+**Plans**: 2 plansPlans:
+**Wave 1**
+
 - [ ] 06-01-PLAN.md — Schema Prisma, schema push e conversation-repository.ts
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
 - [ ] 06-02-PLAN.md — Integração do save nos 7 route handlers de tools
 
 ### Phase 7: Frontend History
+
 **Goal**: Usuário vê automaticamente o histórico de trocas anteriores ao abrir um workspace e pode iniciar uma conversa limpa
 **Depends on**: Phase 6
 **Requirements**: HIST-03, HIST-05
 **Success Criteria** (what must be TRUE):
+
   1. Ao abrir qualquer workspace de tool (Formula, SQL, Regex, Scripts, Template, File Analysis), as trocas anteriores aparecem no chat sem nenhuma ação do usuário
   2. Cada exchange recarregado exibe os metadados corretos — plataforma selecionada, dialeto e modo estão consistentes com o estado salvo
   3. Ao clicar em "Nova conversa", o chat é limpo e confirmado ao usuário, e as próximas trocas começam um novo thread
+
 **Plans**: TBD
 **UI hint**: yes
 
 ### Phase 8: Multi-turn LLM Context
+
 **Goal**: O LLM recebe o histórico da conversa como contexto em cada nova mensagem, tornando follow-ups funcionais sem repetição manual
 **Depends on**: Phase 7
 **Requirements**: MULTI-01, MULTI-02, MULTI-03
 **Success Criteria** (what must be TRUE):
+
   1. O usuário pode fazer uma pergunta de follow-up (ex: "agora adapte para o Google Sheets") e o LLM responde corretamente sem o usuário repetir o contexto anterior
   2. Conversas longas não causam erro de limite de tokens — o backend trunca automaticamente para as últimas N trocas quando necessário
   3. Trocar de tool (ex: de Formula para SQL) não vaza contexto — cada tool mantém e injeta apenas seu próprio thread de conversa
+
 **Plans**: TBD
 
 ## Progress

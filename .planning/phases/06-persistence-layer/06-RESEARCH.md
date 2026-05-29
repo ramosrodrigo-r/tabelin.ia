@@ -439,17 +439,17 @@ await prisma.$transaction(async (tx) => {
 
 ---
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Delete account endpoint existe?**
    - What we know: Nenhum endpoint `/api/auth/delete-account` ou similar foi encontrado nos route handlers existentes.
    - What's unclear: PRIV-01 exige cascade delete ao excluir conta — mas se não há endpoint de exclusão de conta ainda, o cascade delete será testado como? O PRIV-01 pode ser verificado apenas pela constraint DDL.
-   - Recommendation: Implementar o cascade delete via DDL (`onDelete: Cascade`) conforme planejado. Criar um teste que deleta diretamente via `prisma.user.delete()` para verificar a cascade. O endpoint de exclusão de conta, se necessário, é escopo de uma fase futura.
+   - RESOLVED: Implementar o cascade delete via DDL (`onDelete: Cascade`) conforme planejado. Verificar PRIV-01 deletando diretamente via `prisma.user.delete()` no step de verificação — sem endpoint de exclusão de conta necessário nesta fase. Endpoint de exclusão de conta é escopo futuro.
 
 2. **`toolKind` para Scripts: `"script"` ou `"scripts"`?**
    - What we know: O route handler de scripts usa `toolKind: "script"` (sem 's') em `recordToolRequest()`. A pasta da API é `tools/scripts` (com 's').
    - What's unclear: O cap de 50 em D-05 é por `userId + toolKind` — o valor string deve ser consistente.
-   - Recommendation: Usar `"script"` (sem 's') — consistente com o valor já usado em `recordToolRequest()` no handler de scripts. Ver `apps/web/src/app/api/tools/scripts/generate/route.ts` linha 32.
+   - RESOLVED: Usar `"script"` (sem 's') — consistente com o valor já usado em `recordToolRequest()` no handler de scripts. Ver `apps/web/src/app/api/tools/scripts/generate/route.ts` linha 32.
 
 ---
 
