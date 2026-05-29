@@ -5,6 +5,7 @@ import { SQL_DIALECTS } from "@tabelin/shared";
 import type { SqlDialect } from "@tabelin/shared";
 
 import { ChatInput } from "@/components/app/chat-input";
+import { ToolNav } from "@/components/app/tool-nav";
 
 export function SqlInputPanel({
   dialect,
@@ -61,6 +62,7 @@ export function SqlInputPanel({
         disabled={quotaBlocked}
         submitLabel={pending ? "Gerando..." : "Gerar SQL"}
         options={options}
+        bottomNav={<ToolNav />}
       />
 
       {validationError ? <div className="form-error mt-2">{validationError}</div> : null}

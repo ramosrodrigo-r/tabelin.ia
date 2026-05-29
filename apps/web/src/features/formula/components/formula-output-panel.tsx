@@ -6,14 +6,8 @@ import { CopyButton } from "./copy-button";
 import type { FormulaStreamStatus } from "../hooks/use-formula-stream";
 
 function copyValue(result: FormulaCompletePayload | null) {
-  if (!result) {
-    return "";
-  }
-
-  if (result.kind === "formula") {
-    return result.formula;
-  }
-
+  if (!result) return "";
+  if (result.kind === "formula") return result.formula;
   return result.steps.join("\n");
 }
 
@@ -24,7 +18,7 @@ export function FormulaOutputPanel({
   metadata,
   warnings,
   error,
-  onRetry
+  onRetry,
 }: {
   status: FormulaStreamStatus;
   draft: string;
@@ -37,12 +31,11 @@ export function FormulaOutputPanel({
   const completeText = copyValue(result);
 
   return (
-    <section className="output-panel" aria-label="Resultado">
+    <div className="assistant-card" aria-label="Resposta">
       <div className="output-header">
-        <div>
-          <h2>Resultado</h2>
-          <p aria-live="polite">{status === "streaming" ? "Recebendo resposta..." : "Pronto para revisar e copiar."}</p>
-        </div>
+        <p aria-live="polite" style={{ margin: 0 }}>
+          {status === "streaming" ? "Gerando..." : status === "loading" ? "Preparando..." : null}
+        </p>
         <CopyButton disabled={status !== "complete"} value={completeText} />
       </div>
 
@@ -55,7 +48,6 @@ export function FormulaOutputPanel({
       ) : null}
 
       <div className="output-box" data-status={status}>
-        {status === "idle" ? <span>O resultado aparece aqui assim que a resposta comecar.</span> : null}
         {status === "loading" ? <span>Preparando resposta...</span> : null}
         {status === "streaming" ? <pre>{draft}</pre> : null}
         {status === "complete" && result?.kind === "formula" ? (
@@ -97,7 +89,7 @@ export function FormulaOutputPanel({
 
       {warnings.length ? (
         <div className="note-block warning">
-          <h3>Atencao</h3>
+          <h3>Atenção</h3>
           <ul>
             {warnings.map((warning) => (
               <li key={warning}>{warning}</li>
@@ -105,7 +97,6 @@ export function FormulaOutputPanel({
           </ul>
         </div>
       ) : null}
-    </section>
+    </div>
   );
 }
-

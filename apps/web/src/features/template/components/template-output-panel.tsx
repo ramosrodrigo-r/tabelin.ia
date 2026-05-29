@@ -12,7 +12,7 @@ export function TemplateOutputPanel({
   metadata,
   warnings,
   error,
-  onRetry
+  onRetry,
 }: {
   status: TemplateStreamStatus;
   draft: string;
@@ -23,31 +23,21 @@ export function TemplateOutputPanel({
   onRetry: () => void;
 }) {
   const codeToHighlight = status === "streaming" ? draft : (result?.output ?? "");
-  // Templates use markdown formatting
-  const highlighted = useShikiHighlighter(codeToHighlight, "markdown", "github-light", { delay: 150 });
-
+  const highlighted = useShikiHighlighter(codeToHighlight, "markdown", "github-light", {
+    delay: 150,
+  });
   const copyValue = result?.output ?? "";
 
   return (
-    <section className="tool-panel" aria-label="Template gerado">
+    <div className="assistant-card" aria-label="Template gerado">
       <div className="output-header">
-        <div>
-          <h2>Template gerado</h2>
-          <p aria-live="polite">
-            {status === "streaming"
-              ? "Recebendo resposta..."
-              : status === "complete"
-                ? "Pronto para revisar e copiar."
-                : status === "loading"
-                  ? "Preparando resposta..."
-                  : "O resultado aparece aqui assim que a resposta comecar."}
-          </p>
-        </div>
+        <p aria-live="polite" style={{ margin: 0 }}>
+          {status === "streaming" ? "Gerando..." : status === "loading" ? "Preparando..." : null}
+        </p>
         <CopyButton disabled={status !== "complete"} value={copyValue} />
       </div>
 
       <div className="output-box" data-status={status}>
-        {status === "idle" ? <span>O resultado aparece aqui assim que a resposta comecar.</span> : null}
         {status === "loading" ? <span>Preparando resposta...</span> : null}
         {(status === "streaming" || status === "complete") && codeToHighlight ? (
           highlighted ? (
@@ -62,7 +52,9 @@ export function TemplateOutputPanel({
         {status === "error" ? (
           <div className="error-block">
             <p>{error || "Nao foi possivel gerar o resultado. Ajuste o pedido e tente novamente."}</p>
-            <button className="ghost-button" onClick={onRetry} type="button">Tentar novamente</button>
+            <button className="ghost-button" onClick={onRetry} type="button">
+              Tentar novamente
+            </button>
           </div>
         ) : null}
       </div>
@@ -77,6 +69,6 @@ export function TemplateOutputPanel({
           </ul>
         </div>
       ) : null}
-    </section>
+    </div>
   );
 }

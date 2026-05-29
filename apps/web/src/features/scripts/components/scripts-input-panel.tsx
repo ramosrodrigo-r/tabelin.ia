@@ -5,6 +5,7 @@ import { SCRIPT_TYPES } from "@tabelin/shared";
 import type { ScriptType } from "@tabelin/shared";
 
 import { ChatInput } from "@/components/app/chat-input";
+import { ToolNav } from "@/components/app/tool-nav";
 
 export function ScriptsInputPanel({
   scriptType,
@@ -62,6 +63,7 @@ export function ScriptsInputPanel({
         disabled={quotaBlocked}
         submitLabel={pending ? "Gerando..." : "Gerar script"}
         options={options}
+        bottomNav={<ToolNav />}
       />
 
       {validationError ? <div className="form-error mt-2">{validationError}</div> : null}

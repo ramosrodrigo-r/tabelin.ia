@@ -5,6 +5,7 @@ import type { FormulaLanguage, FormulaPlatform } from "@tabelin/shared";
 import { FORMULA_LANGUAGES, FORMULA_PLATFORMS } from "@tabelin/shared";
 
 import { ChatInput } from "@/components/app/chat-input";
+import { ToolNav } from "@/components/app/tool-nav";
 import type { FormulaMode } from "../hooks/use-formula-stream";
 
 export function FormulaInputPanel({
@@ -115,6 +116,7 @@ export function FormulaInputPanel({
         disabled={quotaBlocked}
         submitLabel={submitLabel}
         options={options}
+        bottomNav={<ToolNav />}
       />
 
       {validationError ? <div className="form-error mt-2">{validationError}</div> : null}

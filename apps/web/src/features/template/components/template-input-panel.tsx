@@ -3,6 +3,7 @@
 import { useState } from "react";
 
 import { ChatInput } from "@/components/app/chat-input";
+import { ToolNav } from "@/components/app/tool-nav";
 
 export function TemplateInputPanel({
   text,
@@ -40,6 +41,7 @@ export function TemplateInputPanel({
         pending={pending}
         disabled={showProGate || quotaBlocked}
         submitLabel={pending ? "Gerando..." : "Gerar template"}
+        bottomNav={<ToolNav />}
       />
 
       {validationError ? <div className="form-error mt-2">{validationError}</div> : null}

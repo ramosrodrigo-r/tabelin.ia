@@ -8,11 +8,10 @@ import { SCRIPT_TYPES } from "@tabelin/shared";
 import type { ScriptStreamStatus } from "../hooks/use-scripts-stream";
 import { CopyButton } from "../../formula/components/copy-button";
 
-// "vba" is not in shiki bundledLanguages — use "vb" as fallback for VBA highlighting
 const SCRIPT_HIGHLIGHT_LANG: Record<string, string> = {
   vba: "vb",
   apps_script: "javascript",
-  airtable_script: "javascript"
+  airtable_script: "javascript",
 };
 
 export function ScriptsOutputPanel({
@@ -22,7 +21,7 @@ export function ScriptsOutputPanel({
   metadata,
   warnings,
   error,
-  onRetry
+  onRetry,
 }: {
   status: ScriptStreamStatus;
   draft: string;
@@ -33,8 +32,12 @@ export function ScriptsOutputPanel({
   onRetry: () => void;
 }) {
   const codeToHighlight = status === "streaming" ? draft : (result?.code ?? "");
-  const highlightLang = metadata?.scriptType ? (SCRIPT_HIGHLIGHT_LANG[metadata.scriptType] ?? "text") : "text";
-  const highlighted = useShikiHighlighter(codeToHighlight, highlightLang, "github-light", { delay: 150 });
+  const highlightLang = metadata?.scriptType
+    ? (SCRIPT_HIGHLIGHT_LANG[metadata.scriptType] ?? "text")
+    : "text";
+  const highlighted = useShikiHighlighter(codeToHighlight, highlightLang, "github-light", {
+    delay: 150,
+  });
 
   const completeCode = result?.code ?? "";
   const scriptTypeLabel = metadata?.scriptType
@@ -42,20 +45,11 @@ export function ScriptsOutputPanel({
     : null;
 
   return (
-    <section className="tool-panel" aria-label="Script gerado">
+    <div className="assistant-card" aria-label="Script gerado">
       <div className="output-header">
-        <div>
-          <h2>Script gerado</h2>
-          <p aria-live="polite">
-            {status === "streaming"
-              ? "Recebendo resposta..."
-              : status === "complete"
-                ? "Pronto para revisar e copiar."
-                : status === "loading"
-                  ? "Preparando resposta..."
-                  : "O resultado aparece aqui assim que a resposta comecar."}
-          </p>
-        </div>
+        <p aria-live="polite" style={{ margin: 0 }}>
+          {status === "streaming" ? "Gerando..." : status === "loading" ? "Preparando..." : null}
+        </p>
         <CopyButton disabled={status !== "complete"} value={completeCode} />
       </div>
 
@@ -69,14 +63,13 @@ export function ScriptsOutputPanel({
         <div className="note-block warning" role="alert">
           <h3>
             <AlertTriangle aria-hidden size={16} />
-            {" "}Atencao — Operacao destrutiva
+            {" "}Atenção — Operação destrutiva
           </h3>
           <p>Esta operacao remove dados da planilha ou base permanentemente. Nao pode ser desfeita.</p>
         </div>
       ) : null}
 
       <div className="output-box" data-status={status}>
-        {status === "idle" ? <span>O resultado aparece aqui assim que a resposta comecar.</span> : null}
         {status === "loading" ? <span>Preparando resposta...</span> : null}
         {(status === "streaming" || status === "complete") && codeToHighlight ? (
           highlighted ? (
@@ -91,7 +84,9 @@ export function ScriptsOutputPanel({
         {status === "error" ? (
           <div className="error-block">
             <p>{error || "Nao foi possivel gerar o resultado. Ajuste o pedido e tente novamente."}</p>
-            <button className="ghost-button" onClick={onRetry} type="button">Tentar novamente</button>
+            <button className="ghost-button" onClick={onRetry} type="button">
+              Tentar novamente
+            </button>
           </div>
         ) : null}
       </div>
@@ -106,6 +101,6 @@ export function ScriptsOutputPanel({
           </ul>
         </div>
       ) : null}
-    </section>
+    </div>
   );
 }

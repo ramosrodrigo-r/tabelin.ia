@@ -12,7 +12,7 @@ export function RegexOutputPanel({
   metadata,
   warnings,
   error,
-  onRetry
+  onRetry,
 }: {
   status: RegexStreamStatus;
   draft: string;
@@ -23,42 +23,31 @@ export function RegexOutputPanel({
   onRetry: () => void;
 }) {
   const isGenerate = metadata?.mode === "generate" || !metadata;
-  const codeToHighlight = status === "streaming" ? draft : (result?.kind === "regex_generate" ? result.pattern : "");
-  // shiki supports "regex" language
+  const codeToHighlight =
+    status === "streaming" ? draft : result?.kind === "regex_generate" ? result.pattern : "";
   const highlighted = useShikiHighlighter(codeToHighlight, "regex", "github-light", { delay: 150 });
 
-  // Copy value: for generate = pattern; for explain = full explanation text
-  const copyValue = result?.kind === "regex_generate"
-    ? result.pattern
-    : result?.kind === "regex_explain"
-      ? result.steps.join("\n")
-      : "";
-
-  const outputHeading = result?.kind === "regex_explain" ? "Explicacao" : "Regex gerada";
+  const copyValue =
+    result?.kind === "regex_generate"
+      ? result.pattern
+      : result?.kind === "regex_explain"
+        ? result.steps.join("\n")
+        : "";
 
   return (
-    <section className="tool-panel" aria-label={outputHeading}>
+    <div className="assistant-card" aria-label="Resposta">
       <div className="output-header">
-        <div>
-          <h2>{outputHeading}</h2>
-          <p aria-live="polite">
-            {status === "streaming"
-              ? "Recebendo resposta..."
-              : status === "complete"
-                ? "Pronto para revisar e copiar."
-                : status === "loading"
-                  ? "Preparando resposta..."
-                  : "O resultado aparece aqui assim que a resposta comecar."}
-          </p>
-        </div>
+        <p aria-live="polite" style={{ margin: 0 }}>
+          {status === "streaming" ? "Gerando..." : status === "loading" ? "Preparando..." : null}
+        </p>
         <CopyButton disabled={status !== "complete"} value={copyValue} />
       </div>
 
       <div className="output-box" data-status={status}>
-        {status === "idle" ? <span>O resultado aparece aqui assim que a resposta comecar.</span> : null}
         {status === "loading" ? <span>Preparando resposta...</span> : null}
 
-        {(status === "streaming" || (status === "complete" && result?.kind === "regex_generate")) && isGenerate ? (
+        {(status === "streaming" || (status === "complete" && result?.kind === "regex_generate")) &&
+        isGenerate ? (
           <>
             {codeToHighlight ? (
               highlighted ? (
@@ -75,7 +64,9 @@ export function RegexOutputPanel({
 
         {status === "complete" && result?.kind === "regex_explain" ? (
           <>
-            <p><code>{result.pattern}</code></p>
+            <p>
+              <code>{result.pattern}</code>
+            </p>
             <ol>
               {result.steps.map((step, index) => (
                 <li key={index}>{step}</li>
@@ -89,7 +80,9 @@ export function RegexOutputPanel({
         {status === "error" ? (
           <div className="error-block">
             <p>{error || "Nao foi possivel gerar o resultado. Ajuste o pedido e tente novamente."}</p>
-            <button className="ghost-button" onClick={onRetry} type="button">Tentar novamente</button>
+            <button className="ghost-button" onClick={onRetry} type="button">
+              Tentar novamente
+            </button>
           </div>
         ) : null}
       </div>
@@ -104,6 +97,6 @@ export function RegexOutputPanel({
           </ul>
         </div>
       ) : null}
-    </section>
+    </div>
   );
 }

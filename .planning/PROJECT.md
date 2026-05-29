@@ -84,6 +84,9 @@ The recommended technical direction from the PRD is a web SaaS with a Next.js/Ta
 | Mercado Pago Checkout Pro for billing | Brazilian Pix/card support without multi-bank complexity | Validated — Phase 2 |
 | Fixture fallback when OPENAI_API_KEY absent | Enables dev/test without real API costs | Validated — Phase 5 (OCR + chart fixtures connected after UAT gap) |
 | Mock AI and billing in E2E smoke tests; use real auth/DB | Isolates flaky external calls while keeping auth/quota paths real | Validated — Phase 5 (9/9 smoke tests pass) |
+| Adotar layout chat-thread em todos os tools | Input fixo na base, respostas acumulam acima como troca usuário↔assistente — reduz fricção e torna o fluxo multi-consulta natural | Aplicado pós-v1.0 — Formula, SQL, Regex, Scripts, Template |
+| Mover ToolNav para dentro do ChatInput (bottomNav prop) | Pills de navegação abaixo do textarea integram melhor com o layout chat; evitam separação visual entre input e navegação | Aplicado pós-v1.0 |
+| Tokens do chat input migrados de dark para light theme | Workspace usa tema claro; chat escuro criava contraste indesejado e quebrava a coerência visual | Aplicado pós-v1.0 |
 
 ## Evolution
 

@@ -29,7 +29,7 @@ export function SqlOutputPanel({
   metadata,
   warnings,
   error,
-  onRetry
+  onRetry,
 }: {
   status: SqlStreamStatus;
   draft: string;
@@ -47,7 +47,6 @@ export function SqlOutputPanel({
     ? (SQL_DIALECTS.find((d) => d.id === metadata.dialect)?.label ?? metadata.dialect)
     : null;
 
-  // Determine the safety warning message
   const isDestructive = result?.isDestructive ?? false;
   let warningMessage: string | null = null;
   if (isDestructive && result) {
@@ -58,20 +57,11 @@ export function SqlOutputPanel({
   }
 
   return (
-    <section className="tool-panel" aria-label="Consulta gerada">
+    <div className="assistant-card" aria-label="Consulta gerada">
       <div className="output-header">
-        <div>
-          <h2>Consulta gerada</h2>
-          <p aria-live="polite">
-            {status === "streaming"
-              ? "Recebendo resposta..."
-              : status === "complete"
-                ? "Pronto para revisar e copiar."
-                : status === "loading"
-                  ? "Preparando resposta..."
-                  : "O resultado aparece aqui assim que a resposta comecar."}
-          </p>
-        </div>
+        <p aria-live="polite" style={{ margin: 0 }}>
+          {status === "streaming" ? "Gerando..." : status === "loading" ? "Preparando..." : null}
+        </p>
         <CopyButton disabled={status !== "complete"} value={completeQuery} />
       </div>
 
@@ -85,14 +75,13 @@ export function SqlOutputPanel({
         <div className="note-block warning" role="alert">
           <h3>
             <AlertTriangle aria-hidden size={16} />
-            {" "}Atencao — Operacao destrutiva
+            {" "}Atenção — Operação destrutiva
           </h3>
           <p>{warningMessage}</p>
         </div>
       ) : null}
 
       <div className="output-box" data-status={status}>
-        {status === "idle" ? <span>O resultado aparece aqui assim que a resposta comecar.</span> : null}
         {status === "loading" ? <span>Preparando resposta...</span> : null}
         {(status === "streaming" || status === "complete") && codeToHighlight ? (
           highlighted ? (
@@ -122,6 +111,6 @@ export function SqlOutputPanel({
           </ul>
         </div>
       ) : null}
-    </section>
+    </div>
   );
 }

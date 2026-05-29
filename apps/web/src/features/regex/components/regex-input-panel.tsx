@@ -3,6 +3,7 @@
 import { useState } from "react";
 
 import { ChatInput } from "@/components/app/chat-input";
+import { ToolNav } from "@/components/app/tool-nav";
 import type { RegexMode } from "../hooks/use-regex-stream";
 
 export function RegexInputPanel({
@@ -74,6 +75,7 @@ export function RegexInputPanel({
           pending ? "Gerando..." : mode === "generate" ? "Gerar regex" : "Explicar regex"
         }
         options={options}
+        bottomNav={<ToolNav />}
       />
 
       {validationError ? <div className="form-error mt-2">{validationError}</div> : null}

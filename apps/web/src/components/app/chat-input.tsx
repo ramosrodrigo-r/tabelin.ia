@@ -15,6 +15,7 @@ interface ChatInputProps {
   submitLabel: string;
   options?: React.ReactNode;
   leftAction?: React.ReactNode;
+  bottomNav?: React.ReactNode;
 }
 
 export function ChatInput({
@@ -29,6 +30,7 @@ export function ChatInput({
   submitLabel,
   options,
   leftAction,
+  bottomNav,
 }: ChatInputProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -76,6 +78,7 @@ export function ChatInput({
           disabled={disabled}
         />
       </div>
+      {bottomNav ? <div className="chat-input-bottom-nav">{bottomNav}</div> : null}
       <div className="chat-input-footer">
         <div className="chat-input-left">{leftAction}</div>
         <button
