@@ -49,7 +49,7 @@ Declared values (existing project scale; 12 and 20 are documented exceptions car
 | 2xl | 48px | Major section breaks |
 | 3xl | 64px | Page-level spacing |
 
-Exceptions: 12px and 20px are pre-existing documented exceptions from the v1.0 system. No new exceptions introduced by this phase. The confirmation popover uses only 4px / 8px / 10px-12px paddings matching the existing `.account-menu` (8px container padding, 8px 10px menu-item padding).
+Exceptions: 12px and 20px are pre-existing documented exceptions from the v1.0 system. No new exceptions introduced by this phase. The confirmation popover uses only 4px / 8px / 12px paddings (8px container padding, 8px 12px action-button padding) — all on the documented scale, no new exception required.
 
 ---
 
@@ -111,7 +111,7 @@ Net-new interaction. Built entirely on the existing `.account-menu` dropdown pat
 **Visual (reuse `.account-menu` tokens)**
 - Background `--surface` (#ffffff), border `1px solid --border` (#d9dee5), `border-radius: 6px`, `box-shadow: 0 8px 24px rgb(15 23 42 / 12%)`, `z-index: 10`, internal padding 8px.
 - Prompt text: Body 14px / weight 400 / line-height 1.5, color `--text`.
-- Action row: two buttons.
+- Action row: two buttons, each with `8px 12px` padding (all on the documented scale).
   - "Apagar histórico" — destructive style using `--destructive` (#b42318).
   - "Cancelar" — ghost style (`.ghost-button`).
 
