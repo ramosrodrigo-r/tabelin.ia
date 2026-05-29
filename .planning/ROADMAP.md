@@ -42,7 +42,8 @@ Full details: `.planning/milestones/v1.0-ROADMAP.md`
   3. Ao deletar uma conta de usuário, todos os seus exchanges são removidos em cascade sem registros órfãos
   4. Endpoints CRUD de conversations respondem com os dados corretos e retornam erro 401 para requisições não autenticadas
 
-**Plans**: 2 plansPlans:
+**Plans**: 2 plans
+
 **Wave 1**
 
 - [x] 06-01-PLAN.md — Schema Prisma, schema push e conversation-repository.ts
@@ -58,12 +59,24 @@ Full details: `.planning/milestones/v1.0-ROADMAP.md`
 **Requirements**: HIST-03, HIST-05
 **Success Criteria** (what must be TRUE):
 
-  1. Ao abrir qualquer workspace de tool (Formula, SQL, Regex, Scripts, Template, File Analysis), as trocas anteriores aparecem no chat sem nenhuma ação do usuário
+  1. Ao abrir qualquer workspace de tool de texto (Formula, SQL, Regex, Scripts, Template), as trocas anteriores aparecem no chat sem nenhuma ação do usuário. File Analysis permanece efêmero (D-07).
   2. Cada exchange recarregado exibe os metadados corretos — plataforma selecionada, dialeto e modo estão consistentes com o estado salvo
   3. Ao clicar em "Nova conversa", o chat é limpo e confirmado ao usuário, e as próximas trocas começam um novo thread
 
-**Plans**: TBD
-**UI hint**: yes
+**Plans**: 4 plans
+
+**Wave 1**
+
+- [ ] 07-01-PLAN.md — findConversationExchanges + deleteConversationExchanges no repository
+
+**Wave 2** *(parallel — sem conflito de arquivos)*
+
+- [ ] 07-02-PLAN.md — DELETE /api/conversations/[tool] + botão "Nova conversa" no Topbar
+- [ ] 07-03-PLAN.md — Prefetch server-side de exchanges nos 5 pages de tool de texto
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
+- [ ] 07-04-PLAN.md — Seed de exchanges + seletores + onNewConversation nos 5 tool components
 
 ### Phase 8: Multi-turn LLM Context
 
@@ -88,5 +101,5 @@ Full details: `.planning/milestones/v1.0-ROADMAP.md`
 | 4. Spreadsheet File Analysis | v1.0 | 3/3 | Complete | 2026-05-26 |
 | 5. OCR, Charts, and Launch Hardening | v1.0 | 4/4 | Complete | 2026-05-26 |
 | 6. Persistence Layer | v1.1 | 2/2 | Complete    | 2026-05-29 |
-| 7. Frontend History | v1.1 | 0/? | Not started | - |
+| 7. Frontend History | v1.1 | 0/4 | Not started | - |
 | 8. Multi-turn LLM Context | v1.1 | 0/? | Not started | - |
