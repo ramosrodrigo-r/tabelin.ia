@@ -1,8 +1,9 @@
 "use client";
 
 import type { RegexCompletePayload, RegexMetadata, UserEntitlement } from "@tabelin/shared";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 
+import { useRegisterNewConversation } from "@/components/app/workspace-conversation-context";
 import { RegexInputPanel } from "./components/regex-input-panel";
 import { RegexOutputPanel } from "./components/regex-output-panel";
 import { type RegexMode, useRegexStream } from "./hooks/use-regex-stream";
@@ -17,15 +18,53 @@ type RegexExchange = {
   error: string;
 };
 
-export function RegexTool({ entitlement }: { entitlement: UserEntitlement }) {
-  const [mode, setMode] = useState<RegexMode>("generate");
+type PersistedExchange = {
+  id: string;
+  userPrompt: string;
+  assistantPayload: unknown;
+  mode: string;
+  platform: string | null;
+  dialect: string | null;
+  createdAt: Date;
+};
+
+export function RegexTool({
+  entitlement,
+  initialExchanges = [],
+}: {
+  entitlement: UserEntitlement;
+  initialExchanges?: PersistedExchange[];
+}) {
+  // D-08: restaurar mode do exchange mais recente
+  const lastEx = initialExchanges[initialExchanges.length - 1];
+
+  const [mode, setMode] = useState<RegexMode>((lastEx?.mode as RegexMode) ?? "generate");
   const [text, setText] = useState("");
   const [validationError, setValidationError] = useState("");
-  const [exchanges, setExchanges] = useState<RegexExchange[]>([]);
+  // Seed de exchanges com dados do servidor (lazy initializer)
+  const [exchanges, setExchanges] = useState<RegexExchange[]>(() =>
+    initialExchanges.map((ex) => ({
+      id: ex.id,
+      userText: ex.userPrompt,
+      status: "complete" as const,
+      result: (ex.assistantPayload as RegexCompletePayload) ?? null,
+      metadata: null,
+      warnings: [],
+      error: "",
+    }))
+  );
   const [submittedText, setSubmittedText] = useState("");
   const stream = useRegexStream();
   const pending = stream.status === "loading" || stream.status === "streaming";
   const isPro = entitlement.plan === "pro" && entitlement.status === "active";
+
+  const handleNewConversation = useCallback(() => {
+    setExchanges([]);
+    setSubmittedText("");
+  }, []);
+
+  // Registrar callback no contexto para que o Topbar possa invocar após hard delete
+  useRegisterNewConversation(handleNewConversation);
 
   async function submit() {
     if (!text.trim()) {

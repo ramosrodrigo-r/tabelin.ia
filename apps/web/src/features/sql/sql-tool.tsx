@@ -2,8 +2,9 @@
 
 import type { SqlGenerateResponse, SqlMetadata, UserEntitlement } from "@tabelin/shared";
 import type { SqlDialect } from "@tabelin/shared";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 
+import { useRegisterNewConversation } from "@/components/app/workspace-conversation-context";
 import { SqlInputPanel } from "./components/sql-input-panel";
 import { SqlOutputPanel } from "./components/sql-output-panel";
 import { useSqlStream } from "./hooks/use-sql-stream";
@@ -18,15 +19,53 @@ type SqlExchange = {
   error: string;
 };
 
-export function SqlTool({ entitlement }: { entitlement: UserEntitlement }) {
-  const [dialect, setDialect] = useState<SqlDialect>("postgresql");
+type PersistedExchange = {
+  id: string;
+  userPrompt: string;
+  assistantPayload: unknown;
+  mode: string;
+  platform: string | null;
+  dialect: string | null;
+  createdAt: Date;
+};
+
+export function SqlTool({
+  entitlement,
+  initialExchanges = [],
+}: {
+  entitlement: UserEntitlement;
+  initialExchanges?: PersistedExchange[];
+}) {
+  // D-08: restaurar dialect do exchange mais recente
+  const lastEx = initialExchanges[initialExchanges.length - 1];
+
+  const [dialect, setDialect] = useState<SqlDialect>((lastEx?.dialect as SqlDialect) ?? "postgresql");
   const [text, setText] = useState("");
   const [validationError, setValidationError] = useState("");
-  const [exchanges, setExchanges] = useState<SqlExchange[]>([]);
+  // Seed de exchanges com dados do servidor (lazy initializer)
+  const [exchanges, setExchanges] = useState<SqlExchange[]>(() =>
+    initialExchanges.map((ex) => ({
+      id: ex.id,
+      userText: ex.userPrompt,
+      status: "complete" as const,
+      result: (ex.assistantPayload as SqlGenerateResponse) ?? null,
+      metadata: null,
+      warnings: [],
+      error: "",
+    }))
+  );
   const [submittedText, setSubmittedText] = useState("");
   const stream = useSqlStream();
   const pending = stream.status === "loading" || stream.status === "streaming";
   const isPro = entitlement.plan === "pro" && entitlement.status === "active";
+
+  const handleNewConversation = useCallback(() => {
+    setExchanges([]);
+    setSubmittedText("");
+  }, []);
+
+  // Registrar callback no contexto para que o Topbar possa invocar após hard delete
+  useRegisterNewConversation(handleNewConversation);
 
   async function submit() {
     if (!text.trim()) {

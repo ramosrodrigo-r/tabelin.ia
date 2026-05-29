@@ -1,8 +1,9 @@
 "use client";
 
 import type { TemplateGenerateResponse, TemplateMetadata, UserEntitlement } from "@tabelin/shared";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 
+import { useRegisterNewConversation } from "@/components/app/workspace-conversation-context";
 import { TemplateInputPanel } from "./components/template-input-panel";
 import { TemplateOutputPanel } from "./components/template-output-panel";
 import { useTemplateStream } from "./hooks/use-template-stream";
@@ -17,14 +18,50 @@ type TemplateExchange = {
   error: string;
 };
 
-export function TemplateTool({ entitlement }: { entitlement: UserEntitlement }) {
+type PersistedExchange = {
+  id: string;
+  userPrompt: string;
+  assistantPayload: unknown;
+  mode: string;
+  platform: string | null;
+  dialect: string | null;
+  createdAt: Date;
+};
+
+export function TemplateTool({
+  entitlement,
+  initialExchanges = [],
+}: {
+  entitlement: UserEntitlement;
+  initialExchanges?: PersistedExchange[];
+}) {
   const [text, setText] = useState("");
   const [validationError, setValidationError] = useState("");
-  const [exchanges, setExchanges] = useState<TemplateExchange[]>([]);
+  // Seed de exchanges com dados do servidor (lazy initializer)
+  // TemplateTool não tem seletores de domínio (mode implícito "generate")
+  const [exchanges, setExchanges] = useState<TemplateExchange[]>(() =>
+    initialExchanges.map((ex) => ({
+      id: ex.id,
+      userText: ex.userPrompt,
+      status: "complete" as const,
+      result: (ex.assistantPayload as TemplateGenerateResponse) ?? null,
+      metadata: null,
+      warnings: [],
+      error: "",
+    }))
+  );
   const [submittedText, setSubmittedText] = useState("");
   const stream = useTemplateStream();
   const pending = stream.status === "loading" || stream.status === "streaming";
   const isPro = entitlement.plan === "pro" && entitlement.status === "active";
+
+  const handleNewConversation = useCallback(() => {
+    setExchanges([]);
+    setSubmittedText("");
+  }, []);
+
+  // Registrar callback no contexto para que o Topbar possa invocar após hard delete
+  useRegisterNewConversation(handleNewConversation);
 
   async function submit() {
     if (!text.trim()) {

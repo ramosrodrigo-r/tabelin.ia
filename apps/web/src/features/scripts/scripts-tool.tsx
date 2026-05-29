@@ -2,8 +2,9 @@
 
 import type { ScriptGenerateResponse, ScriptMetadata, UserEntitlement } from "@tabelin/shared";
 import type { ScriptType } from "@tabelin/shared";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 
+import { useRegisterNewConversation } from "@/components/app/workspace-conversation-context";
 import { ScriptsInputPanel } from "./components/scripts-input-panel";
 import { ScriptsOutputPanel } from "./components/scripts-output-panel";
 import { useScriptsStream } from "./hooks/use-scripts-stream";
@@ -18,15 +19,54 @@ type ScriptExchange = {
   error: string;
 };
 
-export function ScriptsTool({ entitlement }: { entitlement: UserEntitlement }) {
-  const [scriptType, setScriptType] = useState<ScriptType>("vba");
+type PersistedExchange = {
+  id: string;
+  userPrompt: string;
+  assistantPayload: unknown;
+  mode: string;
+  platform: string | null;
+  dialect: string | null;
+  createdAt: Date;
+};
+
+export function ScriptsTool({
+  entitlement,
+  initialExchanges = [],
+}: {
+  entitlement: UserEntitlement;
+  initialExchanges?: PersistedExchange[];
+}) {
+  // D-08: restaurar scriptType do exchange mais recente
+  // scriptType é salvo no campo dialect pelo route handler (apps/web/src/app/api/tools/scripts/generate/route.ts)
+  const lastEx = initialExchanges[initialExchanges.length - 1];
+
+  const [scriptType, setScriptType] = useState<ScriptType>((lastEx?.dialect as ScriptType) ?? "vba");
   const [text, setText] = useState("");
   const [validationError, setValidationError] = useState("");
-  const [exchanges, setExchanges] = useState<ScriptExchange[]>([]);
+  // Seed de exchanges com dados do servidor (lazy initializer)
+  const [exchanges, setExchanges] = useState<ScriptExchange[]>(() =>
+    initialExchanges.map((ex) => ({
+      id: ex.id,
+      userText: ex.userPrompt,
+      status: "complete" as const,
+      result: (ex.assistantPayload as ScriptGenerateResponse) ?? null,
+      metadata: null,
+      warnings: [],
+      error: "",
+    }))
+  );
   const [submittedText, setSubmittedText] = useState("");
   const stream = useScriptsStream();
   const pending = stream.status === "loading" || stream.status === "streaming";
   const isPro = entitlement.plan === "pro" && entitlement.status === "active";
+
+  const handleNewConversation = useCallback(() => {
+    setExchanges([]);
+    setSubmittedText("");
+  }, []);
+
+  // Registrar callback no contexto para que o Topbar possa invocar após hard delete
+  useRegisterNewConversation(handleNewConversation);
 
   async function submit() {
     if (!text.trim()) {

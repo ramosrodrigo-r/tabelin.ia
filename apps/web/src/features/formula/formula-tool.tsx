@@ -7,8 +7,9 @@ import type {
   FormulaPlatform,
   UserEntitlement,
 } from "@tabelin/shared";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 
+import { useRegisterNewConversation } from "@/components/app/workspace-conversation-context";
 import { FormulaInputPanel } from "./components/formula-input-panel";
 import { FormulaOutputPanel } from "./components/formula-output-panel";
 import { type FormulaMode, useFormulaStream } from "./hooks/use-formula-stream";
@@ -23,18 +24,56 @@ type FormulaExchange = {
   error: string;
 };
 
-export function FormulaTool({ entitlement }: { entitlement: UserEntitlement }) {
-  const [mode, setMode] = useState<FormulaMode>("generate");
-  const [platform, setPlatform] = useState<FormulaPlatform>("excel");
-  const [formulaLanguage, setFormulaLanguage] = useState<FormulaLanguage>("pt-BR");
+type PersistedExchange = {
+  id: string;
+  userPrompt: string;
+  assistantPayload: unknown;
+  mode: string;
+  platform: string | null;
+  dialect: string | null;
+  createdAt: Date;
+};
+
+export function FormulaTool({
+  entitlement,
+  initialExchanges = [],
+}: {
+  entitlement: UserEntitlement;
+  initialExchanges?: PersistedExchange[];
+}) {
+  // D-08: restaurar seletores do exchange mais recente
+  const lastEx = initialExchanges[initialExchanges.length - 1];
+
+  const [mode, setMode] = useState<FormulaMode>((lastEx?.mode as FormulaMode) ?? "generate");
+  const [platform, setPlatform] = useState<FormulaPlatform>((lastEx?.platform as FormulaPlatform) ?? "excel");
+  const [formulaLanguage, setFormulaLanguage] = useState<FormulaLanguage>((lastEx?.dialect as FormulaLanguage) ?? "pt-BR");
   const [text, setText] = useState("");
   const [validationError, setValidationError] = useState("");
   const [showRevokedNotice, setShowRevokedNotice] = useState(entitlement.recentlyRevoked || false);
-  const [exchanges, setExchanges] = useState<FormulaExchange[]>([]);
+  // Seed de exchanges com dados do servidor (lazy initializer)
+  const [exchanges, setExchanges] = useState<FormulaExchange[]>(() =>
+    initialExchanges.map((ex) => ({
+      id: ex.id,
+      userText: ex.userPrompt,
+      status: "complete" as const,
+      result: (ex.assistantPayload as FormulaCompletePayload) ?? null,
+      metadata: null,
+      warnings: [],
+      error: "",
+    }))
+  );
   const [submittedText, setSubmittedText] = useState("");
   const stream = useFormulaStream();
   const pending = stream.status === "loading" || stream.status === "streaming";
   const isPro = entitlement.plan === "pro" && entitlement.status === "active";
+
+  const handleNewConversation = useCallback(() => {
+    setExchanges([]);
+    setSubmittedText("");
+  }, []);
+
+  // Registrar callback no contexto para que o Topbar possa invocar após hard delete
+  useRegisterNewConversation(handleNewConversation);
 
   async function submit() {
     if (!platform || !formulaLanguage) {
