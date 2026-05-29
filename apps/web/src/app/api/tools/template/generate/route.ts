@@ -7,6 +7,7 @@ import { getSessionFromCookieHeader } from "@/server/auth/session";
 import { getUserEntitlement } from "@/server/billing/entitlements";
 import { recordToolRequest } from "@/server/tools/tool-repository";
 import { confirmToolUse, releaseToolUse, reserveToolUse } from "@/server/usage/quota-service";
+import { saveConversationExchange } from "@/server/tools/conversation-repository";
 
 export async function POST(request: Request) {
   const user = getSessionFromCookieHeader(request.headers.get("cookie"));
@@ -43,6 +44,14 @@ export async function POST(request: Request) {
       status: "success",
       latencyMs: Math.round(performance.now() - startedAt),
       providerModel: payload.metadata.providerModel
+    });
+    // NOVO — Phase 6
+    await saveConversationExchange({
+      userId: user.id,
+      toolKind: "template",
+      mode: "generate",
+      userPrompt: parsed.data.prompt,
+      assistantPayload: payload
     });
     return new Response(createTemplateEventStream(payload, quotaCheck.lastFreeUse), {
       headers: { "content-type": "application/x-ndjson; charset=utf-8", "cache-control": "no-store" }
