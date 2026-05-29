@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { getSessionFromCookieHeader } from "@/server/auth/session";
 import { deleteConversationExchanges } from "@/server/tools/conversation-repository";
 
-const VALID_TOOL_KINDS = ["formula", "sql", "regex", "scripts", "template"] as const;
+const VALID_TOOL_KINDS = ["formula", "sql", "regex", "script", "template"] as const;
 type ToolKind = (typeof VALID_TOOL_KINDS)[number];
 
 function isValidToolKind(value: string): value is ToolKind {
