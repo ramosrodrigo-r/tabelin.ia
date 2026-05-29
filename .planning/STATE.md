@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Conversas Persistentes
-status: executing
-last_updated: "2026-05-29T22:30:00.000Z"
+status: awaiting-checkpoint
+last_updated: "2026-05-29T23:30:00.000Z"
 last_activity: 2026-05-29
 progress:
   total_phases: 3
   completed_phases: 1
   total_plans: 6
   completed_plans: 5
-  percent: 55
+  percent: 83
 ---
 
 # Project State
@@ -24,12 +24,12 @@ See: .planning/PROJECT.md (updated 2026-05-26 after v1.0 milestone)
 
 ## Current Position
 
-Phase: 07 (frontend-history) — EXECUTING
-Plan: 4 of 4
-Status: Ready to execute
+Phase: 07 (frontend-history) — AWAITING CHECKPOINT
+Plan: 4 of 4 (tasks 0 e 1 completas; checkpoint humano pendente)
+Status: Awaiting human verification
 Last activity: 2026-05-29
 
-Progress: [███████░░░] 70%
+Progress: [█████████░] 83%
 
 ## Performance Metrics
 
@@ -59,6 +59,7 @@ Recent decisions affecting current work:
 - v1.1 planning: PRIV-01 (cascade delete) absorvido na Phase 6 como DDL constraint — não requer fase separada
 - 07-02: params como Promise (Next.js 15), falha silenciosa no DELETE (D-10), file-analysis excluído do enum (D-07)
 - 07-03: prefetch server-side de exchanges nos 5 server components; initialExchanges prop passada (TypeScript resolverá no Plano 04)
+- 07-04: wiring Topbar ↔ tool components via WorkspaceConversationContext + usePathname; 5 tool components com seed, seletores e onNewConversation; tsc exit 0
 
 ### Pending Todos
 
@@ -83,6 +84,6 @@ Items acknowledged and carried forward:
 
 ## Session Continuity
 
-Last session: 2026-05-29T22:30:00.000Z
-Stopped at: Completed 07-03-PLAN.md — Prefetch de exchanges nos 5 server components de page.tsx
+Last session: 2026-05-29T23:30:00.000Z
+Stopped at: 07-04-PLAN.md Tarefa 1 completa — aguardando checkpoint humano (verificação visual do histórico + Nova conversa)
 Resume file: None

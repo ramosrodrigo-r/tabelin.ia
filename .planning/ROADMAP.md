@@ -76,7 +76,7 @@ Full details: `.planning/milestones/v1.0-ROADMAP.md`
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 07-04-PLAN.md — Seed de exchanges + seletores + onNewConversation nos 5 tool components
+- [x] 07-04-PLAN.md — Seed de exchanges + seletores + onNewConversation nos 5 tool components (aguardando checkpoint humano)
 
 ### Phase 8: Multi-turn LLM Context
 
@@ -101,5 +101,5 @@ Full details: `.planning/milestones/v1.0-ROADMAP.md`
 | 4. Spreadsheet File Analysis | v1.0 | 3/3 | Complete | 2026-05-26 |
 | 5. OCR, Charts, and Launch Hardening | v1.0 | 4/4 | Complete | 2026-05-26 |
 | 6. Persistence Layer | v1.1 | 2/2 | Complete    | 2026-05-29 |
-| 7. Frontend History | v1.1 | 3/4 | In Progress|  |
+| 7. Frontend History | v1.1 | 4/4 | Awaiting Checkpoint |  |
 | 8. Multi-turn LLM Context | v1.1 | 0/? | Not started | - |
