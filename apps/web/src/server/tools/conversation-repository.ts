@@ -1,5 +1,16 @@
 import { prisma } from "@/server/db/client";
 
+const MAX_PAYLOAD_BYTES = 32 * 1024; // 32 KB per row
+
+function guardPayloadSize(payload: unknown): object {
+  const json = JSON.stringify(payload);
+  if (json.length > MAX_PAYLOAD_BYTES) {
+    const p = payload as Record<string, unknown>;
+    return { kind: p["kind"] ?? "unknown", truncated: true };
+  }
+  return payload as object;
+}
+
 export async function saveConversationExchange(input: {
   userId: string;
   toolKind: string;
@@ -36,7 +47,7 @@ export async function saveConversationExchange(input: {
             platform: input.platform ?? null,
             dialect: input.dialect ?? null,
             userPrompt: input.userPrompt,
-            assistantPayload: input.assistantPayload as object,
+            assistantPayload: guardPayloadSize(input.assistantPayload),
           },
         });
       },
