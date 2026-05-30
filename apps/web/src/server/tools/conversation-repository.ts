@@ -1,3 +1,4 @@
+import { GENERATE_MODE } from "@/server/ai/context-messages";
 import { prisma } from "@/server/db/client";
 
 const MAX_PAYLOAD_BYTES = 32 * 1024; // 32 KB per row
@@ -72,11 +73,18 @@ export async function saveConversationExchange(input: {
 
 export async function findConversationExchanges(userId: string, toolKind: string) {
   try {
-    // Bound o read independentemente do prune do write-path (WR-01): pega as
+    // Filtra por mode no read boundary (WR-01): READ_LIMIT conta só as linhas
+    // que serão de fato usadas. Sem o filtro aqui, linhas `explain` recentes
+    // (mesma partição toolKind) consumiriam a janela de 10 e starvavam o
+    // contexto `generate` que buildToolContextMessages monta. O índice
+    // @@index([userId, toolKind, createdAt]) cobre o filtro; `mode` é um
+    // predicado residual de baixa cardinalidade.
+    //
+    // Bound o read independentemente do prune do write-path: pega as
     // READ_LIMIT linhas mais recentes (desc) e restaura ordem cronológica asc
     // para buildToolContextMessages, que espera history ordenado por createdAt asc.
     const rows = await prisma.conversationExchange.findMany({
-      where: { userId, toolKind },
+      where: { userId, toolKind, mode: GENERATE_MODE },
       orderBy: { createdAt: "desc" },
       take: READ_LIMIT,
     });
