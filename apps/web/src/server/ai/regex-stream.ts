@@ -1,5 +1,7 @@
 import "server-only";
 
+import type { ConversationExchange } from "@prisma/client";
+
 import {
   type RegexCompletePayload,
   type RegexExplainRequest,
@@ -10,10 +12,11 @@ import {
   regexCompletePayloadSchema
 } from "@tabelin/shared";
 
+import { buildToolContextMessages, truncateHistory } from "./context-messages";
 import { getOpenAIModel } from "./openai-client";
 
 type RegexModeInput =
-  | { mode: "generate"; request: RegexGenerateRequest }
+  | { mode: "generate"; request: RegexGenerateRequest; history?: ConversationExchange[] }
   | { mode: "explain"; request: RegexExplainRequest };
 
 export async function resolveRegexPayload(input: RegexModeInput): Promise<RegexCompletePayload> {
@@ -37,13 +40,12 @@ export async function resolveRegexPayload(input: RegexModeInput): Promise<RegexC
   if (input.mode === "generate") {
     const completion = await client.chat.completions.create({
       model: getOpenAIModel(),
-      messages: [
-        {
-          role: "system",
-          content: 'Voce e um especialista em expressoes regulares. Gere uma regex em resposta ao pedido em portugues. Responda APENAS com JSON: {"pattern": "...regex...", "explanation": "...explicacao em portugues...", "examples": ["..."], "assumptions": [], "warnings": []}'
-        },
-        { role: "user", content: input.request.prompt }
-      ],
+      messages: buildToolContextMessages(
+        "regex",
+        truncateHistory(input.history ?? []),
+        'Voce e um especialista em expressoes regulares. Gere uma regex em resposta ao pedido em portugues. Responda APENAS com JSON: {"pattern": "...regex...", "explanation": "...explicacao em portugues...", "examples": ["..."], "assumptions": [], "warnings": []}',
+        input.request.prompt
+      ),
       response_format: { type: "json_object" }
     });
 

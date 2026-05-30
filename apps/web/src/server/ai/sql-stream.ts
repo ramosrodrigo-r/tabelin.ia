@@ -1,5 +1,7 @@
 import "server-only";
 
+import type { ConversationExchange } from "@prisma/client";
+
 import {
   type SqlGenerateRequest,
   type SqlGenerateResponse,
@@ -9,10 +11,12 @@ import {
 } from "@tabelin/shared";
 
 import { classifyDestructive } from "./destructive-classifier";
+import { buildToolContextMessages, truncateHistory } from "./context-messages";
 import { getOpenAIModel } from "./openai-client";
 
 export async function resolveSqlPayload(input: {
   request: SqlGenerateRequest;
+  history?: ConversationExchange[];
 }): Promise<SqlGenerateResponse> {
   const { request } = input;
 
@@ -31,13 +35,12 @@ export async function resolveSqlPayload(input: {
 
   const completion = await client.chat.completions.create({
     model: getOpenAIModel(),
-    messages: [
-      {
-        role: "system",
-        content: `Voce e um especialista em SQL. Gere uma consulta ${request.dialect.toUpperCase()} em resposta ao pedido em portugues. Responda APENAS com JSON valido: {"query": "...SQL completo...", "explanation": "...explicacao em portugues...", "assumptions": ["..."], "warnings": [], "isDestructive": false}`
-      },
-      { role: "user", content: request.prompt }
-    ],
+    messages: buildToolContextMessages(
+      "sql",
+      truncateHistory(input.history ?? []),
+      `Voce e um especialista em SQL. Gere uma consulta ${request.dialect.toUpperCase()} em resposta ao pedido em portugues. Responda APENAS com JSON valido: {"query": "...SQL completo...", "explanation": "...explicacao em portugues...", "assumptions": ["..."], "warnings": [], "isDestructive": false}`,
+      request.prompt
+    ),
     response_format: { type: "json_object" }
   });
 
