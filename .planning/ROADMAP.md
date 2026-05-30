@@ -26,7 +26,7 @@ Full details: `.planning/milestones/v1.0-ROADMAP.md`
 
 - [x] **Phase 6: Persistence Layer** - Schema DB, API CRUD de exchanges e cascade delete de privacidade (completed 2026-05-29)
 - [x] **Phase 7: Frontend History** - Carregamento de histórico no mount, renderização e controle "Nova conversa" (completed 2026-05-30)
-- [x] **Phase 8: Multi-turn LLM Context** - Injeção de contexto nas chamadas LLM com truncagem automática por tool (completed 2026-05-30)
+- [ ] **Phase 8: Multi-turn LLM Context** - Injeção de contexto nas chamadas LLM com truncagem automática por tool (gap closure in progress)
 
 ## Phase Details
 
@@ -85,11 +85,11 @@ Full details: `.planning/milestones/v1.0-ROADMAP.md`
 **Requirements**: MULTI-01, MULTI-02, MULTI-03
 **Success Criteria** (what must be TRUE):
 
-  1. O usuário pode fazer uma pergunta de follow-up (ex: "agora adapte para o Google Sheets") e o LLM responde corretamente sem o usuário repetir o contexto anterior
+  1. O usuário pode fazer uma pergunta de follow-up (ex: "agora adicione ORDER BY nome") e o LLM responde corretamente sem o usuário repetir o contexto anterior
   2. Conversas longas não causam erro de limite de tokens — o backend trunca automaticamente para as últimas N trocas quando necessário
   3. Trocar de tool (ex: de Formula para SQL) não vaza contexto — cada tool mantém e injeta apenas seu próprio thread de conversa
 
-**Plans**: 3 plans
+**Plans**: 4 plans
 
 **Wave 1**
 
@@ -103,6 +103,10 @@ Full details: `.planning/milestones/v1.0-ROADMAP.md`
 
 - [x] 08-03-PLAN.md — Wiring da leitura de history nos 4 route handlers + teste de integração de isolamento
 
+**Wave 4 — Gap Closure** *(blocked on Wave 3 + UAT diagnosis)*
+
+- [ ] 08-04-PLAN.md — Correção de prompting multi-turn: rótulo "[Resposta anterior]" no histórico + buildMultiTurnSystemPrompt DRY nos 4 tools + testes com histórico não-vazio
+
 ## Progress
 
 | Phase | Milestone | Plans Complete | Status | Completed |
@@ -114,4 +118,4 @@ Full details: `.planning/milestones/v1.0-ROADMAP.md`
 | 5. OCR, Charts, and Launch Hardening | v1.0 | 4/4 | Complete | 2026-05-26 |
 | 6. Persistence Layer | v1.1 | 2/2 | Complete    | 2026-05-29 |
 | 7. Frontend History | v1.1 | 4/4 | Complete    | 2026-05-30 |
-| 8. Multi-turn LLM Context | v1.1 | 3/3 | Complete    | 2026-05-30 |
+| 8. Multi-turn LLM Context | v1.1 | 3/4 | Gap closure in progress | — |
