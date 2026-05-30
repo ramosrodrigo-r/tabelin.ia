@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Conversas Persistentes
 status: executing
-last_updated: "2026-05-30T15:32:13.364Z"
+last_updated: "2026-05-30T15:36:48.305Z"
 last_activity: 2026-05-30
 progress:
   total_phases: 3
   completed_phases: 2
   total_plans: 9
-  completed_plans: 7
+  completed_plans: 8
   percent: 67
 ---
 
@@ -25,11 +25,11 @@ See: .planning/PROJECT.md (updated 2026-05-26 after v1.0 milestone)
 ## Current Position
 
 Phase: 08 (multi-turn-llm-context) — EXECUTING
-Plan: 2 of 3
+Plan: 3 of 3
 Status: Ready to execute
 Last activity: 2026-05-30
 
-Progress: [████████░░] 78%
+Progress: [█████████░] 89%
 
 ## Performance Metrics
 
@@ -61,6 +61,7 @@ Recent decisions affecting current work:
 - 07-03: prefetch server-side de exchanges nos 5 server components; initialExchanges prop passada (TypeScript resolverá no Plano 04)
 - 07-04: wiring Topbar ↔ tool components via WorkspaceConversationContext + usePathname; 5 tool components com seed, seletores e onNewConversation; tsc exit 0
 - [Phase ?]: Calibrado para gpt-5-mini com margem para system+prompt+resposta
+- [Phase ?]: toolKind singular para isolamento correto
 
 ### Pending Todos
 
@@ -83,9 +84,10 @@ Items acknowledged and carried forward:
 | History | Conversas compartilháveis entre usuários | v2 | v1.1 requirements |
 | Phase 07 P01 | 5 | 1 tasks | 1 files |
 | Phase 08-multi-turn-llm-context P01 | 18 | 2 tasks | 2 files |
+| Phase 08 P02 | 7 | 2 tasks | 4 files |
 
 ## Session Continuity
 
-Last session: 2026-05-30T15:32:13.347Z
-Stopped at: Phase 8 context gathered
+Last session: 2026-05-30T15:36:48.286Z
+Stopped at: Completed 08-02-PLAN.md
 Resume file: None

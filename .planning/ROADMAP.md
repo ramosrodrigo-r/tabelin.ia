@@ -97,7 +97,7 @@ Full details: `.planning/milestones/v1.0-ROADMAP.md`
 
 **Wave 2** *(blocked on Wave 1)*
 
-- [ ] 08-02-PLAN.md — Injeção de history nos 4 stream modules (SQL, Regex generate-only, Scripts, Template)
+- [x] 08-02-PLAN.md — Injeção de history nos 4 stream modules (SQL, Regex generate-only, Scripts, Template)
 
 **Wave 3** *(blocked on Wave 2)*
 
@@ -114,4 +114,4 @@ Full details: `.planning/milestones/v1.0-ROADMAP.md`
 | 5. OCR, Charts, and Launch Hardening | v1.0 | 4/4 | Complete | 2026-05-26 |
 | 6. Persistence Layer | v1.1 | 2/2 | Complete    | 2026-05-29 |
 | 7. Frontend History | v1.1 | 4/4 | Complete    | 2026-05-30 |
-| 8. Multi-turn LLM Context | v1.1 | 1/3 | In Progress|  |
+| 8. Multi-turn LLM Context | v1.1 | 2/3 | In Progress|  |
