@@ -89,7 +89,19 @@ Full details: `.planning/milestones/v1.0-ROADMAP.md`
   2. Conversas longas não causam erro de limite de tokens — o backend trunca automaticamente para as últimas N trocas quando necessário
   3. Trocar de tool (ex: de Formula para SQL) não vaza contexto — cada tool mantém e injeta apenas seu próprio thread de conversa
 
-**Plans**: TBD
+**Plans**: 3 plans
+
+**Wave 1**
+
+- [ ] 08-01-PLAN.md — Helper context-messages.ts (serialização concisa por tool + truncagem híbrida N=10 + tokens)
+
+**Wave 2** *(blocked on Wave 1)*
+
+- [ ] 08-02-PLAN.md — Injeção de history nos 4 stream modules (SQL, Regex generate-only, Scripts, Template)
+
+**Wave 3** *(blocked on Wave 2)*
+
+- [ ] 08-03-PLAN.md — Wiring da leitura de history nos 4 route handlers + teste de integração de isolamento
 
 ## Progress
 
@@ -102,4 +114,4 @@ Full details: `.planning/milestones/v1.0-ROADMAP.md`
 | 5. OCR, Charts, and Launch Hardening | v1.0 | 4/4 | Complete | 2026-05-26 |
 | 6. Persistence Layer | v1.1 | 2/2 | Complete    | 2026-05-29 |
 | 7. Frontend History | v1.1 | 4/4 | Complete    | 2026-05-30 |
-| 8. Multi-turn LLM Context | v1.1 | 0/? | Not started | - |
+| 8. Multi-turn LLM Context | v1.1 | 0/3 | Not started | - |
