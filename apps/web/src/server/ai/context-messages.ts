@@ -98,12 +98,15 @@ export function truncateHistory(history: ConversationExchange[]): ConversationEx
   // Passo 1: teto numérico — últimas MAX_EXCHANGES trocas
   let truncated = history.slice(-MAX_EXCHANGES);
 
-  // Passo 2: guarda de tokens — estimar custo total do histórico truncado
+  // Passo 2: guarda de tokens — estimar custo total do histórico truncado.
+  // Estima contra a MESMA serialização que será enviada ao modelo
+  // (serializeAssistant: artefato + explicação), não o JSON cru — o payload
+  // bruto inclui metadata/warnings/assumptions que nunca trafegam (WR-01).
   function totalTokens(exchanges: ConversationExchange[]): number {
     return exchanges.reduce((sum, ex) => {
       const promptTokens = estimateTokens(ex.userPrompt);
-      const payloadText = JSON.stringify(ex.assistantPayload) ?? "";
-      const payloadTokens = estimateTokens(payloadText);
+      const serialized = serializeAssistant(ex.assistantPayload) ?? "";
+      const payloadTokens = estimateTokens(serialized);
       return sum + promptTokens + payloadTokens;
     }, 0);
   }
