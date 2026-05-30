@@ -52,7 +52,8 @@ export async function POST(request: Request) {
     return new Response(createSqlEventStream(payload, quotaCheck.lastFreeUse), {
       headers: { "content-type": "application/x-ndjson; charset=utf-8", "cache-control": "no-store" }
     });
-  } catch {
+  } catch (err) {
+    console.error("tool generate failed", { toolKind: "sql", err });
     await releaseToolUse(quotaCheck.reservationKey);
     return NextResponse.json({ error: "Nao consegui validar a resposta." }, { status: 502 });
   }
