@@ -1,5 +1,5 @@
 ---
-status: complete
+status: diagnosed
 phase: 08-multi-turn-llm-context
 source: [08-01-SUMMARY.md, 08-02-SUMMARY.md, 08-03-SUMMARY.md]
 started: 2026-05-30T00:00:00Z
@@ -54,17 +54,32 @@ blocked: 0
   reason: "User reported: follow-up retornou query byte-a-byte idêntica à primeira geração — a nova instrução foi totalmente ignorada (sem ORDER BY data_cadastro, sem qualquer alteração)."
   severity: major
   test: 1
-  root_cause: ""
-  artifacts: []
-  missing: []
-  debug_session: ""
+  root_cause: "Defeito de prompting (não de montagem do array). (1) serializeAssistant injeta turnos anteriores como prosa (artefato+explicação), conflitando com o system prompt 'responda APENAS com JSON' + response_format json_object; (2) os system prompts são single-shot e não instruem o modelo a tratar turnos anteriores como contexto e responder ao ÚLTIMO pedido. Com gpt-5-mini e follow-up curto, o modelo 'completa o padrão' e regenera o artefato anterior verbatim. Prova decisiva: a 2ª resposta repetiu as 'Premissas' byte-a-byte, mas serializeAssistant REMOVE as premissas do histórico — só seria possível regenerando a resposta original ao pedido original."
+  artifacts:
+    - path: "apps/web/src/server/ai/context-messages.ts"
+      issue: "serializeAssistant emite prosa que conflita com o contrato JSON (response_format json_object); histórico não é rotulado como contexto de referência"
+    - path: "apps/web/src/server/ai/sql-stream.ts"
+      issue: "system prompt single-shot sem orientação multi-turn; response_format json_object contra histórico em prosa"
+  missing:
+    - "Adicionar orientação multi-turn aos system prompts: tratar mensagens anteriores como contexto e responder/refinar o ÚLTIMO pedido do usuário"
+    - "Resolver o mismatch de formato: serializar histórico de forma consistente com o JSON exigido OU rotular claramente a prosa como 'resposta anterior (formato de referência)'"
+    - "Adicionar teste de integração com histórico NÃO-vazio que dirige um follow-up e asserta que a nova instrução é aplicada"
+  debug_session: .planning/debug/multi-turn-followup-echoes-previous-answer.md
 
 - truth: "Um follow-up no Regex ('quero validar um rg') deve gerar um regex novo para a nova instrução, não repetir o anterior."
   status: failed
   reason: "User reported: após gerar regex de CPF, o follow-up 'quero validar um rg' retornou o MESMO regex de CPF byte-a-byte. Reproduz o bug do teste 1 em outra ferramenta (padrão cross-tool). Isolamento SQL↔Regex não validado de forma limpa."
   severity: major
   test: 2
-  root_cause: ""
-  artifacts: []
-  missing: []
-  debug_session: ""
+  root_cause: "Mesma causa-raiz do gap do teste 1 — defeito de prompting compartilhado pelos 4 tools (prosa no histórico vs. contrato JSON + ausência de instrução multi-turn). CPF→RG byte-idêntico sob amostragem padrão confirma 'mesmo pedido efetivo'."
+  artifacts:
+    - path: "apps/web/src/server/ai/context-messages.ts"
+      issue: "serializeAssistant + ausência de rótulo de contexto afeta todos os tools, incluindo regex"
+    - path: "apps/web/src/server/ai/regex-stream.ts"
+      issue: "system prompt do branch generate sem orientação multi-turn"
+    - path: "apps/web/tests/multi-turn-context.test.ts"
+      issue: "findConversationExchanges sempre mockado para [] — caminho de histórico não-vazio nunca exercido (falsa confiança)"
+  missing:
+    - "Mesma correção de prompting/formato do gap 1, aplicada de forma compartilhada aos 4 tools"
+    - "Teste de comportamento com histórico não-vazio cobrindo regex (e idealmente os 4 tools)"
+  debug_session: .planning/debug/multi-turn-followup-echoes-previous-answer.md
