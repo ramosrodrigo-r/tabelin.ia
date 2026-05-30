@@ -15,12 +15,19 @@ const MAX_PAYLOAD_BYTES = 32 * 1024; // 32 KB per row
 const READ_LIMIT = 10;
 
 function guardPayloadSize(payload: unknown): object {
+  // Valida a forma antes de serializar (WR-02): JSON.stringify(undefined)
+  // retorna o valor `undefined` (não string), então `.length` lançaria
+  // TypeError; e um scalar (string/number/null) persistido numa coluna Json
+  // seria rejeitado depois por serializeAssistant. Fail-closed para placeholder.
+  if (typeof payload !== "object" || payload === null) {
+    return { kind: "unknown", truncated: true };
+  }
   const json = JSON.stringify(payload);
   if (json.length > MAX_PAYLOAD_BYTES) {
     const p = payload as Record<string, unknown>;
     return { kind: p["kind"] ?? "unknown", truncated: true };
   }
-  return payload as object;
+  return payload;
 }
 
 export async function saveConversationExchange(input: {
