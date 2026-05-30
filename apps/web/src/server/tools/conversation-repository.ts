@@ -2,6 +2,17 @@ import { prisma } from "@/server/db/client";
 
 const MAX_PAYLOAD_BYTES = 32 * 1024; // 32 KB per row
 
+/**
+ * Teto de linhas lido do banco por (userId, toolKind).
+ *
+ * Limita o read independentemente do prune de 50 linhas do write-path (WR-01):
+ * o prune roda numa transação Serializable que engole erros e pode ser pulado
+ * (transação falha, inserts manuais/backfill). Sem este `take`, o read carregaria
+ * todas as linhas em memória a cada generate antes de truncateHistory descartar
+ * tudo menos as mais recentes. Alinhado com MAX_EXCHANGES (context-messages.ts).
+ */
+const READ_LIMIT = 10;
+
 function guardPayloadSize(payload: unknown): object {
   const json = JSON.stringify(payload);
   if (json.length > MAX_PAYLOAD_BYTES) {
@@ -61,10 +72,15 @@ export async function saveConversationExchange(input: {
 
 export async function findConversationExchanges(userId: string, toolKind: string) {
   try {
-    return await prisma.conversationExchange.findMany({
+    // Bound o read independentemente do prune do write-path (WR-01): pega as
+    // READ_LIMIT linhas mais recentes (desc) e restaura ordem cronológica asc
+    // para buildToolContextMessages, que espera history ordenado por createdAt asc.
+    const rows = await prisma.conversationExchange.findMany({
       where: { userId, toolKind },
-      orderBy: { createdAt: "asc" },
+      orderBy: { createdAt: "desc" },
+      take: READ_LIMIT,
     });
+    return rows.reverse();
   } catch (err) {
     console.warn("ConversationExchange read skipped.", err);
     return [];
