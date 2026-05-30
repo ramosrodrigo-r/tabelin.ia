@@ -2,7 +2,7 @@
 phase: 08-multi-turn-llm-context
 reviewed: 2026-05-30T00:00:00Z
 depth: standard
-files_reviewed: 11
+files_reviewed: 12
 files_reviewed_list:
   - apps/web/src/app/api/tools/regex/generate/route.ts
   - apps/web/src/app/api/tools/scripts/generate/route.ts
@@ -13,13 +13,14 @@ files_reviewed_list:
   - apps/web/src/server/ai/scripts-stream.ts
   - apps/web/src/server/ai/sql-stream.ts
   - apps/web/src/server/ai/template-stream.ts
+  - apps/web/src/server/tools/conversation-repository.ts
   - apps/web/tests/context-messages.test.ts
   - apps/web/tests/multi-turn-context.test.ts
 findings:
-  critical: 1
-  warning: 4
+  critical: 0
+  warning: 3
   info: 4
-  total: 9
+  total: 7
 status: issues_found
 ---
 
@@ -27,225 +28,177 @@ status: issues_found
 
 **Reviewed:** 2026-05-30T00:00:00Z
 **Depth:** standard
-**Files Reviewed:** 11
+**Files Reviewed:** 12
 **Status:** issues_found
 
 ## Summary
 
-Phase 8 wires multi-turn conversation history into the four tool-generation streams
-(sql, regex, script, template). The core contract — read history by `toolKind`,
-filter to `mode === "generate"`, serialize to concise prose, truncate, and assemble
-`[system, ...history, user]` — is implemented in `context-messages.ts` and consumed
-by the four `*-stream.ts` resolvers.
+Re-review of Phase 8 (multi-turn LLM context). The previously reported CR-01
+(resolvers pre-truncating before the `mode` filter) has been **fixed**: all four
+resolvers now pass raw `input.history ?? []` directly into
+`buildToolContextMessages`, which filters by `mode === "generate"` *then* truncates —
+the correct order. Prior warnings WR-01 (token budget computed against serialized
+prose), WR-02 (overstated injection-defense comment, now documenting residual risk),
+WR-03 (route `catch` now logs via `console.error`), and WR-04 (`GENERATE_MODE`
+constant centralizing the literal) are all addressed in the current source.
 
-The architecture is sound and the test coverage for the route-level wiring (correct
-`toolKind`, `script` singular regression, Pro gate ordering, empty-history paths) is
-genuinely good. However, there is a **truncation-ordering bug** caused by the
-resolvers pre-truncating history *before* the mode filter runs inside
-`buildToolContextMessages`. This silently drops valid `generate` turns from context
-whenever older `explain` turns exist — degrading the multi-turn feature it was built
-to deliver, and it is invisible to the current tests because they never mix modes
-through the resolver path. Several warnings concern token-budget correctness and
-prompt-injection surface that the design explicitly tried to close.
-
-## Critical Issues
-
-### CR-01: History is truncated before the `mode` filter runs — valid `generate` turns silently dropped
-
-**File:** `apps/web/src/server/ai/regex-stream.ts:45`, `apps/web/src/server/ai/sql-stream.ts:40`, `apps/web/src/server/ai/scripts-stream.ts:48`, `apps/web/src/server/ai/template-stream.ts:36` (in conjunction with `apps/web/src/server/ai/context-messages.ts:139-149`)
-
-**Issue:** Each resolver calls `truncateHistory(input.history ?? [])` and passes the
-result into `buildToolContextMessages`, which *then* filters by `mode === "generate"`
-(line 146) and truncates **again** (line 149). Two defects fall out of this ordering:
-
-1. **Truncation precedes filtering.** `truncateHistory` applies `MAX_EXCHANGES = 10`
-   (`slice(-10)`) and the token budget to the *raw, unfiltered* history — which still
-   contains `explain` exchanges. Those non-`generate` rows consume slots in the
-   "last 10" window and token budget, then get discarded by the filter inside
-   `buildToolContextMessages`. Result: a user with, say, 6 recent `explain` turns and
-   8 older `generate` turns can end up with only ~4 `generate` turns in context even
-   though 10 would fit. The feature loses conversational memory it was designed to
-   retain. The unit tests in `context-messages.test.ts` (filtro de mode, D-03) pass
-   only because they call `buildToolContextMessages` directly with un-pre-truncated
-   input — the real resolver path is never exercised with mixed modes.
-
-2. **Token budget is computed against the wrong payload size.** The pre-truncation in
-   the resolvers counts `explain` payloads toward `SAFE_TOKEN_BUDGET`, but those
-   payloads are dropped before being sent to the model. The effective budget delivered
-   to the LLM is therefore smaller than the 4,000-token reservation intends.
-
-The double `truncateHistory` call is also dead/redundant work given the internal call,
-but the correctness problem is the ordering, not the duplication.
-
-**Fix:** Remove the pre-truncation from all four resolvers and let
-`buildToolContextMessages` own the filter-then-truncate order. Stop exporting/calling
-`truncateHistory` from the resolvers:
-
-```ts
-// regex-stream.ts / sql-stream.ts / scripts-stream.ts / template-stream.ts
-import { buildToolContextMessages } from "./context-messages"; // drop truncateHistory import
-
-// ...
-messages: buildToolContextMessages(
-  "regex",
-  input.history ?? [],   // pass raw history; build* filters THEN truncates
-  systemPrompt,
-  request.prompt
-),
-```
-
-`buildToolContextMessages` already does `filter(mode === "generate")` (line 146)
-before `truncateHistory` (line 149), which is the correct order. No change needed
-inside `context-messages.ts` for the ordering itself.
+This pass found no crashes, injection sinks, or data-loss defects, so no BLOCKERs.
+However, the **same class of bug that CR-01 described still exists one layer down**:
+`findConversationExchanges` applies `READ_LIMIT = 10` *before* any `mode` filter, and
+the `regex` thread genuinely mixes `generate` and `explain` rows under one `toolKind`.
+A user with recent `explain` activity can therefore lose `generate` context that
+would otherwise fit — the central promise of the phase. This is a correctness/quality
+degradation rather than a crash, so it is filed as a WARNING.
 
 ## Warnings
 
-### WR-01: Token-budget guard ignores serialized message size; can still ship oversized context
+### WR-01: `READ_LIMIT` is applied before the `mode` filter — recent `explain` rows starve `generate` context
 
-**File:** `apps/web/src/server/ai/context-messages.ts:102-114`
+**File:** `apps/web/src/server/tools/conversation-repository.ts:73-88` (in conjunction with `apps/web/src/server/ai/context-messages.ts:172`)
 
-**Issue:** `truncateHistory` estimates tokens from `ex.userPrompt` plus
-`JSON.stringify(ex.assistantPayload)` (line 105). But the message actually sent to the
-model is the **serialized prose** from `serializeAssistant` (artifact + explanation),
-which differs from the raw JSON payload size — and exchanges whose payload fails
-serialization (unknown `kind`, missing fields) are dropped entirely in
-`buildToolContextMessages` yet still counted against the budget here. The DoS guard
-(T-08-02) therefore measures a quantity that is not what gets transmitted. In the
-common case `JSON.stringify` over-counts (includes metadata/warnings/assumptions that
-are never sent), so the guard is conservative — but the budget reasoning in the
-docstring ("artifact + explanation") does not match the implementation, and the two
-can diverge enough to matter when payloads are large and the budget is the active
-constraint.
+**Issue:** `findConversationExchanges` reads the most-recent `READ_LIMIT = 10` rows for
+`(userId, toolKind)` ordered by `createdAt desc`, **with no `mode` filter**. The
+`mode === "generate"` filter only runs later, inside `buildToolContextMessages`
+(line 172). This is the exact ordering defect that the prior CR-01 fixed at the
+resolver layer, but it survives at the read layer.
 
-**Fix:** Truncate against the same serialization that gets sent. Compute token cost
-from `serializeAssistant(ex.assistantPayload)` (skip nulls, matching the build step)
-rather than `JSON.stringify`, so the budget reflects the real wire payload:
+The `regex` thread genuinely mixes modes under one `toolKind`:
+`apps/web/src/app/api/tools/regex/explain/route.ts:34,43` saves with
+`toolKind: "regex"`, `mode: "explain"`; `regex/generate` saves with
+`toolKind: "regex"`, `mode: "generate"`. Both land in the same partition. Because the
+read takes the last 10 rows regardless of mode and the filter discards `explain`
+afterward, a user who recently ran several `explain` operations can receive **fewer
+`generate` turns than the 10-row window could hold** — or zero, even though older
+`generate` rows exist and would fit the token budget. The feature silently loses the
+conversational memory it was built to deliver.
+
+This is invisible to the test suite: `multi-turn-context.test.ts` mocks
+`findConversationExchanges` to return `[]`, and `context-messages.test.ts` exercises
+the filter with hand-built mixed arrays — neither drives a real read window saturated
+with `explain` rows.
+
+**Fix:** Filter by `mode` at the read boundary so `READ_LIMIT` counts only the rows
+that will actually be used. Use the shared `GENERATE_MODE` constant rather than a
+literal:
 
 ```ts
-function totalTokens(exchanges: ConversationExchange[]): number {
-  return exchanges.reduce((sum, ex) => {
-    const serialized = serializeAssistant(ex.assistantPayload) ?? "";
-    return sum + estimateTokens(ex.userPrompt) + estimateTokens(serialized);
-  }, 0);
+import { GENERATE_MODE } from "@/server/ai/context-messages";
+
+const rows = await prisma.conversationExchange.findMany({
+  where: { userId, toolKind, mode: GENERATE_MODE },
+  orderBy: { createdAt: "desc" },
+  take: READ_LIMIT,
+});
+return rows.reverse();
+```
+
+The `@@index([userId, toolKind, createdAt])` still covers this filter; `mode` is a
+low-cardinality residual predicate. If the read is intentionally mode-agnostic for
+future reuse, document that and raise `READ_LIMIT` enough to survive the post-filter,
+but filtering at the source is the correct fix.
+
+### WR-02: `guardPayloadSize` casts non-object payloads and can throw on `undefined`
+
+**File:** `apps/web/src/server/tools/conversation-repository.ts:16-23`
+
+**Issue:** `guardPayloadSize(payload: unknown)` runs `JSON.stringify(payload)` then
+reads `.length`. If `payload` is `undefined`, `JSON.stringify(undefined)` returns the
+JS value `undefined` (not a string), so `.length` is read on `undefined` and throws a
+`TypeError`. The function also unconditionally casts `payload as Record<string, unknown>`
+in the oversize branch and `payload as object` in the pass-through branch, so a
+non-object payload (string/number/null) would be persisted into a `Json @db.Json`
+column as a scalar, which downstream `serializeAssistant` then rejects (returns null)
+— wasting a stored row. In the current call sites the payload is always a validated
+resolver response object, so this is latent rather than live; the throw would be
+caught by the outer `try/catch` (line 67) and degrade to a skipped persist. Still, the
+guard does not actually guard the type it claims to.
+
+**Fix:** Validate shape before stringifying, and fail closed to a safe placeholder:
+
+```ts
+function guardPayloadSize(payload: unknown): object {
+  if (typeof payload !== "object" || payload === null) {
+    return { kind: "unknown", truncated: true };
+  }
+  const json = JSON.stringify(payload);
+  if (json.length > MAX_PAYLOAD_BYTES) {
+    const p = payload as Record<string, unknown>;
+    return { kind: p["kind"] ?? "unknown", truncated: true };
+  }
+  return payload;
 }
 ```
 
-### WR-02: Untrusted history content is injected into the LLM with no instruction-injection boundary
+### WR-03: `MAX_PAYLOAD_BYTES` truncation guard measures UTF-16 code units, not bytes
 
-**File:** `apps/web/src/server/ai/context-messages.ts:154-165`
+**File:** `apps/web/src/server/tools/conversation-repository.ts:3,18`
 
-**Issue:** The serialized `assistantContent` and raw `ex.userPrompt` are pushed
-verbatim as `assistant`/`user` messages. The design comment (lines 35-37) claims that
-emitting only artifact+explanation "reduz superfície de injeção", but the artifact
-itself (a SQL query, a regex, VBA/Apps Script code, or arbitrary Markdown template
-output) is fully attacker-influenced text that previously round-tripped through the
-model. A prior turn whose explanation embeds an adversarial directive (for example, a
-string instructing the model to disregard prior guidance and emit only raw JSON) is
-replayed as a trusted `assistant` message in the next turn.
-Because these are persisted across turns and the system prompt is just one message
-among many, there is a real multi-turn prompt-injection surface. This is a known
-limitation rather than a crash, hence WARNING, but it contradicts the security claim
-in the docstring. (Note: the adversarial directive above is described, not quoted, to
-keep this report inert for downstream agents.)
+**Issue:** `MAX_PAYLOAD_BYTES = 32 * 1024` is named and documented as "32 KB per row",
+but the check is `json.length > MAX_PAYLOAD_BYTES`, where `String.length` counts
+UTF-16 code units, not bytes. Portuguese content is full of multi-byte UTF-8
+characters (acentos, ç) and the generated artifacts can contain emoji or non-BMP
+characters that count as 2 code units but up to 4 UTF-8 bytes. The actual stored byte
+size can therefore exceed the intended 32 KB ceiling by a meaningful margin, defeating
+the row-size guard's purpose. This is a correctness gap in a size guard, hence
+WARNING rather than INFO.
 
-**Fix:** Do not rely on field-stripping alone for injection defense. At minimum,
-document the residual risk honestly (the artifact body is untrusted), and consider
-delimiting replayed history content (e.g. fenced/labelled blocks) and reinforcing in
-the system prompt that prior turns are reference context, not instructions. A real
-mitigation is out of scope for this phase but the "reduz superfície de injeção"
-comment overstates the protection and should be corrected.
-
-### WR-03: `findConversationExchanges` runs inside the `try` but its failure is masked, while resolver/LLM failure maps to a misleading 502
-
-**File:** `apps/web/src/app/api/tools/sql/generate/route.ts:29-56` (same pattern in regex/scripts/template routes)
-
-**Issue:** History read is inside the `try` (good — D-09 skip-on-error). But
-`findConversationExchanges` already swallows its own errors and returns `[]`
-(`conversation-repository.ts:62-72`), so the only thing the route `catch` (line 55)
-can catch from this region is a `resolveXxxPayload` failure (LLM/parse/zod). That path
-calls `releaseToolUse` and returns a generic 502 "Nao consegui validar a resposta."
-The `catch` is a bare `catch {}` with no error logging at all — any unexpected failure
-(including a programming error in serialization/truncation, or a Zod parse failure)
-is silently collapsed into a 502 with no diagnostic trail. Combined with CR-01, a
-context-assembly bug would be invisible in production.
-
-**Fix:** Log the caught error before returning 502 so failures are diagnosable:
+**Fix:** Measure real byte length, or rename the constant to reflect that it is a
+character budget:
 
 ```ts
-} catch (err) {
-  console.error("tool generate failed", { toolKind: "sql", err });
-  await releaseToolUse(quotaCheck.reservationKey);
-  return NextResponse.json({ error: "Nao consegui validar a resposta." }, { status: 502 });
-}
+const json = JSON.stringify(payload);
+if (Buffer.byteLength(json, "utf8") > MAX_PAYLOAD_BYTES) { ... }
 ```
-
-### WR-04: `mode` is typed as a free-form `string`; the D-03 filter is a stringly-typed equality with no guard against drift
-
-**File:** `apps/web/src/server/ai/context-messages.ts:146`
-
-**Issue:** `history.filter((ex) => ex.mode === "generate")` depends on the persisted
-`mode` value being exactly the literal `"generate"`. `ConversationExchange.mode` is a
-plain `string` (Prisma model) and is written from route handlers as a literal. There
-is no shared constant or enum, so a future writer using `"GENERATE"`, `"gen"`, or a new
-mode silently produces empty context with no type error and no test failure. The
-`toolKind` mismatch case (`script` vs `scripts`) is explicitly tested (MULTI-03) but
-the analogous `mode` literal has no equivalent guard.
-
-**Fix:** Centralize the literal as a shared const (e.g. `GENERATE_MODE = "generate"`)
-used by both the save path and this filter, or narrow the Prisma type. At minimum add
-a unit test asserting that only `mode === "generate"` survives and that an unexpected
-mode string is dropped (rather than relying on the current `"explain"`-only test).
 
 ## Info
 
-### IN-01: `toolKind` parameter of `buildToolContextMessages` is unused
+### IN-01: `serializeAssistant` is invoked twice per exchange on the build path
 
-**File:** `apps/web/src/server/ai/context-messages.ts:139-140`
+**File:** `apps/web/src/server/ai/context-messages.ts:126,181`
 
-**Issue:** The first parameter `toolKind: string` is never referenced in the function
-body — serialization dispatches on `payload.kind`, not the passed `toolKind`. All four
-call sites pass a literal ("sql"/"regex"/"script"/"template") that has no effect. This
-is dead parameter surface that invites confusion (a reader assumes it scopes/filters
-history, which it does not — the repository already scoped by `toolKind`).
+**Issue:** `buildToolContextMessages` calls `truncateHistory`, whose `totalTokens`
+serializes every exchange via `serializeAssistant` (line 126), then the build loop
+serializes each surviving exchange again (line 181). Correctness is fine, but the
+work is duplicated for every retained exchange every request. Out of v1 performance
+scope; noted as a maintainability smell — the serialization could be computed once and
+threaded through.
 
-**Fix:** Either remove the parameter, or actually use it to validate that
-`payload.kind` matches the expected tool (which would also harden against cross-tool
-payloads leaking into a thread). If kept for signature symmetry, add a comment stating
-it is intentionally unused.
+### IN-02: `dialect` column overloaded to store `scriptType` for the script tool
 
-### IN-02: Truncation comment claims a `skipTruncation` parameter that does not exist
+**File:** `apps/web/src/app/api/tools/scripts/generate/route.ts:38,48`
 
-**File:** `apps/web/src/server/ai/context-messages.ts:122-123`
+**Issue:** The scripts route writes `dialect: parsed.data.scriptType` to both
+`recordToolRequest` and `saveConversationExchange`, persisting an enum like `"vba"` /
+`"apps_script"` into a column named `dialect`. The Prisma model also has an unused
+`platform String?` field that is never written by any route in scope. The semantic
+mismatch (`scriptType` stored as `dialect`) is harmless today but invites confusion
+for anyone querying `ConversationExchange.dialect` expecting SQL dialects. Consider a
+dedicated column or a clearly documented convention.
 
-**Issue:** The docstring says "(caller ou este módulo — veja parâmetro skipTruncation
-para testes unitários)" but `buildToolContextMessages` has no `skipTruncation`
-parameter. Stale comment referencing a non-existent API; misleads maintainers.
+### IN-03: Resolver fixture branch discards `input.history`, masking multi-turn behavior in dev/tests
 
-**Fix:** Remove the `skipTruncation` reference from the docstring (line 122-123).
+**File:** `apps/web/src/server/ai/regex-stream.ts:24-34`, `sql-stream.ts:23-31`, `scripts-stream.ts:24-32`, `template-stream.ts:22-27`
 
-### IN-03: Stale "NOVO — Phase 6" comments on Phase 8 code
+**Issue:** When `OPENAI_API_KEY` is unset, all four resolvers short-circuit to a static
+fixture and never call `buildToolContextMessages`, so the multi-turn assembly path is
+exercised only with a key set. This is intentional for deterministic local dev, but it
+means the integration tests in `multi-turn-context.test.ts` assert only that
+`findConversationExchanges` is *called* with the right `toolKind` — they never assert
+the history is actually *threaded into the model messages*, because the fixture branch
+discards `input.history`. Consider one test that sets `OPENAI_API_KEY` with a mocked
+OpenAI client to verify history reaches `messages`.
 
-**File:** `apps/web/src/app/api/tools/sql/generate/route.ts:43`, `regex/generate/route.ts:42`, `scripts/generate/route.ts:43`, `template/generate/route.ts:50`
+### IN-04: System prompts embedded as long inline string literals, decoupled from the serialization contract
 
-**Issue:** The `saveConversationExchange` blocks are labelled `// NOVO — Phase 6`
-while the adjacent history-read blocks are labelled `// Phase 8`. Mixed/inaccurate
-phase tags add noise and will mislead future bisecting/archaeology.
+**File:** `apps/web/src/server/ai/regex-stream.ts:46`, `sql-stream.ts:41`, `scripts-stream.ts:49`, `template-stream.ts:37`
 
-**Fix:** Normalize or drop the phase tags; they encode no behavior and drift over time.
-
-### IN-04: `vi.clearAllMocks()` mid-test resets entitlement stub without re-stubbing (latent, currently harmless)
-
-**File:** `apps/web/tests/multi-turn-context.test.ts:183`
-
-**Issue:** The isolation test calls `vi.clearAllMocks()` at line 183 to reset call
-history between the sql and scripts invocations, then re-stubs quota and repo mocks
-but not `entitlementMocks.getUserEntitlement`. This is harmless today because the
-second call is `scriptsPost` (no Pro gate). But if this test is later extended to call
-`templatePost` after the reset, `getUserEntitlement` would return `undefined` and the
-Pro gate would throw/403 unexpectedly. Fragile pattern.
-
-**Fix:** Re-stub `getUserEntitlement` alongside the others after the mid-test clear,
-or restructure into two separate `it` blocks to avoid mid-test mock surgery.
+**Issue:** Each resolver hardcodes its system prompt (including the required JSON
+output schema) as a multi-hundred-character inline string. These prompts encode the
+exact field contract that `serializeAssistant` (`context-messages.ts:66-98`) depends
+on per `kind`. The two live far apart with no shared constant, so a prompt edit that
+changes a field name (e.g. renaming `pattern`) would silently break serialization with
+no compile-time link. Extracting prompts to named constants colocated with the
+serialization contract would reduce drift risk.
 
 ---
 
