@@ -25,7 +25,7 @@ Full details: `.planning/milestones/v1.0-ROADMAP.md`
 **Milestone Goal:** Transformar o chat-thread visual em experiência multi-turn real — histórico salvo no banco e contexto passado ao LLM em cada nova mensagem.
 
 - [x] **Phase 6: Persistence Layer** - Schema DB, API CRUD de exchanges e cascade delete de privacidade (completed 2026-05-29)
-- [ ] **Phase 7: Frontend History** - Carregamento de histórico no mount, renderização e controle "Nova conversa"
+- [x] **Phase 7: Frontend History** - Carregamento de histórico no mount, renderização e controle "Nova conversa" (completed 2026-05-30)
 - [ ] **Phase 8: Multi-turn LLM Context** - Injeção de contexto nas chamadas LLM com truncagem automática por tool
 
 ## Phase Details
@@ -101,5 +101,5 @@ Full details: `.planning/milestones/v1.0-ROADMAP.md`
 | 4. Spreadsheet File Analysis | v1.0 | 3/3 | Complete | 2026-05-26 |
 | 5. OCR, Charts, and Launch Hardening | v1.0 | 4/4 | Complete | 2026-05-26 |
 | 6. Persistence Layer | v1.1 | 2/2 | Complete    | 2026-05-29 |
-| 7. Frontend History | v1.1 | 4/4 | Awaiting Checkpoint |  |
+| 7. Frontend History | v1.1 | 4/4 | Complete    | 2026-05-30 |
 | 8. Multi-turn LLM Context | v1.1 | 0/? | Not started | - |
