@@ -34,7 +34,15 @@ function estimateTokens(text: string): number {
  *
  * Extrai apenas o artefato principal + explicação curta por tool kind (D-05).
  * NUNCA emite JSON cru, metadata, warnings, assumptions ou outros campos —
- * isso reduz superfície de injeção e impede que o modelo imite formato JSON (T-08-01).
+ * isso impede que o modelo imite o formato JSON de saída (T-08-01).
+ *
+ * RISCO RESIDUAL (WR-02): o corpo do artefato (query SQL, regex, código VBA/
+ * Apps Script, Markdown de template) e o userPrompt são texto influenciado pelo
+ * usuário e são reproduzidos como mensagens assistant/user em turnos seguintes.
+ * O field-stripping NÃO é defesa de injeção: uma explicação adversária persistida
+ * é replayed como contexto "confiável". Mitigação real (delimitar/rotular o
+ * histórico, reforçar no system prompt que turnos anteriores são referência e não
+ * instruções) está fora do escopo desta fase. Tratar o histórico como não-confiável.
  *
  * Retorna null para payloads com kind desconhecido ou campos ausentes (D-09).
  */
