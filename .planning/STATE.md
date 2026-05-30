@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Conversas Persistentes
-status: executing
-last_updated: "2026-05-30T15:36:48.305Z"
+status: verifying
+last_updated: "2026-05-30T15:42:22.732Z"
 last_activity: 2026-05-30
 progress:
   total_phases: 3
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 9
-  completed_plans: 8
-  percent: 67
+  completed_plans: 9
+  percent: 100
 ---
 
 # Project State
@@ -26,10 +26,10 @@ See: .planning/PROJECT.md (updated 2026-05-26 after v1.0 milestone)
 
 Phase: 08 (multi-turn-llm-context) — EXECUTING
 Plan: 3 of 3
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-05-30
 
-Progress: [█████████░] 89%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
@@ -62,6 +62,7 @@ Recent decisions affecting current work:
 - 07-04: wiring Topbar ↔ tool components via WorkspaceConversationContext + usePathname; 5 tool components com seed, seletores e onNewConversation; tsc exit 0
 - [Phase ?]: Calibrado para gpt-5-mini com margem para system+prompt+resposta
 - [Phase ?]: toolKind singular para isolamento correto
+- [Phase ?]: toolKind 'script' singular em scripts/generate para isolamento MULTI-03 correto
 
 ### Pending Todos
 
@@ -85,9 +86,10 @@ Items acknowledged and carried forward:
 | Phase 07 P01 | 5 | 1 tasks | 1 files |
 | Phase 08-multi-turn-llm-context P01 | 18 | 2 tasks | 2 files |
 | Phase 08 P02 | 7 | 2 tasks | 4 files |
+| Phase 08-multi-turn-llm-context P03 | 12 | 2 tasks | 5 files |
 
 ## Session Continuity
 
-Last session: 2026-05-30T15:36:48.286Z
-Stopped at: Completed 08-02-PLAN.md
+Last session: 2026-05-30T15:42:22.720Z
+Stopped at: Completed 08-03-PLAN.md
 Resume file: None
