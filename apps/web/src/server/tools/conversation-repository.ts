@@ -23,7 +23,11 @@ function guardPayloadSize(payload: unknown): object {
     return { kind: "unknown", truncated: true };
   }
   const json = JSON.stringify(payload);
-  if (json.length > MAX_PAYLOAD_BYTES) {
+  // Mede bytes UTF-8 reais (WR-03): String.length conta code units UTF-16,
+  // não bytes. Conteúdo em pt-BR (acentos, ç) e emoji/non-BMP usam mais bytes
+  // do que code units, então a checagem por .length deixaria passar linhas
+  // acima do teto de 32 KB. Buffer.byteLength reflete o tamanho armazenado.
+  if (Buffer.byteLength(json, "utf8") > MAX_PAYLOAD_BYTES) {
     const p = payload as Record<string, unknown>;
     return { kind: p["kind"] ?? "unknown", truncated: true };
   }
