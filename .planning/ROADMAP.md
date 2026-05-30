@@ -114,4 +114,4 @@ Full details: `.planning/milestones/v1.0-ROADMAP.md`
 | 5. OCR, Charts, and Launch Hardening | v1.0 | 4/4 | Complete | 2026-05-26 |
 | 6. Persistence Layer | v1.1 | 2/2 | Complete    | 2026-05-29 |
 | 7. Frontend History | v1.1 | 4/4 | Complete    | 2026-05-30 |
-| 8. Multi-turn LLM Context | v1.1 | 3/3 | Complete   | 2026-05-30 |
+| 8. Multi-turn LLM Context | v1.1 | 3/3 | Complete    | 2026-05-30 |
