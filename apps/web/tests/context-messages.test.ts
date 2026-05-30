@@ -290,10 +290,32 @@ describe("truncateHistory", () => {
 
     // Deve ter cortado algumas trocas antigas para caber no orçamento
     expect(result.length).toBeLessThan(10);
+    // WR-02: sempre retém ao menos a troca mais recente
+    expect(result.length).toBeGreaterThanOrEqual(1);
     // As que sobraram devem ser as MAIS RECENTES (finais do array)
-    if (result.length > 0) {
-      expect(result.at(-1)!.userPrompt).toBe(bigText);
-    }
+    expect(result.at(-1)!.userPrompt).toBe(bigText);
+  });
+
+  it("retém a troca mais recente mesmo quando ela sozinha excede o orçamento (WR-02)", () => {
+    // Uma única troca cujo corpo serializado estoura SAFE_TOKEN_BUDGET sozinha.
+    const hugeText = "A".repeat(40_000); // ≈ 10.000 tokens, bem acima de 4.000
+    const exchanges = [
+      makeExchange({
+        userPrompt: hugeText,
+        assistantPayload: {
+          kind: "sql",
+          query: hugeText,
+          explanation: hugeText
+        },
+        createdAt: new Date(2026, 0, 1)
+      })
+    ];
+
+    const result = truncateHistory(exchanges);
+
+    // Nunca retornar [] — o usuário ficaria sem contexto no turno que mais referencia
+    expect(result.length).toBeGreaterThanOrEqual(1);
+    expect(result.at(-1)!.userPrompt).toBe(hugeText);
   });
 
   it("estimativa de tokens é monotônica — string maior estima mais tokens", () => {

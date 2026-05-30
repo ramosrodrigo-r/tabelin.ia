@@ -129,8 +129,13 @@ export function truncateHistory(history: ConversationExchange[]): ConversationEx
     }, 0);
   }
 
-  // Passo 3: cortar mais antigas uma a uma até caber no orçamento
-  while (truncated.length > 0 && totalTokens(truncated) > SAFE_TOKEN_BUDGET) {
+  // Passo 3: cortar mais antigas uma a uma até caber no orçamento.
+  // Preserva sempre ao menos a troca mais recente (WR-02): se a última troca
+  // sozinha exceder o orçamento, retorná-la vazia daria ZERO contexto justamente
+  // no turno que o usuário mais provavelmente referencia. O recorte do corpo
+  // serializado quando uma única troca estoura o budget está deferido (ver
+  // 08-CONTEXT.md <deferred>); por ora a retemos inteira em vez de descartá-la.
+  while (truncated.length > 1 && totalTokens(truncated) > SAFE_TOKEN_BUDGET) {
     truncated = truncated.slice(1);
   }
 
