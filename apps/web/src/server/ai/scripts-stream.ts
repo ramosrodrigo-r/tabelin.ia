@@ -11,7 +11,7 @@ import {
 } from "@tabelin/shared";
 
 import { classifyDestructive } from "./destructive-classifier";
-import { buildToolContextMessages, truncateHistory } from "./context-messages";
+import { buildToolContextMessages } from "./context-messages";
 import { getOpenAIModel } from "./openai-client";
 
 export async function resolveScriptPayload(input: {
@@ -45,7 +45,7 @@ export async function resolveScriptPayload(input: {
     model: getOpenAIModel(),
     messages: buildToolContextMessages(
       "script",
-      truncateHistory(input.history ?? []),
+      input.history ?? [],
       `Voce e um especialista em automacao de planilhas. Gere ${scriptTypeLabels[request.scriptType] ?? request.scriptType} em resposta ao pedido em portugues do usuario. Responda APENAS com JSON valido no formato: {"code": "...codigo completo...", "explanation": "...explicacao em portugues...", "assumptions": ["..."], "warnings": [], "isDestructive": false}`,
       request.prompt
     ),

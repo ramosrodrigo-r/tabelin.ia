@@ -12,7 +12,7 @@ import {
   regexCompletePayloadSchema
 } from "@tabelin/shared";
 
-import { buildToolContextMessages, truncateHistory } from "./context-messages";
+import { buildToolContextMessages } from "./context-messages";
 import { getOpenAIModel } from "./openai-client";
 
 type RegexModeInput =
@@ -42,7 +42,7 @@ export async function resolveRegexPayload(input: RegexModeInput): Promise<RegexC
       model: getOpenAIModel(),
       messages: buildToolContextMessages(
         "regex",
-        truncateHistory(input.history ?? []),
+        input.history ?? [],
         'Voce e um especialista em expressoes regulares. Gere uma regex em resposta ao pedido em portugues. Responda APENAS com JSON: {"pattern": "...regex...", "explanation": "...explicacao em portugues...", "examples": ["..."], "assumptions": [], "warnings": []}',
         input.request.prompt
       ),

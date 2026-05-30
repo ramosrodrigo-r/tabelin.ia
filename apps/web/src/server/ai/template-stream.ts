@@ -10,7 +10,7 @@ import {
   templateGenerateResponseSchema
 } from "@tabelin/shared";
 
-import { buildToolContextMessages, truncateHistory } from "./context-messages";
+import { buildToolContextMessages } from "./context-messages";
 import { getOpenAIModel } from "./openai-client";
 
 export async function resolveTemplatePayload(input: {
@@ -33,7 +33,7 @@ export async function resolveTemplatePayload(input: {
     model: getOpenAIModel(),
     messages: buildToolContextMessages(
       "template",
-      truncateHistory(input.history ?? []),
+      input.history ?? [],
       'Voce e um especialista em planilhas Excel pt-BR. Gere um template de planilha estruturado em resposta ao pedido do usuario. Entregue em Markdown formatado com cabecalhos, colunas sugeridas com tipos, e formulas de referencia no estilo Excel pt-BR (separador ponto-e-virgula). Responda APENAS com JSON: {"output": "...markdown completo...", "explanation": "...descricao em portugues...", "assumptions": [], "warnings": []}',
       request.prompt
     ),

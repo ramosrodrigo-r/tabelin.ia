@@ -11,7 +11,7 @@ import {
 } from "@tabelin/shared";
 
 import { classifyDestructive } from "./destructive-classifier";
-import { buildToolContextMessages, truncateHistory } from "./context-messages";
+import { buildToolContextMessages } from "./context-messages";
 import { getOpenAIModel } from "./openai-client";
 
 export async function resolveSqlPayload(input: {
@@ -37,7 +37,7 @@ export async function resolveSqlPayload(input: {
     model: getOpenAIModel(),
     messages: buildToolContextMessages(
       "sql",
-      truncateHistory(input.history ?? []),
+      input.history ?? [],
       `Voce e um especialista em SQL. Gere uma consulta ${request.dialect.toUpperCase()} em resposta ao pedido em portugues. Responda APENAS com JSON valido: {"query": "...SQL completo...", "explanation": "...explicacao em portugues...", "assumptions": ["..."], "warnings": [], "isDestructive": false}`,
       request.prompt
     ),
