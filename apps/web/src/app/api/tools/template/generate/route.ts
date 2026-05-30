@@ -7,7 +7,7 @@ import { getSessionFromCookieHeader } from "@/server/auth/session";
 import { getUserEntitlement } from "@/server/billing/entitlements";
 import { recordToolRequest } from "@/server/tools/tool-repository";
 import { confirmToolUse, releaseToolUse, reserveToolUse } from "@/server/usage/quota-service";
-import { saveConversationExchange } from "@/server/tools/conversation-repository";
+import { findConversationExchanges, saveConversationExchange } from "@/server/tools/conversation-repository";
 
 export async function POST(request: Request) {
   const user = getSessionFromCookieHeader(request.headers.get("cookie"));
@@ -35,7 +35,9 @@ export async function POST(request: Request) {
   }
 
   try {
-    const payload = await resolveTemplatePayload({ request: parsed.data });
+    // Phase 8: ler histórico multi-turn APÓS o Pro gate (D — ordem) e dentro do try (D-09)
+    const history = await findConversationExchanges(user.id, "template");
+    const payload = await resolveTemplatePayload({ request: parsed.data, history });
     await confirmToolUse(quotaCheck.reservationKey);
     await recordToolRequest({
       userId: user.id,

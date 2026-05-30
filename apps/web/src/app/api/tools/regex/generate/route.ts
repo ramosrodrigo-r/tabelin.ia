@@ -6,7 +6,7 @@ import { createRegexEventStream, resolveRegexPayload } from "@/server/ai/regex-s
 import { getSessionFromCookieHeader } from "@/server/auth/session";
 import { recordToolRequest } from "@/server/tools/tool-repository";
 import { confirmToolUse, releaseToolUse, reserveToolUse } from "@/server/usage/quota-service";
-import { saveConversationExchange } from "@/server/tools/conversation-repository";
+import { findConversationExchanges, saveConversationExchange } from "@/server/tools/conversation-repository";
 
 export async function POST(request: Request) {
   const user = getSessionFromCookieHeader(request.headers.get("cookie"));
@@ -27,7 +27,9 @@ export async function POST(request: Request) {
   }
 
   try {
-    const payload = await resolveRegexPayload({ mode: "generate", request: parsed.data });
+    // Phase 8: ler histórico multi-turn (skip-on-error embutido no repository — D-09)
+    const history = await findConversationExchanges(user.id, "regex");
+    const payload = await resolveRegexPayload({ mode: "generate", request: parsed.data, history });
     await confirmToolUse(quotaCheck.reservationKey);
     await recordToolRequest({
       userId: user.id,

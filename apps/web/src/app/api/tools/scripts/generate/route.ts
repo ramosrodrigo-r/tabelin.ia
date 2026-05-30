@@ -6,7 +6,7 @@ import { createScriptEventStream, resolveScriptPayload } from "@/server/ai/scrip
 import { getSessionFromCookieHeader } from "@/server/auth/session";
 import { recordToolRequest } from "@/server/tools/tool-repository";
 import { confirmToolUse, releaseToolUse, reserveToolUse } from "@/server/usage/quota-service";
-import { saveConversationExchange } from "@/server/tools/conversation-repository";
+import { findConversationExchanges, saveConversationExchange } from "@/server/tools/conversation-repository";
 
 export async function POST(request: Request) {
   const user = getSessionFromCookieHeader(request.headers.get("cookie"));
@@ -27,7 +27,9 @@ export async function POST(request: Request) {
   }
 
   try {
-    const payload = await resolveScriptPayload({ request: parsed.data });
+    // Phase 8: ler histórico multi-turn — toolKind "script" SINGULAR (bate com o save existente — MULTI-03)
+    const history = await findConversationExchanges(user.id, "script");
+    const payload = await resolveScriptPayload({ request: parsed.data, history });
     await confirmToolUse(quotaCheck.reservationKey);
     await recordToolRequest({
       userId: user.id,
