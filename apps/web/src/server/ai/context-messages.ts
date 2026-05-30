@@ -9,6 +9,16 @@ import type { ConversationExchange } from "@prisma/client";
 export const MAX_EXCHANGES = 10;
 
 /**
+ * Literal canônico do modo "generate" persistido em ConversationExchange.mode.
+ *
+ * Centralizado para evitar drift stringly-typed (WR-04): o filtro D-03 e o
+ * caminho de gravação (route handlers) devem referenciar esta constante em vez
+ * de repetir o literal "generate", que falharia silenciosamente como contexto
+ * vazio se divergir (ex.: "GENERATE", "gen").
+ */
+export const GENERATE_MODE = "generate";
+
+/**
  * Orçamento conservador de tokens reservado para o histórico.
  *
  * gpt-5-mini tem janela de contexto de ~128k tokens.
@@ -153,8 +163,8 @@ export function buildToolContextMessages(
   systemPrompt: string,
   userPrompt: string
 ): import("openai").OpenAI.Chat.ChatCompletionMessageParam[] {
-  // D-03: descartar exchanges com mode != "generate"
-  const generateExchanges = history.filter((ex) => ex.mode === "generate");
+  // D-03: descartar exchanges com mode != "generate" (literal via GENERATE_MODE — WR-04)
+  const generateExchanges = history.filter((ex) => ex.mode === GENERATE_MODE);
 
   // D-07/D-08: truncagem híbrida
   const truncated = truncateHistory(generateExchanges);
