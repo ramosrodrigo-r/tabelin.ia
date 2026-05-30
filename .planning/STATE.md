@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Conversas Persistentes
 status: executing
-last_updated: "2026-05-30T14:35:41.966Z"
-last_activity: 2026-05-30 -- Phase 08 planning complete
+last_updated: "2026-05-30T15:32:13.364Z"
+last_activity: 2026-05-30
 progress:
   total_phases: 3
   completed_phases: 2
   total_plans: 9
-  completed_plans: 6
+  completed_plans: 7
   percent: 67
 ---
 
@@ -20,16 +20,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-26 after v1.0 milestone)
 
 **Core value:** Brazilian spreadsheet users can describe the outcome they need in Portuguese and quickly receive correct, copy-ready formulas, code, queries, or structured table outputs that fit their actual tools.
-**Current focus:** Phase 8 — multi turn llm context
+**Current focus:** Phase 08 — multi-turn-llm-context
 
 ## Current Position
 
-Phase: 8
-Plan: Not started
+Phase: 08 (multi-turn-llm-context) — EXECUTING
+Plan: 2 of 3
 Status: Ready to execute
-Last activity: 2026-05-30 -- Phase 08 planning complete
+Last activity: 2026-05-30
 
-Progress: [█████████░] 83%
+Progress: [████████░░] 78%
 
 ## Performance Metrics
 
@@ -60,6 +60,7 @@ Recent decisions affecting current work:
 - 07-02: params como Promise (Next.js 15), falha silenciosa no DELETE (D-10), file-analysis excluído do enum (D-07)
 - 07-03: prefetch server-side de exchanges nos 5 server components; initialExchanges prop passada (TypeScript resolverá no Plano 04)
 - 07-04: wiring Topbar ↔ tool components via WorkspaceConversationContext + usePathname; 5 tool components com seed, seletores e onNewConversation; tsc exit 0
+- [Phase ?]: Calibrado para gpt-5-mini com margem para system+prompt+resposta
 
 ### Pending Todos
 
@@ -81,9 +82,10 @@ Items acknowledged and carried forward:
 | History | Export de conversas (PDF, texto) | Future | v1.1 requirements |
 | History | Conversas compartilháveis entre usuários | v2 | v1.1 requirements |
 | Phase 07 P01 | 5 | 1 tasks | 1 files |
+| Phase 08-multi-turn-llm-context P01 | 18 | 2 tasks | 2 files |
 
 ## Session Continuity
 
-Last session: 2026-05-30T14:11:49.465Z
+Last session: 2026-05-30T15:32:13.347Z
 Stopped at: Phase 8 context gathered
-Resume file: .planning/phases/08-multi-turn-llm-context/08-CONTEXT.md
+Resume file: None

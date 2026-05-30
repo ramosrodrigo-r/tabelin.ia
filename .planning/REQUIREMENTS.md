@@ -20,9 +20,9 @@
 
 ### Multi-turn LLM
 
-- [ ] **MULTI-01**: Backend inclui as trocas anteriores da conversa como mensagens de contexto na chamada ao LLM (usuário pode fazer follow-up sem repetir contexto)
-- [ ] **MULTI-02**: Contexto truncado automaticamente às últimas N trocas quando o total de tokens exceder o limite seguro do modelo
-- [ ] **MULTI-03**: Contexto de conversa é independente por tool — cada tool mantém seu próprio thread de contexto
+- [x] **MULTI-01**: Backend inclui as trocas anteriores da conversa como mensagens de contexto na chamada ao LLM (usuário pode fazer follow-up sem repetir contexto)
+- [x] **MULTI-02**: Contexto truncado automaticamente às últimas N trocas quando o total de tokens exceder o limite seguro do modelo
+- [x] **MULTI-03**: Contexto de conversa é independente por tool — cada tool mantém seu próprio thread de contexto
 
 ### Privacidade
 
@@ -54,6 +54,6 @@
 | PRIV-01 | Phase 6 | Complete |
 | HIST-03 | Phase 7 | Complete |
 | HIST-05 | Phase 7 | Complete |
-| MULTI-01 | Phase 8 | Pending |
-| MULTI-02 | Phase 8 | Pending |
-| MULTI-03 | Phase 8 | Pending |
+| MULTI-01 | Phase 8 | Complete |
+| MULTI-02 | Phase 8 | Complete |
+| MULTI-03 | Phase 8 | Complete |
