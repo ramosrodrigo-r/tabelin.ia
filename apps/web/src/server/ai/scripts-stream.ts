@@ -1,5 +1,7 @@
 import "server-only";
 
+import type { ConversationExchange } from "@prisma/client";
+
 import {
   type ScriptGenerateRequest,
   type ScriptGenerateResponse,
@@ -9,10 +11,12 @@ import {
 } from "@tabelin/shared";
 
 import { classifyDestructive } from "./destructive-classifier";
+import { buildToolContextMessages, truncateHistory } from "./context-messages";
 import { getOpenAIModel } from "./openai-client";
 
 export async function resolveScriptPayload(input: {
   request: ScriptGenerateRequest;
+  history?: ConversationExchange[];
 }): Promise<ScriptGenerateResponse> {
   const { request } = input;
 
@@ -39,16 +43,12 @@ export async function resolveScriptPayload(input: {
 
   const completion = await client.chat.completions.create({
     model: getOpenAIModel(),
-    messages: [
-      {
-        role: "system",
-        content: `Voce e um especialista em automacao de planilhas. Gere ${scriptTypeLabels[request.scriptType] ?? request.scriptType} em resposta ao pedido em portugues do usuario. Responda APENAS com JSON valido no formato: {"code": "...codigo completo...", "explanation": "...explicacao em portugues...", "assumptions": ["..."], "warnings": [], "isDestructive": false}`
-      },
-      {
-        role: "user",
-        content: request.prompt
-      }
-    ],
+    messages: buildToolContextMessages(
+      "script",
+      truncateHistory(input.history ?? []),
+      `Voce e um especialista em automacao de planilhas. Gere ${scriptTypeLabels[request.scriptType] ?? request.scriptType} em resposta ao pedido em portugues do usuario. Responda APENAS com JSON valido no formato: {"code": "...codigo completo...", "explanation": "...explicacao em portugues...", "assumptions": ["..."], "warnings": [], "isDestructive": false}`,
+      request.prompt
+    ),
     response_format: { type: "json_object" }
   });
 

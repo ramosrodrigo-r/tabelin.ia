@@ -1,5 +1,7 @@
 import "server-only";
 
+import type { ConversationExchange } from "@prisma/client";
+
 import {
   type TemplateGenerateRequest,
   type TemplateGenerateResponse,
@@ -8,10 +10,12 @@ import {
   templateGenerateResponseSchema
 } from "@tabelin/shared";
 
+import { buildToolContextMessages, truncateHistory } from "./context-messages";
 import { getOpenAIModel } from "./openai-client";
 
 export async function resolveTemplatePayload(input: {
   request: TemplateGenerateRequest;
+  history?: ConversationExchange[];
 }): Promise<TemplateGenerateResponse> {
   const { request } = input;
 
@@ -27,13 +31,12 @@ export async function resolveTemplatePayload(input: {
 
   const completion = await client.chat.completions.create({
     model: getOpenAIModel(),
-    messages: [
-      {
-        role: "system",
-        content: 'Voce e um especialista em planilhas Excel pt-BR. Gere um template de planilha estruturado em resposta ao pedido do usuario. Entregue em Markdown formatado com cabecalhos, colunas sugeridas com tipos, e formulas de referencia no estilo Excel pt-BR (separador ponto-e-virgula). Responda APENAS com JSON: {"output": "...markdown completo...", "explanation": "...descricao em portugues...", "assumptions": [], "warnings": []}'
-      },
-      { role: "user", content: request.prompt }
-    ],
+    messages: buildToolContextMessages(
+      "template",
+      truncateHistory(input.history ?? []),
+      'Voce e um especialista em planilhas Excel pt-BR. Gere um template de planilha estruturado em resposta ao pedido do usuario. Entregue em Markdown formatado com cabecalhos, colunas sugeridas com tipos, e formulas de referencia no estilo Excel pt-BR (separador ponto-e-virgula). Responda APENAS com JSON: {"output": "...markdown completo...", "explanation": "...descricao em portugues...", "assumptions": [], "warnings": []}',
+      request.prompt
+    ),
     response_format: { type: "json_object" }
   });
 
