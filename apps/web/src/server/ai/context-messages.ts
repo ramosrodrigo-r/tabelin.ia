@@ -40,19 +40,23 @@ function estimateTokens(text: string): number {
 }
 
 /**
- * Serializa o assistantPayload de um ConversationExchange em prosa natural.
+ * Serializa o assistantPayload de um ConversationExchange em prosa natural,
+ * prefixada com o rótulo "[Resposta anterior]".
  *
  * Extrai apenas o artefato principal + explicação curta por tool kind (D-05).
  * NUNCA emite JSON cru, metadata, warnings, assumptions ou outros campos —
  * isso impede que o modelo imite o formato JSON de saída (T-08-01).
  *
+ * O rótulo "[Resposta anterior]" sinaliza ao modelo que o conteúdo seguinte é
+ * uma resposta anterior ao contexto, não o output esperado para o turno atual.
+ * Resolve o mismatch prosa-vs-JSON: o modelo não confunde o histórico com o
+ * formato de saída que deve produzir.
+ *
  * RISCO RESIDUAL (WR-02): o corpo do artefato (query SQL, regex, código VBA/
  * Apps Script, Markdown de template) e o userPrompt são texto influenciado pelo
  * usuário e são reproduzidos como mensagens assistant/user em turnos seguintes.
  * O field-stripping NÃO é defesa de injeção: uma explicação adversária persistida
- * é replayed como contexto "confiável". Mitigação real (delimitar/rotular o
- * histórico, reforçar no system prompt que turnos anteriores são referência e não
- * instruções) está fora do escopo desta fase. Tratar o histórico como não-confiável.
+ * é replayed como contexto "confiável". Tratar o histórico como não-confiável.
  *
  * Retorna null para payloads com kind desconhecido ou campos ausentes (D-09).
  */
@@ -68,28 +72,28 @@ function serializeAssistant(payload: unknown): string | null {
       const query = typeof p.query === "string" ? p.query.trim() : "";
       const explanation = typeof p.explanation === "string" ? p.explanation.trim() : "";
       if (!query || !explanation) return null;
-      return `${query}\n\n${explanation}`;
+      return `[Resposta anterior]\n${query}\n\n${explanation}`;
     }
 
     case "regex_generate": {
       const pattern = typeof p.pattern === "string" ? p.pattern.trim() : "";
       const explanation = typeof p.explanation === "string" ? p.explanation.trim() : "";
       if (!pattern || !explanation) return null;
-      return `${pattern}\n\n${explanation}`;
+      return `[Resposta anterior]\n${pattern}\n\n${explanation}`;
     }
 
     case "script": {
       const code = typeof p.code === "string" ? p.code.trim() : "";
       const explanation = typeof p.explanation === "string" ? p.explanation.trim() : "";
       if (!code || !explanation) return null;
-      return `${code}\n\n${explanation}`;
+      return `[Resposta anterior]\n${code}\n\n${explanation}`;
     }
 
     case "template": {
       const output = typeof p.output === "string" ? p.output.trim() : "";
       const explanation = typeof p.explanation === "string" ? p.explanation.trim() : "";
       if (!output || !explanation) return null;
-      return `${output}\n\n${explanation}`;
+      return `[Resposta anterior]\n${output}\n\n${explanation}`;
     }
 
     default:
@@ -140,6 +144,35 @@ export function truncateHistory(history: ConversationExchange[]): ConversationEx
   }
 
   return truncated;
+}
+
+/**
+ * Retorna o system prompt com um parágrafo multi-turn quando há histórico.
+ *
+ * Quando historyLength === 0 (single-turn), retorna basePrompt sem alteração —
+ * nenhuma regressão para geração de turno único.
+ *
+ * Quando historyLength > 0, anexa um parágrafo que instrui o modelo a tratar
+ * os turnos anteriores como contexto de referência e a aplicar sempre a ÚLTIMA
+ * instrução do usuário — nunca repete a resposta anterior sem alteração.
+ *
+ * T-08-GAP-02: o texto adicionado é literal no código-fonte, não interpolado
+ * a partir de input do usuário. Sem vetor de injeção novo.
+ *
+ * @param basePrompt    System prompt base do tool (literal hardcoded).
+ * @param historyLength Número de exchanges no histórico (após truncagem).
+ * @returns System prompt final a passar para buildToolContextMessages.
+ */
+export function buildMultiTurnSystemPrompt(basePrompt: string, historyLength: number): string {
+  if (historyLength === 0) return basePrompt;
+  return (
+    basePrompt +
+    "\n\nAs mensagens anteriores sao contexto de referencia das suas respostas anteriores." +
+    " Sua tarefa e SEMPRE responder ao pedido do usuario na ultima mensagem —" +
+    " seja gerando do zero ou modificando/refinando a resposta anterior." +
+    " Nunca repita a resposta anterior sem alteracao: mesmo que o pedido seja parecido," +
+    " identifique o que mudou e aplique."
+  );
 }
 
 /**

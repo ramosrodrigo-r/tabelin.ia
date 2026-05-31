@@ -308,3 +308,136 @@ describe("multi-turn: Pro gate do template (T-08-10)", () => {
     expect(repoMocks.findConversationExchanges).not.toHaveBeenCalled();
   });
 });
+
+// ---------------------------------------------------------------------------
+// Novos testes: comportamento com histórico não-vazio (regressão do bug echo)
+// ---------------------------------------------------------------------------
+
+describe("multi-turn: comportamento com histórico não-vazio (regressão do bug echo)", () => {
+  // Helper local para criar um exchange compatível com ConversationExchange
+  function makeHistoryExchange(overrides: {
+    toolKind?: string;
+    userPrompt?: string;
+    assistantPayload?: unknown;
+  }) {
+    return {
+      id: "cuid-history",
+      userId: "user-1",
+      toolKind: overrides.toolKind ?? "sql",
+      mode: "generate",
+      platform: null,
+      dialect: null,
+      userPrompt: overrides.userPrompt ?? "Prompt anterior",
+      assistantPayload: overrides.assistantPayload ?? {
+        kind: "sql",
+        query: "SELECT 1",
+        explanation: "Seleciona 1",
+        assumptions: [],
+        warnings: [],
+        isDestructive: false
+      },
+      createdAt: new Date("2026-01-01T00:00:00Z")
+    };
+  }
+
+  it("sql/generate com histórico não-vazio responde 200 e emite evento complete", async () => {
+    repoMocks.findConversationExchanges.mockResolvedValueOnce([
+      makeHistoryExchange({
+        toolKind: "sql",
+        userPrompt: "Listar clientes ativos",
+        assistantPayload: {
+          kind: "sql",
+          query: "SELECT * FROM clientes WHERE ativo = true",
+          explanation: "Busca clientes ativos",
+          assumptions: [],
+          warnings: [],
+          isDestructive: false
+        }
+      })
+    ]);
+
+    const response = await sqlPost(
+      authedRequest("/api/tools/sql/generate", {
+        dialect: "postgresql",
+        prompt: "agora adicione ORDER BY nome"
+      })
+    );
+
+    expect(response.status).toBe(200);
+
+    const events = await readEvents(response);
+    expect(events.some((e) => e.type === "complete")).toBe(true);
+
+    // Confirma que o histórico foi injetado
+    expect(repoMocks.findConversationExchanges).toHaveBeenCalledTimes(1);
+    expect(repoMocks.findConversationExchanges).toHaveBeenCalledWith(
+      expect.any(String),
+      "sql"
+    );
+
+    // Confirma que a resposta foi persistida
+    expect(repoMocks.saveConversationExchange).toHaveBeenCalledTimes(1);
+  });
+
+  it("regex/generate com histórico não-vazio responde 200 e emite evento complete", async () => {
+    repoMocks.findConversationExchanges.mockResolvedValueOnce([
+      makeHistoryExchange({
+        toolKind: "regex",
+        userPrompt: "Validar CPF",
+        assistantPayload: {
+          kind: "regex_generate",
+          pattern: "^\\d{3}\\.\\d{3}\\.\\d{3}-\\d{2}$",
+          explanation: "Valida CPF brasileiro",
+          examples: [],
+          assumptions: [],
+          warnings: []
+        }
+      })
+    ]);
+
+    const response = await regexPost(
+      authedRequest("/api/tools/regex/generate", {
+        prompt: "quero validar um RG"
+      })
+    );
+
+    expect(response.status).toBe(200);
+
+    const events = await readEvents(response);
+    expect(events.some((e) => e.type === "complete")).toBe(true);
+
+    expect(repoMocks.findConversationExchanges).toHaveBeenCalledTimes(1);
+    expect(repoMocks.findConversationExchanges).toHaveBeenCalledWith(
+      expect.any(String),
+      "regex"
+    );
+  });
+
+  it("sql/generate com histórico não-vazio chama saveConversationExchange (fluxo completo sem crash)", async () => {
+    repoMocks.findConversationExchanges.mockResolvedValueOnce([
+      makeHistoryExchange({
+        toolKind: "sql",
+        userPrompt: "Listar produtos por categoria",
+        assistantPayload: {
+          kind: "sql",
+          query: "SELECT * FROM produtos GROUP BY categoria",
+          explanation: "Agrupa produtos por categoria",
+          assumptions: [],
+          warnings: [],
+          isDestructive: false
+        }
+      })
+    ]);
+
+    const response = await sqlPost(
+      authedRequest("/api/tools/sql/generate", {
+        dialect: "mysql",
+        prompt: "agora ordene por nome"
+      })
+    );
+
+    // Se o histórico causasse crash, saveConversationExchange não seria chamado
+    expect(repoMocks.saveConversationExchange).toHaveBeenCalledTimes(1);
+    expect(response.status).toBe(200);
+  });
+});

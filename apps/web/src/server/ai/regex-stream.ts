@@ -12,7 +12,7 @@ import {
   regexCompletePayloadSchema
 } from "@tabelin/shared";
 
-import { buildToolContextMessages } from "./context-messages";
+import { buildToolContextMessages, buildMultiTurnSystemPrompt } from "./context-messages";
 import { getOpenAIModel } from "./openai-client";
 
 type RegexModeInput =
@@ -43,7 +43,10 @@ export async function resolveRegexPayload(input: RegexModeInput): Promise<RegexC
       messages: buildToolContextMessages(
         "regex",
         input.history ?? [],
-        'Voce e um especialista em expressoes regulares. Gere uma regex em resposta ao pedido em portugues. Responda APENAS com JSON: {"pattern": "...regex...", "explanation": "...explicacao em portugues...", "examples": ["..."], "assumptions": [], "warnings": []}',
+        buildMultiTurnSystemPrompt(
+          'Voce e um especialista em expressoes regulares. Gere uma regex em resposta ao pedido em portugues. Responda APENAS com JSON: {"pattern": "...regex...", "explanation": "...explicacao em portugues...", "examples": ["..."], "assumptions": [], "warnings": []}',
+          input.history?.length ?? 0
+        ),
         input.request.prompt
       ),
       response_format: { type: "json_object" }

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { buildToolContextMessages, truncateHistory, MAX_EXCHANGES } from "@/server/ai/context-messages";
+import { buildToolContextMessages, truncateHistory, MAX_EXCHANGES, buildMultiTurnSystemPrompt } from "@/server/ai/context-messages";
 
 // Helper para criar um exchange fake de ConversationExchange
 function makeExchange(overrides: {
@@ -230,7 +230,68 @@ describe("buildToolContextMessages", () => {
       }).not.toThrow();
     });
   });
+
+  describe("serialização SQL — rótulo [Resposta anterior]", () => {
+    it("conteúdo do assistant começa com [Resposta anterior]", () => {
+      const exchange = makeExchange({
+        assistantPayload: {
+          kind: "sql",
+          query: "SELECT * FROM pedidos",
+          explanation: "Busca todos os pedidos"
+        }
+      });
+
+      const result = buildToolContextMessages("sql", [exchange], "System prompt", "Nova pergunta");
+
+      const assistantMsg = result.find((m) => m.role === "assistant");
+      expect(assistantMsg).toBeDefined();
+      const content = assistantMsg!.content as string;
+      expect(content).toContain("[Resposta anterior]");
+    });
+
+    it("buildToolContextMessages com 1 exchange: mensagem assistant contém [Resposta anterior]", () => {
+      const exchange = makeExchange({
+        assistantPayload: {
+          kind: "sql",
+          query: "SELECT id FROM clientes",
+          explanation: "Busca IDs"
+        }
+      });
+
+      const result = buildToolContextMessages("sql", [exchange], "System", "Follow-up");
+
+      const assistantMsg = result.find((m) => m.role === "assistant");
+      expect(assistantMsg).toBeDefined();
+      expect(assistantMsg!.content as string).toContain("[Resposta anterior]");
+    });
+  });
 });
+
+// ---------------------------------------------------------------------------
+// TASK 1b: buildMultiTurnSystemPrompt
+// ---------------------------------------------------------------------------
+
+describe("buildMultiTurnSystemPrompt", () => {
+  it("retorna basePrompt sem modificação quando historyLength === 0", () => {
+    const basePrompt = "Voce e um especialista em SQL.";
+    expect(buildMultiTurnSystemPrompt(basePrompt, 0)).toBe(basePrompt);
+  });
+
+  it("retorna basePrompt + parágrafo multi-turn quando historyLength === 1", () => {
+    const basePrompt = "Voce e um especialista em SQL.";
+    const result = buildMultiTurnSystemPrompt(basePrompt, 1);
+    expect(result).toContain(basePrompt);
+    expect(result).toContain("ultima mensagem");
+  });
+
+  it("retorna basePrompt + parágrafo multi-turn quando historyLength === 5", () => {
+    const basePrompt = "Voce e um especialista em regex.";
+    const result = buildMultiTurnSystemPrompt(basePrompt, 5);
+    expect(result).toContain(basePrompt);
+    expect(result).toContain("ultima mensagem");
+  });
+});
+
 
 // ---------------------------------------------------------------------------
 // TASK 2: Truncagem híbrida

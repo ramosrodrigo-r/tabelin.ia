@@ -11,7 +11,7 @@ import {
 } from "@tabelin/shared";
 
 import { classifyDestructive } from "./destructive-classifier";
-import { buildToolContextMessages } from "./context-messages";
+import { buildToolContextMessages, buildMultiTurnSystemPrompt } from "./context-messages";
 import { getOpenAIModel } from "./openai-client";
 
 export async function resolveScriptPayload(input: {
@@ -46,7 +46,10 @@ export async function resolveScriptPayload(input: {
     messages: buildToolContextMessages(
       "script",
       input.history ?? [],
-      `Voce e um especialista em automacao de planilhas. Gere ${scriptTypeLabels[request.scriptType] ?? request.scriptType} em resposta ao pedido em portugues do usuario. Responda APENAS com JSON valido no formato: {"code": "...codigo completo...", "explanation": "...explicacao em portugues...", "assumptions": ["..."], "warnings": [], "isDestructive": false}`,
+      buildMultiTurnSystemPrompt(
+        `Voce e um especialista em automacao de planilhas. Gere ${scriptTypeLabels[request.scriptType] ?? request.scriptType} em resposta ao pedido em portugues do usuario. Responda APENAS com JSON valido no formato: {"code": "...codigo completo...", "explanation": "...explicacao em portugues...", "assumptions": ["..."], "warnings": [], "isDestructive": false}`,
+        input.history?.length ?? 0
+      ),
       request.prompt
     ),
     response_format: { type: "json_object" }
