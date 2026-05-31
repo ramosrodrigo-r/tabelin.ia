@@ -26,7 +26,7 @@ Full details: `.planning/milestones/v1.0-ROADMAP.md`
 
 - [x] **Phase 6: Persistence Layer** - Schema DB, API CRUD de exchanges e cascade delete de privacidade (completed 2026-05-29)
 - [x] **Phase 7: Frontend History** - Carregamento de histórico no mount, renderização e controle "Nova conversa" (completed 2026-05-30)
-- [ ] **Phase 8: Multi-turn LLM Context** - Injeção de contexto nas chamadas LLM com truncagem automática por tool (gap closure in progress)
+- [x] **Phase 8: Multi-turn LLM Context** - Injeção de contexto nas chamadas LLM com truncagem automática por tool (gap closure in progress) (completed 2026-05-31)
 
 ## Phase Details
 
@@ -105,7 +105,7 @@ Full details: `.planning/milestones/v1.0-ROADMAP.md`
 
 **Wave 4 — Gap Closure** *(blocked on Wave 3 + UAT diagnosis)*
 
-- [ ] 08-04-PLAN.md — Correção de prompting multi-turn: rótulo "[Resposta anterior]" no histórico + buildMultiTurnSystemPrompt DRY nos 4 tools + testes com histórico não-vazio
+- [x] 08-04-PLAN.md — Correção de prompting multi-turn: rótulo "[Resposta anterior]" no histórico + buildMultiTurnSystemPrompt DRY nos 4 tools + testes com histórico não-vazio
 
 ## Progress
 
@@ -118,4 +118,4 @@ Full details: `.planning/milestones/v1.0-ROADMAP.md`
 | 5. OCR, Charts, and Launch Hardening | v1.0 | 4/4 | Complete | 2026-05-26 |
 | 6. Persistence Layer | v1.1 | 2/2 | Complete    | 2026-05-29 |
 | 7. Frontend History | v1.1 | 4/4 | Complete    | 2026-05-30 |
-| 8. Multi-turn LLM Context | v1.1 | 3/4 | Gap closure in progress | — |
+| 8. Multi-turn LLM Context | v1.1 | 4/4 | Complete   | 2026-05-31 |
