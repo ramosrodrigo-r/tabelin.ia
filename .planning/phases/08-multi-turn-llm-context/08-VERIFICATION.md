@@ -1,67 +1,129 @@
 ---
-status: passed
 phase: 08-multi-turn-llm-context
-verified: 2026-05-30
-goal: "O LLM recebe o histórico da conversa como contexto em cada nova mensagem, tornando follow-ups funcionais sem repetição manual"
-requirements: [MULTI-01, MULTI-02, MULTI-03]
-score: 11/11 must-haves verificados
-method: inline (goal-backward) — gsd-verifier indisponível (limite de sessão); verificação feita pelo orquestrador contra o código real + suíte de testes
+verified: 2026-05-30T21:14:00Z
+status: human_needed
+score: 3/3 must-haves verified
+overrides_applied: 0
+re_verification:
+  previous_status: passed
+  previous_score: 11/11
+  previous_note: "Verificação anterior (plans 01-03) feita pelo orquestrador inline, antes do Plan 04 (gap closure). Esta é a verificação pós-04 pelo gsd-verifier."
+  gaps_closed:
+    - "serializeAssistant sem rótulo causava eco verbatim — corrigido com prefixo [Resposta anterior] em todos os 4 cases"
+    - "System prompts single-shot sem instrução multi-turn — corrigido com buildMultiTurnSystemPrompt"
+    - "Testes de multi-turn-context.test.ts só exercitavam histórico vazio — corrigido com 3 novos testes de histórico não-vazio"
+  gaps_remaining: []
+  regressions: []
+human_verification:
+  - test: "Follow-up ao vivo aplica nova instrução (SQL)"
+    expected: "Após gerar uma query SQL, enviar 'agora adicione ORDER BY nome' — o LLM modifica a query anterior adicionando a cláusula, sem repetir verbatim nem recomeçar do zero."
+    why_human: "Em ambiente de teste sem OPENAI_API_KEY o fixture determinístico é retornado independentemente do histórico. Verificar qualidade real da resposta do LLM requer chave ativa."
+  - test: "Follow-up ao vivo aplica nova instrução (Regex)"
+    expected: "Após gerar regex de CPF, enviar 'quero validar um RG' — o LLM gera um novo padrão para RG, não repete o padrão de CPF."
+    why_human: "Mesmo motivo — qualidade da resposta do LLM ao vivo não é verificável por grep ou teste unitário."
 ---
 
-# Phase 8: Multi-turn LLM Context — Verification
+# Phase 8: Multi-turn LLM Context — Verification Report (Re-verificação pós-Plan 04)
 
-## Veredito
+**Phase Goal:** O LLM recebe o histórico da conversa como contexto em cada nova mensagem, tornando follow-ups funcionais sem repetição manual.
+**Verified:** 2026-05-30T21:14:00Z
+**Status:** human_needed
+**Re-verification:** Sim — após gap closure do Plan 04 (bug de echo no multi-turn prompting)
 
-**PASSED** — 11/11 must-haves verificados contra o código real e a suíte de testes. Os 3 requisitos da fase (MULTI-01/02/03) estão implementados, testados e rastreados. Backend puro: a fase injeta o histórico persistido como mensagens de contexto nas chamadas ao LLM dos 4 tools que de fato chamam OpenAI (SQL, Regex, Scripts, Template).
+## Contexto da re-verificação
 
-## Evidência por requisito
+A verificação anterior (inline pelo orquestrador, pré-Plan 04) cobriu Plans 01-03 com status "passed" mas com human verification recomendado para a qualidade do LLM ao vivo. O UAT subsequente encontrou 2 gaps major: follow-ups retornavam resposta verbatim idêntica (instrução ignorada). O Plan 04 foi executado para fechar esses gaps. Esta verificação cobre o estado pós-Plan 04.
 
-### MULTI-01 — Backend inclui trocas anteriores como contexto na chamada ao LLM
-- `apps/web/src/server/ai/context-messages.ts` (novo): `buildToolContextMessages` monta `[system, ...history, user]` em ordem cronológica ascendente (D-06); serializador conciso por tool extrai artefato + explicação curta (D-05), sem JSON/metadata/warnings.
-- Os 4 streams (`sql/regex/scripts/template-stream.ts`) aceitam `history?` opcional e a injetam (D-01); Formula intocado (D-02 — confirmado: 0 refs a `buildToolContextMessages` em `formula-stream.ts`).
-- Os 4 route handlers leem o histórico via `findConversationExchanges(user.id, toolKind)` e o passam a `resolve*Payload`.
-- Histórico vazio → `[system, user]`, idêntico ao single-turn (D-10), coberto por teste.
-- **Status: VERIFICADO** (17 testes unitários do helper + wiring nos 4 streams/routes + typecheck limpo).
+## Goal Achievement
 
-### MULTI-02 — Truncagem automática por tokens
-- `truncateHistory` (função exportada separada): teto `MAX_EXCHANGES = 10` + guarda por orçamento de tokens via heurística ~4 chars/token (D-07/D-08).
-- Responsabilidade única: o helper de montagem NÃO trunca internamente; o call site dos streams aplica `truncateHistory(input.history ?? [])` (contrato fixado nesta fase).
-- Testes: 25 trocas → resultado ≤ 10; corte por orçamento quando excede o limite seguro.
-- **Status: VERIFICADO** (testes unitários determinísticos).
+### Observable Truths (Success Criteria do Roadmap)
 
-### MULTI-03 — Isolamento por tool
-- Leitura sempre filtrada por `user.id` + `toolKind` correto por rota: `"sql"`, `"regex"`, `"script"` (SINGULAR), `"template"`.
-- Gotcha crítico confirmado: scripts usa `"script"` (singular) tanto no `buildToolContextMessages` quanto no `findConversationExchanges`, batendo com o `saveConversationExchange` existente — sem cruzamento/perda de thread.
-- Teste de integração com regressão explícita (`"script"` ≠ `"scripts"`) e assertiva de isolamento (sql vs scripts recebem toolKinds distintos).
-- **Status: VERIFICADO** (11 testes de integração em `multi-turn-context.test.ts`).
+| # | Truth | Status | Evidence |
+|---|-------|--------|----------|
+| 1 | Usuário pode fazer follow-up e o LLM responde corretamente sem repetir contexto anterior | VERIFIED (infra) / HUMAN (qualidade LLM ao vivo) | `[Resposta anterior]` label em todos os 4 cases de `serializeAssistant`; `buildMultiTurnSystemPrompt` anexa instrução multi-turn quando `historyLength > 0`; 4 streams usam o helper; 3 novos testes com histórico não-vazio confirmam pipeline sem crash e evento `complete` emitido. Qualidade real da resposta só verificável com OpenAI API key ativa. |
+| 2 | Conversas longas não causam erro de limite de tokens — truncagem automática para últimas N trocas | VERIFIED | `truncateHistory`: teto `MAX_EXCHANGES=10` + corte por `SAFE_TOKEN_BUDGET=4000` tokens (heurística ~4 chars/token). Coberto por testes determinísticos: 25 trocas → ≤10; trocas de 10k chars são cortadas pelas mais antigas. |
+| 3 | Trocar de tool não vaza contexto — cada tool injeta apenas seu próprio thread (isolamento por toolKind) | VERIFIED | Cada route lê `findConversationExchanges(user.id, toolKind)` com literal exato: `"sql"`, `"regex"`, `"script"` (singular), `"template"`. Teste de regressão assere que scripts NÃO usa `"scripts"`. Teste de isolamento confirma toolKinds distintos entre sql e scripts. |
 
-## Critérios de Sucesso do ROADMAP
+**Score:** 3/3 truths verified (infra/código). SC1 tem componente de qualidade de LLM que requer verificação humana.
 
-| # | Critério | Status | Evidência |
-|---|----------|--------|-----------|
-| 1 | Follow-up sem repetir contexto | VERIFICADO (wiring) / smoke manual recomendado (resposta do LLM ao vivo) | Integração: history lido por toolKind e passado ao stream. A qualidade da resposta do LLM ao vivo só é observável com `OPENAI_API_KEY` real. |
-| 2 | Conversas longas não estouram tokens | VERIFICADO | `truncateHistory` testado (teto N=10 + orçamento de tokens). |
-| 3 | Trocar de tool não vaza contexto | VERIFICADO | Teste de isolamento por `user.id+toolKind`; regressão `"script"` singular. |
+### Required Artifacts
 
-## Decisões travadas (D-01..D-11) — conformidade
+| Artifact | Expected | Status | Details |
+|----------|----------|--------|---------|
+| `apps/web/src/server/ai/context-messages.ts` | Serializador + buildMultiTurnSystemPrompt + truncagem | VERIFIED | Exporta `buildToolContextMessages`, `truncateHistory`, `MAX_EXCHANGES`, `GENERATE_MODE`, `buildMultiTurnSystemPrompt`. 233 linhas. `serializeAssistant` prefixando `[Resposta anterior]\n` em todos os 4 cases (linhas 75, 82, 89, 96). `buildMultiTurnSystemPrompt` na linha 166. |
+| `apps/web/tests/context-messages.test.ts` | Suite cobrindo serialização, rótulo, truncagem, buildMultiTurnSystemPrompt | VERIFIED | 23 testes — todos passam. Inclui 2 testes para o rótulo `[Resposta anterior]` (adicionados no Plan 04) e 3 testes para `buildMultiTurnSystemPrompt`. |
+| `apps/web/src/server/ai/sql-stream.ts` | `buildMultiTurnSystemPrompt` wrapping system prompt | VERIFIED | Linha 14: import. Linha 41: `buildMultiTurnSystemPrompt(literal, input.history?.length ?? 0)` dentro de `buildToolContextMessages`. |
+| `apps/web/src/server/ai/regex-stream.ts` | `buildMultiTurnSystemPrompt` no branch generate, explain intocado | VERIFIED | Linha 46: `buildMultiTurnSystemPrompt` apenas no branch `generate`. Branch `explain` (linhas 68-88): sem `history`, sem `buildToolContextMessages` — apenas `[system, user]` literal. |
+| `apps/web/src/server/ai/scripts-stream.ts` | `buildMultiTurnSystemPrompt` wrapping system prompt, toolKind "script" | VERIFIED | Linha 47: `buildToolContextMessages("script", ...)`. Linha 49: `buildMultiTurnSystemPrompt(...)`. |
+| `apps/web/src/server/ai/template-stream.ts` | `buildMultiTurnSystemPrompt` wrapping system prompt | VERIFIED | Linha 37: `buildMultiTurnSystemPrompt(...)` dentro de `buildToolContextMessages`. |
+| `apps/web/src/app/api/tools/sql/generate/route.ts` | `findConversationExchanges(user.id, "sql")` antes de `resolveSqlPayload` | VERIFIED | Linha 31: `findConversationExchanges(user.id, "sql")`. Linha 32: passado a `resolveSqlPayload`. |
+| `apps/web/src/app/api/tools/regex/generate/route.ts` | `findConversationExchanges(user.id, "regex")` + passagem com `mode:"generate"` | VERIFIED | Linha 31: `findConversationExchanges(user.id, "regex")`. Linha 32: `resolveRegexPayload({ mode: "generate", ..., history })`. |
+| `apps/web/src/app/api/tools/scripts/generate/route.ts` | `findConversationExchanges(user.id, "script")` SINGULAR | VERIFIED | Linha 31: `findConversationExchanges(user.id, "script")` — singular, matching `saveConversationExchange` existente. |
+| `apps/web/src/app/api/tools/template/generate/route.ts` | History lido APÓS Pro gate, dentro do try | VERIFIED | Pro gate retorna 403 na linha 22. `findConversationExchanges` na linha 39 — dentro do `try` (linha 37), após o Pro gate. |
+| `apps/web/tests/multi-turn-context.test.ts` | 14 testes (11 originais + 3 novos com histórico não-vazio) | VERIFIED | 14 testes — todos passam. Novos describes: `"multi-turn: comportamento com histórico não-vazio (regressão do bug echo)"` com 3 testes: sql 200+complete, regex 200+complete, saveConversationExchange chamado com histórico não-vazio. |
 
-Todas as 11 decisões do `08-CONTEXT.md` foram honradas e estão rastreadas nas `must_haves.truths` dos planos (gate de decision-coverage: 11/11). Destaques verificados no código: D-02 (Formula fora), D-03 (regex só no `generate`; branch `explain` sem history), D-05 (serializador sem JSON cru), D-09 (skip-on-error herdado do repository, sem try/catch extra), D-11 (filtro userId+toolKind), gotcha `"script"` singular, e leitura do template APÓS o Pro gate dentro do try.
+### Key Link Verification
 
-## Testes
+| From | To | Via | Status | Details |
+|------|----|-----|--------|---------|
+| `sql-stream.ts` | `context-messages.ts` | `import buildToolContextMessages, buildMultiTurnSystemPrompt` | WIRED | Linha 14: import confirmado. Linha 41: `buildMultiTurnSystemPrompt(literal, input.history?.length ?? 0)` passado como systemPrompt. |
+| `regex-stream.ts` (generate branch) | `buildMultiTurnSystemPrompt` | Chamada com basePrompt + historyLength | WIRED | Linha 46: dentro do bloco `if (input.mode === "generate")`. Branch explain: sem referência. |
+| `regex-stream.ts` (explain branch) | SEM history | Ausência deliberada de injeção | VERIFIED (negativo) | Linhas 68-88: apenas `[system, user]` literal — nenhuma referência a `history`, `buildToolContextMessages`, ou `buildMultiTurnSystemPrompt`. |
+| `scripts-stream.ts` | `"script"` singular | toolKind literal | WIRED | Linha 47: `buildToolContextMessages("script", ...)`. Bate com `saveConversationExchange` do route (linha 46 do route). |
+| `template/generate/route.ts` | `findConversationExchanges` | APÓS Pro gate | WIRED (ordem correta) | Pro gate: linha 22 (retorno 403 antes do try). `findConversationExchanges`: linha 39 (dentro do try, após o gate). |
+| `serializeAssistant` | `role:assistant content` | Rótulo `[Resposta anterior]` | WIRED | Linhas 75, 82, 89, 96: todos os 4 cases retornam string iniciando com `[Resposta anterior]\n`. |
+| `buildMultiTurnSystemPrompt` | system prompt final | Concatenação condicional | WIRED | Linha 167: `if (historyLength === 0) return basePrompt` — sem regressão. Linha 169-175: append do parágrafo multi-turn. |
 
-- `apps/web/tests/context-messages.test.ts` — 17 testes (serialização 4 tools, ordem, histórico vazio, filtro de mode, truncagem, edge cases) — **PASS**
-- `apps/web/tests/multi-turn-context.test.ts` — 11 testes (toolKind por rota, regressão `"script"`, isolamento, skip-on-error 200, Pro gate 403) — **PASS**
-- Total fase 8: **28/28 PASS**. `tsc --noEmit`: **limpo**.
+### Behavioral Spot-Checks
 
-## Avisos / dívida (não bloqueiam esta fase)
+| Behavior | Command | Result | Status |
+|----------|---------|--------|--------|
+| context-messages tests (23) | `cd apps/web && pnpm vitest run tests/context-messages.test.ts` | 23/23 PASS | PASS |
+| multi-turn integration tests (14) | `cd apps/web && pnpm vitest run tests/multi-turn-context.test.ts` | 14/14 PASS | PASS |
+| TypeScript typecheck | `pnpm --filter web typecheck` | exit 0 (tsc --noEmit limpo) | PASS |
 
-1. **Falha pré-existente herdada (não-regressão):** `apps/web/tests/formula-ui.test.tsx > "streams formula output and enables validated copy"` falha (botão "Copiar resultado" não encontrado). Confirmado pré-existente: o componente `FormulaTool` foi alterado por último na fase 07 (`5aeae3e feat(07-04)`); a Phase 8 não tocou em NENHUM arquivo `.tsx`/formula/componente. Drift de acessibilidade do frontend da fase 7 — fora do escopo da Phase 8. Recomenda-se corrigir em uma tarefa de manutenção do frontend.
-2. **Code review (gate advisory):** não pôde ser concluído nesta execução por limite de sessão do subagente. Não-bloqueante por design. Recomenda-se rodar `/gsd:code-review 08` quando a sessão resetar.
+### Requirements Coverage
 
-## Verificação humana recomendada (smoke ao vivo — não-bloqueante)
+| Requirement | Source Plan | Description | Status | Evidence |
+|-------------|-------------|-------------|--------|----------|
+| MULTI-01 | 08-01, 08-02, 08-03, 08-04 | Backend inclui trocas anteriores como mensagens de contexto na chamada ao LLM | SATISFIED | `buildToolContextMessages` monta `[system, ...history, user]`; 4 streams injetam history; 4 routes leem history; `[Resposta anterior]` + `buildMultiTurnSystemPrompt` garantem que o modelo trata o histórico como contexto (não como output a repetir). |
+| MULTI-02 | 08-01, 08-03 | Contexto truncado automaticamente às últimas N trocas | SATISFIED | `truncateHistory`: MAX_EXCHANGES=10 + SAFE_TOKEN_BUDGET=4000. Testes determinísticos cobrem teto numérico e corte por tokens. |
+| MULTI-03 | 08-01, 08-02, 08-03 | Contexto independente por tool | SATISFIED | Cada route usa toolKind literal fixo (`"sql"`, `"regex"`, `"script"` singular, `"template"`). Teste de isolamento e regressão `"script"` ≠ `"scripts"` cobertos. |
 
-Com `OPENAI_API_KEY` configurada, em qualquer dos 4 tools (ex.: SQL):
-1. Gerar um artefato (ex.: "consulta de vendas por mês").
-2. Enviar um follow-up sem repetir contexto (ex.: "agora faça isso no BigQuery").
-   - **Esperado:** o LLM adapta a resposta anterior sem o usuário re-explicar.
-3. Trocar para outro tool e confirmar que o contexto do tool anterior não aparece.
+### Anti-Patterns Found
+
+| File | Line | Pattern | Severity | Impact |
+|------|------|---------|----------|--------|
+| Nenhum | — | — | — | Nenhum TBD, FIXME, XXX, placeholder ou return vazio encontrado nos arquivos da fase. |
+
+**Nota sobre falha pré-existente:** `apps/web/tests/formula-ui.test.tsx` tem 1 falha pré-existente (componente `FormulaTool` — botão "Copiar resultado" não encontrado). Confirmado como pré-existente da Phase 07, intocada pela Phase 08. Não é regressão desta fase.
+
+### Human Verification Required
+
+#### 1. Follow-up ao vivo aplica nova instrução (SQL)
+
+**Test:** Com `OPENAI_API_KEY` real configurada, no gerador SQL: (1) gerar uma query (ex.: "listar clientes ativos"); (2) enviar follow-up "agora adicione ORDER BY nome".
+**Expected:** A segunda resposta constrói sobre a anterior — mantém tabela/colunas, adiciona `ORDER BY nome`. Não repete a query anterior sem alteração nem recomeça do zero.
+**Why human:** Em ambiente de teste sem chave OpenAI, o fixture determinístico é retornado independentemente do histórico injetado. A qualidade real da resposta do LLM (se o rótulo `[Resposta anterior]` e a instrução `buildMultiTurnSystemPrompt` produzem o comportamento correto) só é observável com modelo ao vivo.
+
+#### 2. Follow-up ao vivo aplica nova instrução (Regex)
+
+**Test:** Com `OPENAI_API_KEY` real, no gerador Regex: (1) gerar regex de CPF; (2) enviar "quero validar um RG".
+**Expected:** O LLM gera um novo padrão para RG (diferente do CPF). O padrão de CPF não é repetido verbatim.
+**Why human:** Mesmo motivo do item 1 — qualidade de resposta do LLM ao vivo.
+
+---
+
+## Gaps Summary
+
+Nenhum gap bloqueante. Os dois gaps do UAT (eco verbatim em SQL e Regex) foram endereçados pelo Plan 04:
+- Causa 1 (serialização sem rótulo): corrigida com prefixo `[Resposta anterior]` em todos os 4 cases do `serializeAssistant`.
+- Causa 2 (system prompts single-shot): corrigida com `buildMultiTurnSystemPrompt` que anexa instrução multi-turn condicional nos 4 streams.
+- Cobertura de teste: 3 novos testes em `multi-turn-context.test.ts` exercitam o pipeline com histórico não-vazio e confirmam 200 OK + evento complete + saveConversationExchange chamado (fluxo sem crash).
+
+A verificação humana restante (items 1 e 2 acima) valida a qualidade da resposta do modelo ao vivo, que por design não pode ser verificada programaticamente sem chave OpenAI ativa.
+
+---
+
+_Verified: 2026-05-30T21:14:00Z_
+_Verifier: Claude (gsd-verifier)_
