@@ -1,9 +1,10 @@
 ---
-status: diagnosed
+status: resolved
 phase: 08-multi-turn-llm-context
 source: [08-01-SUMMARY.md, 08-02-SUMMARY.md, 08-03-SUMMARY.md]
 started: 2026-05-30T00:00:00Z
-updated: 2026-05-30T00:00:00Z
+updated: 2026-06-01T20:10:00Z
+resolution: "Ambos os gaps fechados pelo Plan 08-04 (gap closure) e confirmados em re-teste ao vivo com OPENAI_API_KEY ativa — ver 08-HUMAN-UAT.md (2/2 passed). NOTA: o re-teste inicial falhou por artefato de ambiente (fixture mode sem OPENAI_API_KEY), não por defeito de código."
 ---
 
 ## Current Test
@@ -50,7 +51,7 @@ blocked: 0
 ## Gaps
 
 - truth: "Um follow-up no mesmo tool ('agora ordene por data de cadastro') deve construir sobre a geração anterior, aplicando a nova instrução."
-  status: failed
+  status: resolved
   reason: "User reported: follow-up retornou query byte-a-byte idêntica à primeira geração — a nova instrução foi totalmente ignorada (sem ORDER BY data_cadastro, sem qualquer alteração)."
   severity: major
   test: 1
@@ -67,7 +68,7 @@ blocked: 0
   debug_session: .planning/debug/multi-turn-followup-echoes-previous-answer.md
 
 - truth: "Um follow-up no Regex ('quero validar um rg') deve gerar um regex novo para a nova instrução, não repetir o anterior."
-  status: failed
+  status: resolved
   reason: "User reported: após gerar regex de CPF, o follow-up 'quero validar um rg' retornou o MESMO regex de CPF byte-a-byte. Reproduz o bug do teste 1 em outra ferramenta (padrão cross-tool). Isolamento SQL↔Regex não validado de forma limpa."
   severity: major
   test: 2
