@@ -1,8 +1,9 @@
 ---
 phase: 08-multi-turn-llm-context
-verified: 2026-05-30T21:14:00Z
-status: human_needed
+verified: 2026-06-01T20:10:00Z
+status: passed
 score: 3/3 must-haves verified
+human_uat: passed (2/2 follow-ups ao vivo com OPENAI_API_KEY ativa — ver 08-HUMAN-UAT.md)
 overrides_applied: 0
 re_verification:
   previous_status: passed
