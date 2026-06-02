@@ -70,14 +70,71 @@
 
 ---
 
+## Milestone: v1.1 — Conversas Persistentes
+
+**Shipped:** 2026-06-02
+**Phases:** 3 (6–8) | **Plans:** 10
+
+---
+
+### What Was Built
+
+1. Persistência de exchanges por usuário+tool no PostgreSQL (model `ConversationExchange`, cap de 50) integrada nos 7 route handlers; cascade delete no removal de conta (PRIV-01).
+2. Carregamento automático do histórico ao abrir o workspace (prefetch server-side + `WorkspaceConversationContext`) e controle "Nova conversa" por tool.
+3. Contexto multi-turn no LLM: helper `context-messages.ts` com serialização concisa e truncagem híbrida (últimas N=10 + limite de tokens), injetado nos 4 stream modules com isolamento por tool.
+4. Gap closure de prompting (08-04): rótulo `[Resposta anterior]` + `buildMultiTurnSystemPrompt` DRY corrigindo follow-ups que repetiam a resposta anterior verbatim.
+
+---
+
+### What Worked
+
+- **Reuso dos padrões do v1.0:** repository pattern, feature folders e o pipeline auth→quota→AI→stream absorveram a persistência e o contexto sem refatoração estrutural.
+- **Gap closure como plano nomeado de novo (08-04):** o bug de multi-turn virou um plano rastreável em vez de hot-fix informal — mesma disciplina que funcionou no v1.0 (05-04).
+- **Helper de contexto centralizado:** concentrar serialização + truncagem em `context-messages.ts` manteve os 4 tools consistentes e testáveis em um só ponto.
+- **UAT ao vivo com chave real:** rodar o re-teste com `OPENAI_API_KEY` ativa confirmou de forma inequívoca que os follow-ups passaram a funcionar (2/2).
+
+---
+
+### What Was Inefficient
+
+- **Bug de prompting só pego no UAT, não no teste de integração:** o teste de integração da Wave 3 validava isolamento entre tools mas não verificava que o follow-up *mudava* a saída. O LLM retornava a resposta anterior verbatim e isso passou pelos testes automatizados — exigiu a Wave 4 de gap closure.
+- **UAT inicial bloqueado por artefato de ambiente:** o primeiro re-teste falhou por estar em fixture mode (sem `OPENAI_API_KEY`), não por defeito de código — custou um ciclo de diagnóstico até identificar que era ambiente.
+- **Descasamento de convenção de nomes nos quick tasks:** o workflow grava `{id}-SUMMARY.md` mas o audit de fechamento procura `SUMMARY.md`, fazendo todo quick task aparecer como "missing" no close — falso positivo que exigiu remediação manual.
+
+---
+
+### Patterns Established
+
+- **`WorkspaceConversationContext`** para hidratar o chat com histórico no mount, separando estado de servidor (prefetch) do estado de UI.
+- **Truncagem híbrida de contexto** (últimas N + limite de tokens) como padrão para qualquer feature multi-turn futura.
+- **Rotular turns no histórico serializado** (`[Resposta anterior]`) para o LLM distinguir contexto de instrução atual — evita repetição verbatim.
+
+---
+
+### Key Lessons
+
+1. **Testes de integração multi-turn devem assertar que a saída muda, não só que não vaza.** Verificar isolamento entre tools não captura o bug de "ignora a nova instrução". Adicionar uma asserção de que o follow-up difere da resposta anterior teria pego o defeito antes do UAT.
+2. **Diferenciar falha de ambiente de falha de código no UAT.** Rodar UAT em fixture mode produz falsos negativos para features que dependem do comportamento real do LLM — garantir `OPENAI_API_KEY` ativa antes de marcar gap.
+3. **Convenções de nomes de artefatos devem casar entre o que escreve e o que audita.** O mismatch `{id}-SUMMARY.md` vs `SUMMARY.md` deve ser corrigido upstream para não recorrer no próximo close.
+
+---
+
+### Cost Observations
+
+- Model mix: principalmente Opus/Sonnet (balanced profile)
+- Sessions: ~4 dias, ~81 commits
+- Notable: milestone menor e focado (3 fases) construído inteiramente sobre os padrões do v1.0; 1 gap closure (08-04)
+
+---
+
 ## Cross-Milestone Trends
 
-| Metric | v1.0 |
-|--------|------|
-| Days to ship | 4 |
-| Phases | 5 |
-| Plans | 16 |
-| Requirements | 46/46 |
-| Smoke tests | 9/9 pass |
-| LOC TypeScript | ~10.500 |
-| Gap closures | 1 (05-04) |
+| Metric | v1.0 | v1.1 |
+|--------|------|------|
+| Days to ship | 4 | 4 |
+| Phases | 5 | 3 |
+| Plans | 16 | 10 |
+| Requirements | 46/46 | 9/9 |
+| Smoke tests | 9/9 pass | — (reusa suite v1.0) |
+| LOC TypeScript | ~10.500 | ~8.450 ins. |
+| Gap closures | 1 (05-04) | 1 (08-04) |
