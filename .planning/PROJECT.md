@@ -10,15 +10,13 @@ The product is inspired by the capabilities of GPTExcel, but the product definit
 
 Brazilian spreadsheet users can describe the outcome they need in Portuguese and quickly receive correct, copy-ready formulas, code, queries, or structured table outputs that fit their actual tools.
 
-## Current Milestone: v1.1 Conversas Persistentes
+## Current State
 
-**Goal:** Transformar o chat-thread visual em experiência multi-turn real — histórico salvo no banco e contexto passado ao LLM em cada nova mensagem.
+**Shipped:** v1.1 Conversas Persistentes (2026-06-02) — Phases 6–8.
 
-**Target features:**
-- Histórico de conversas por tool salvo no banco (por usuário)
-- Recarregamento do histórico ao abrir o workspace
-- Multi-turn no backend: exchanges anteriores enviados ao LLM como contexto
-- Truncagem de contexto (últimas N trocas) para controlar tokens
+O chat-thread visual do v1.0 virou uma experiência multi-turn real: cada troca é persistida por usuário+tool (cap 50), recarregada ao abrir o workspace, e reinjetada no LLM como contexto a cada mensagem, com truncagem por tokens e isolamento de thread entre tools. Follow-ups funcionam sem repetir contexto.
+
+**Next milestone:** ainda não definido — usar `/gsd:new-milestone` para iniciar o próximo ciclo (questioning → research → requirements → roadmap).
 
 ## Requirements
 
@@ -42,14 +40,17 @@ Brazilian spreadsheet users can describe the outcome they need in Portuguese and
 - ✓ Chart rendering: Sugerir Gráfico → BarChart/LineChart/PieChart with local type toggle — Phase 5
 - ✓ Sidebar navigation: Formula, Scripts, SQL, Regex, File Analysis, OCR all active — Phase 5
 - ✓ E2E smoke test suite (9 suites, Playwright) covering all happy paths — Phase 5
-- ✓ Every AI exchange (user prompt + assistant response) persisted to PostgreSQL per userId+toolKind with 50-exchange cap — Phase 6
+- ✓ Every AI exchange (user prompt + assistant response) persisted to PostgreSQL per userId+toolKind with 50-exchange cap — Phase 6 (HIST-01, HIST-02, HIST-04)
 - ✓ Cascade deletion of conversation history on user account removal (PRIV-01) — Phase 6
+- ✓ Histórico de trocas carregado automaticamente ao abrir o workspace (prefetch server-side nos 5 tools de texto) — Phase 7 (HIST-03)
+- ✓ Controle "Nova conversa" para limpar o thread de um tool individual — Phase 7 (HIST-05)
+- ✓ Backend injeta trocas anteriores como contexto no LLM; follow-ups funcionam sem repetir contexto — Phase 8 (MULTI-01)
+- ✓ Truncagem automática de contexto (híbrida: últimas N=10 + limite de tokens) — Phase 8 (MULTI-02)
+- ✓ Contexto de conversa isolado por tool — cada tool injeta apenas seu próprio thread — Phase 8 (MULTI-03)
 
 ### Active
 
-(All MVP requirements validated — see Validated section above)
-
-### Out of Scope
+(All v1.0 + v1.1 requirements validated — see Validated section above. Next milestone requirements defined via `/gsd:new-milestone`.)
 
 ### Out of Scope
 
@@ -99,6 +100,10 @@ The recommended technical direction from the PRD is a web SaaS with a Next.js/Ta
 | Adotar layout chat-thread em todos os tools | Input fixo na base, respostas acumulam acima como troca usuário↔assistente — reduz fricção e torna o fluxo multi-consulta natural | Aplicado pós-v1.0 — Formula, SQL, Regex, Scripts, Template |
 | Mover ToolNav para dentro do ChatInput (bottomNav prop) | Pills de navegação abaixo do textarea integram melhor com o layout chat; evitam separação visual entre input e navegação | Aplicado pós-v1.0 |
 | Tokens do chat input migrados de dark para light theme | Workspace usa tema claro; chat escuro criava contraste indesejado e quebrava a coerência visual | Aplicado pós-v1.0 |
+| Persistir exchanges por userId+toolKind com cap de 50 | Mantém histórico recuperável sem crescimento ilimitado do banco; isolamento natural por tool | Validado — v1.1 (Phase 6) |
+| Truncagem híbrida de contexto (últimas N=10 + limite de tokens) | Evita erro de limite de tokens em conversas longas sem perder os turns recentes mais relevantes | Validado — v1.1 (Phase 8) |
+| Rótulo `[Resposta anterior]` no histórico serializado + `buildMultiTurnSystemPrompt` DRY | UAT revelou que o LLM repetia a resposta anterior verbatim; rotular o histórico e unificar o system prompt corrigiu follow-ups | Validado — v1.1 (Phase 8 / 08-04, 2/2 UAT ao vivo) |
+| File Analysis permanece efêmero (sem persistência de histórico) | Privacidade: arquivos enviados são dados de sessão temporários (D-07) | Aplicado — v1.1 (Phase 7) |
 
 ## Evolution
 
@@ -118,4 +123,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-05-29 after Phase 6 completion — persistence layer complete, conversation history write-path done*
+*Last updated: 2026-06-02 after v1.1 Conversas Persistentes milestone — multi-turn chat com histórico persistido, recarregado e reinjetado no LLM por tool*
