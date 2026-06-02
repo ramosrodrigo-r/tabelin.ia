@@ -1,7 +1,9 @@
 ---
 phase: 06-persistence-layer
-verified: 2026-05-29T20:00:00Z
-status: human_needed
+verified: 2026-06-01T20:40:00Z
+status: passed
+human_uat: passed (06-HUMAN-UAT.md — 2/2, 0 issues)
+known_caveat: "CR-01 — sob escrita concorrente, a transação READ COMMITTED pode violar o teto de 50 exchanges (tech-debt aceito, baixa probabilidade em uso single-user)"
 score: 3/3 success criteria in-scope verified
 overrides_applied: 0
 gaps: []

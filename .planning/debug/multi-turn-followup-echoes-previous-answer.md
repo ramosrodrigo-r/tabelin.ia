@@ -1,8 +1,9 @@
 ---
-status: diagnosed
+status: resolved
 trigger: "Phase 08 multi-turn: 2nd+ turn follow-up returns byte-for-byte identical previous answer (SQL + Regex). New instruction ignored. Single-turn works."
 created: 2026-05-30T00:00:00Z
-updated: 2026-05-30T00:00:00Z
+updated: 2026-06-01T20:40:00Z
+resolution: "Fechado pelo Plano 08-04 (rótulo [Resposta anterior] + buildMultiTurnSystemPrompt) e confirmado em UAT ao vivo (08-HUMAN-UAT.md 2/2 passed). NOTA: a falha inicial de re-teste foi artefato de ambiente (fixture mode sem OPENAI_API_KEY), não defeito de código."
 ---
 
 ## Current Focus
