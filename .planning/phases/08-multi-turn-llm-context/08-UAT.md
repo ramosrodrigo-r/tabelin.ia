@@ -1,5 +1,5 @@
 ---
-status: resolved
+status: complete
 phase: 08-multi-turn-llm-context
 source: [08-01-SUMMARY.md, 08-02-SUMMARY.md, 08-03-SUMMARY.md]
 started: 2026-05-30T00:00:00Z
