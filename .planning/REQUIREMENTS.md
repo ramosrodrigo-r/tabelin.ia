@@ -21,10 +21,10 @@
 
 ### Extração multi-formato (EXT)
 
-- [ ] **EXT-01**: Sistema extrai conteúdo de planilhas CSV/XLSX reaproveitando o parser de schema existente (colunas + amostra de dados)
-- [ ] **EXT-02**: Sistema extrai tabelas de imagens PNG/JPEG reaproveitando o OCR (OpenAI Vision) existente
+- [x] **EXT-01**: Sistema extrai conteúdo de planilhas CSV/XLSX reaproveitando o parser de schema existente (colunas + amostra de dados)
+- [x] **EXT-02**: Sistema extrai tabelas de imagens PNG/JPEG reaproveitando o OCR (OpenAI Vision) existente
 - [ ] **EXT-03**: Sistema extrai texto de PDF com camada de texto via `unpdf`
-- [ ] **EXT-04**: Sistema lê arquivos TXT diretamente como conteúdo de texto
+- [x] **EXT-04**: Sistema lê arquivos TXT diretamente como conteúdo de texto
 - [ ] **EXT-05**: Um dispatcher único roteia o arquivo para o extrator correto por tipo, retornando texto plano para injeção no prompt — reutilizado pelos 5 tools
 - [ ] **EXT-06**: PDF escaneado (sem camada de texto, `text.length < 50`) é detectado e retorna erro acionável orientando o usuário a usar o tool de OCR — sem fallback automático
 
@@ -71,10 +71,10 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| EXT-01 | Phase 9 | Pending |
-| EXT-02 | Phase 9 | Pending |
+| EXT-01 | Phase 9 | Complete |
+| EXT-02 | Phase 9 | Complete |
 | EXT-03 | Phase 9 | Pending |
-| EXT-04 | Phase 9 | Pending |
+| EXT-04 | Phase 9 | Complete |
 | EXT-05 | Phase 9 | Pending |
 | EXT-06 | Phase 9 | Pending |
 | SEC-02 | Phase 9 | Complete |
