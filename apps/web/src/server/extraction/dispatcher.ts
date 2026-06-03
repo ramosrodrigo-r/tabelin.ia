@@ -9,13 +9,26 @@ import { detectFileType } from "./byte-validation";
 import { guardXlsxZip } from "./zip-guard";
 
 /**
+ * CR-02/SEC-02: Limite máximo de bytes de input aceitos pelo dispatcher.
+ *
+ * Um arquivo acima deste limite causa dupla alocação de memória (~2N bytes)
+ * com `new Uint8Array(buffer)` + `new ArrayBuffer(buffer.length)` antes de
+ * qualquer verificação. O guard deve PRECEDER ambas as alocações.
+ *
+ * Alinhado com o upload limit da plataforma (5 MB para usuários free, 25 MB para Pro).
+ * Exportado para que callers upstream possam validar antes de chamar (Phase 10).
+ */
+export const MAX_INPUT_BYTES = 25 * 1024 * 1024; // 25 MB
+
+/**
  * EXT-05/D-08: Dispatcher único de extração de conteúdo de arquivo.
  *
  * Ponto de entrada canônico para todas as rotas da Phase 10.
  * Centraliza as conversões de buffer (Pitfall 6) e aplica a ordem
- * de segurança correta: magic bytes → guard anti-ZIP-bomb → parse.
+ * de segurança correta: input size guard → magic bytes → guard anti-ZIP-bomb → parse.
  *
  * Fluxo de decisão:
+ *   0. Rejeita inputs acima de MAX_INPUT_BYTES com FILE_TOO_LARGE (CR-02/SEC-02)
  *   1. Detecta tipo por magic bytes (byte-validation.ts / D-10)
  *   2. Para binários: roteia pelo tipo DETECTADO (extensão declarada ignorada)
  *      - xlsx: guarda contra ZIP-bomb ANTES do parse (SEC-02 / D-11)
@@ -40,6 +53,16 @@ export async function extractContent(
   buffer: Buffer,
   declaredName: string
 ): Promise<ExtractionResult> {
+  // CR-02/SEC-02: Guard de tamanho de input ANTES de qualquer alocação.
+  // Impede dupla alocação ~2N bytes para inputs de tamanho arbitrário.
+  if (buffer.length > MAX_INPUT_BYTES) {
+    return {
+      ok: false,
+      code: "FILE_TOO_LARGE",
+      message: "Arquivo excede o tamanho máximo de 25 MB permitido para extração.",
+    };
+  }
+
   // Conversões centralizadas (Pitfall 6)
   const bytes: Uint8Array = new Uint8Array(buffer);
   // Cópia explícita do ArrayBuffer para garantir isolamento do pool Node.js/jsdom.
