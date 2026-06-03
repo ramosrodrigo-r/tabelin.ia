@@ -27,43 +27,43 @@ function makeJpegBytes(): Uint8Array {
 }
 
 /**
- * Bytes mínimos de um PDF real com texto "Hello PDF".
+ * Bytes de um PDF real com texto ASCII longo (>50 chars) — necessário para
+ * passar a heurística D-12 (text.trim().length >= 50).
+ * Texto puro ASCII garante extração correta sem problema de encoding.
  */
 function makePdfBytes(): Uint8Array {
-  // PDF mínimo com texto extraível
+  // Texto ASCII puro com 88 chars — confirmado extraível via unpdf
+  const textContent =
+    "This PDF file contains text layer data that is long enough for extraction tests to pass.";
+  // Conteúdo do stream BT...ET com o texto
+  const streamBody = `BT /F1 12 Tf 100 700 Td (${textContent}) Tj ET`;
   const pdfContent = `%PDF-1.4
 1 0 obj
 << /Type /Catalog /Pages 2 0 R >>
 endobj
-
 2 0 obj
 << /Type /Pages /Kids [3 0 R] /Count 1 >>
 endobj
-
 3 0 obj
 << /Type /Page /Parent 2 0 R /Resources << /Font << /F1 4 0 R >> >> /MediaBox [0 0 612 792] /Contents 5 0 R >>
 endobj
-
 4 0 obj
 << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
 endobj
-
 5 0 obj
-<< /Length 44 >>
+<< /Length ${streamBody.length} >>
 stream
-BT /F1 12 Tf 100 700 Td (Hello PDF) Tj ET
+${streamBody}
 endstream
 endobj
-
 xref
 0 6
 0000000000 65535 f
 0000000009 00000 n
-0000000058 00000 n
-0000000115 00000 n
+0000000055 00000 n
+0000000112 00000 n
 0000000274 00000 n
 0000000353 00000 n
-
 trailer
 << /Size 6 /Root 1 0 R >>
 startxref
