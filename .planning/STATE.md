@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Anexos Universais
-status: executing
-last_updated: "2026-06-03T19:33:55.459Z"
+status: verifying
+last_updated: "2026-06-03T19:43:08.783Z"
 last_activity: 2026-06-03
 progress:
   total_phases: 3
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 4
-  completed_plans: 3
-  percent: 0
+  completed_plans: 4
+  percent: 33
 ---
 
 # Project State
@@ -26,10 +26,10 @@ See: .planning/PROJECT.md (updated 2026-06-03)
 
 Phase: 09 (extraction-infrastructure) — EXECUTING
 Plan: 4 of 4 — CHECKPOINT AGUARDANDO APROVAÇÃO HUMANA
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-06-03
 
-Progress: [████████░░] 75%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
@@ -60,6 +60,8 @@ Recent decisions affecting current work:
 - v1.1 (Phase 8): Truncagem híbrida (últimas N=10 + limite de tokens) — base reutilizada pela truncagem de `MAX_EXTRACTED_CHARS`
 - [Phase ?]: Assumption A1 descarregada empiricamente: comportamento real de unpdf para PDF escaneado
 - [Phase ?]: Assumption A2 descarregada empiricamente: fflate central directory leitura confiável
+- [Phase ?]: Fix conversão ArrayBuffer
+- [Phase ?]: Fix ZIP_BOMB para testes
 
 ### Pending Todos
 
@@ -87,9 +89,10 @@ Items acknowledged and carried forward:
 | Phase 09-extraction-infrastructure P01 | 20 | 3 tasks | 4 files |
 | Phase 09 P02 | 8 | 3 tasks | 5 files |
 | Phase 09 P03 | 12 | 3 tasks | 4 files |
+| Phase 09 P04 | 10 | 2 tasks | 2 files |
 
 ## Session Continuity
 
-Last session: 2026-06-03T19:33:55.440Z
+Last session: 2026-06-03T19:43:01.528Z
 Stopped at: Phase 09-01 Task 2 — checkpoint:human-verify (gate=blocking-human). Aguardando aprovação dos 3 pacotes npm: unpdf@1.6.2, file-type@22.0.1, fflate@0.8.3.
 Resume file: None

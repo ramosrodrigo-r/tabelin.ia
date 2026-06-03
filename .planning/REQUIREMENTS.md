@@ -23,10 +23,10 @@
 
 - [x] **EXT-01**: Sistema extrai conteúdo de planilhas CSV/XLSX reaproveitando o parser de schema existente (colunas + amostra de dados)
 - [x] **EXT-02**: Sistema extrai tabelas de imagens PNG/JPEG reaproveitando o OCR (OpenAI Vision) existente
-- [ ] **EXT-03**: Sistema extrai texto de PDF com camada de texto via `unpdf`
+- [x] **EXT-03**: Sistema extrai texto de PDF com camada de texto via `unpdf`
 - [x] **EXT-04**: Sistema lê arquivos TXT diretamente como conteúdo de texto
-- [ ] **EXT-05**: Um dispatcher único roteia o arquivo para o extrator correto por tipo, retornando texto plano para injeção no prompt — reutilizado pelos 5 tools
-- [ ] **EXT-06**: PDF escaneado (sem camada de texto, `text.length < 50`) é detectado e retorna erro acionável orientando o usuário a usar o tool de OCR — sem fallback automático
+- [x] **EXT-05**: Um dispatcher único roteia o arquivo para o extrator correto por tipo, retornando texto plano para injeção no prompt — reutilizado pelos 5 tools
+- [x] **EXT-06**: PDF escaneado (sem camada de texto, `text.length < 50`) é detectado e retorna erro acionável orientando o usuário a usar o tool de OCR — sem fallback automático
 
 ### Contexto LLM & Persistência (CTX)
 
@@ -73,10 +73,10 @@
 |-------------|-------|--------|
 | EXT-01 | Phase 9 | Complete |
 | EXT-02 | Phase 9 | Complete |
-| EXT-03 | Phase 9 | Pending |
+| EXT-03 | Phase 9 | Complete |
 | EXT-04 | Phase 9 | Complete |
-| EXT-05 | Phase 9 | Pending |
-| EXT-06 | Phase 9 | Pending |
+| EXT-05 | Phase 9 | Complete |
+| EXT-06 | Phase 9 | Complete |
 | SEC-02 | Phase 9 | Complete |
 | CTX-01 | Phase 10 | Pending |
 | CTX-02 | Phase 10 | Pending |
