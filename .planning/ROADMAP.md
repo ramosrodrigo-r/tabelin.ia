@@ -54,11 +54,12 @@ Full details: `.planning/milestones/v1.1-ROADMAP.md`
   3. Um PDF com camada de texto enviado ao extrator retorna o texto via `unpdf`; um PDF escaneado (sem camada) retorna erro acionável orientando o usuário ao tool de OCR
   4. Um arquivo TXT enviado ao extrator retorna seu conteúdo diretamente
   5. O dispatcher roteia cada tipo ao extrator correto sem lógica duplicada nos tools; upload com magic bytes inválidos ou ZIP bomb é rejeitado antes de processar
-**Plans**: 4 plans
+**Plans**: 5 plans
 - [x] 09-01-PLAN.md — Fundação: contrato ExtractionResult (D-09) + instalar unpdf/file-type/fflate (checkpoint de legitimidade)
 - [x] 09-02-PLAN.md — Extratores de reuso: CSV/XLSX (schema+amostra+multi-aba), imagem OCR→Markdown, TXT
 - [x] 09-03-PLAN.md — Segurança/novas-libs: magic bytes (file-type), guard anti-ZIP-bomb (fflate), PDF (unpdf) + scanned-PDF
 - [x] 09-04-PLAN.md — Dispatcher único (EXT-05) + teste de integração end-to-end
+- [ ] 09-05-PLAN.md — Gap closure SEC-02: ratio cap + per-entry cap no zip-guard (CR-01) + MAX_INPUT_BYTES no dispatcher (CR-02)
 
 ### Phase 10: Persistence & LLM Context
 **Goal**: O conteúdo extraído é injetado no system prompt do tool, persistido na troca de conversa (sem guardar o arquivo bruto) e reutilizável em follow-ups; gerações com anexo passam pelo Pro-gate no backend
