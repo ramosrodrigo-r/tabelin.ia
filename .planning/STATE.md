@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Anexos Universais
 status: executing
-last_updated: "2026-06-03T19:26:40.799Z"
+last_updated: "2026-06-03T19:33:55.459Z"
 last_activity: 2026-06-03
 progress:
   total_phases: 3
   completed_phases: 0
   total_plans: 4
-  completed_plans: 2
+  completed_plans: 3
   percent: 0
 ---
 
@@ -25,11 +25,11 @@ See: .planning/PROJECT.md (updated 2026-06-03)
 ## Current Position
 
 Phase: 09 (extraction-infrastructure) — EXECUTING
-Plan: 3 of 4 — CHECKPOINT AGUARDANDO APROVAÇÃO HUMANA
+Plan: 4 of 4 — CHECKPOINT AGUARDANDO APROVAÇÃO HUMANA
 Status: Ready to execute
 Last activity: 2026-06-03
 
-Progress: [█████░░░░░] 50%
+Progress: [████████░░] 75%
 
 ## Performance Metrics
 
@@ -58,6 +58,8 @@ Recent decisions affecting current work:
 - v1.2 planning: Pro-gate no backend (403 para free) antes de qualquer I/O de extração — anti-bypass
 - v1.2 planning: PDF escaneado retorna erro acionável para OCR tool — sem fallback automático (custo/latência a validar com uso real)
 - v1.1 (Phase 8): Truncagem híbrida (últimas N=10 + limite de tokens) — base reutilizada pela truncagem de `MAX_EXTRACTED_CHARS`
+- [Phase ?]: Assumption A1 descarregada empiricamente: comportamento real de unpdf para PDF escaneado
+- [Phase ?]: Assumption A2 descarregada empiricamente: fflate central directory leitura confiável
 
 ### Pending Todos
 
@@ -84,9 +86,10 @@ Items acknowledged and carried forward:
 | Attachments | Redação automática de CPF/CNPJ no conteúdo extraído | Post-v1.2 | v1.2 requirements |
 | Phase 09-extraction-infrastructure P01 | 20 | 3 tasks | 4 files |
 | Phase 09 P02 | 8 | 3 tasks | 5 files |
+| Phase 09 P03 | 12 | 3 tasks | 4 files |
 
 ## Session Continuity
 
-Last session: 2026-06-03T19:26:40.786Z
+Last session: 2026-06-03T19:33:55.440Z
 Stopped at: Phase 09-01 Task 2 — checkpoint:human-verify (gate=blocking-human). Aguardando aprovação dos 3 pacotes npm: unpdf@1.6.2, file-type@22.0.1, fflate@0.8.3.
 Resume file: None

@@ -57,7 +57,7 @@ Full details: `.planning/milestones/v1.1-ROADMAP.md`
 **Plans**: 4 plans
 - [x] 09-01-PLAN.md — Fundação: contrato ExtractionResult (D-09) + instalar unpdf/file-type/fflate (checkpoint de legitimidade)
 - [x] 09-02-PLAN.md — Extratores de reuso: CSV/XLSX (schema+amostra+multi-aba), imagem OCR→Markdown, TXT
-- [ ] 09-03-PLAN.md — Segurança/novas-libs: magic bytes (file-type), guard anti-ZIP-bomb (fflate), PDF (unpdf) + scanned-PDF
+- [x] 09-03-PLAN.md — Segurança/novas-libs: magic bytes (file-type), guard anti-ZIP-bomb (fflate), PDF (unpdf) + scanned-PDF
 - [ ] 09-04-PLAN.md — Dispatcher único (EXT-05) + teste de integração end-to-end
 
 ### Phase 10: Persistence & LLM Context
@@ -98,6 +98,6 @@ Full details: `.planning/milestones/v1.1-ROADMAP.md`
 | 6. Persistence Layer | v1.1 | 2/2 | Complete | 2026-05-29 |
 | 7. Frontend History | v1.1 | 4/4 | Complete | 2026-05-30 |
 | 8. Multi-turn LLM Context | v1.1 | 4/4 | Complete | 2026-06-01 |
-| 9. Extraction Infrastructure | v1.2 | 2/4 | In Progress|  |
+| 9. Extraction Infrastructure | v1.2 | 3/4 | In Progress|  |
 | 10. Persistence & LLM Context | v1.2 | 0/? | Not started | - |
 | 11. Attachment UI & Pro Gating | v1.2 | 0/? | Not started | - |
