@@ -16,7 +16,19 @@ Brazilian spreadsheet users can describe the outcome they need in Portuguese and
 
 O chat-thread visual do v1.0 virou uma experiência multi-turn real: cada troca é persistida por usuário+tool (cap 50), recarregada ao abrir o workspace, e reinjetada no LLM como contexto a cada mensagem, com truncagem por tokens e isolamento de thread entre tools. Follow-ups funcionam sem repetir contexto.
 
-**Next milestone:** ainda não definido — usar `/gsd:new-milestone` para iniciar o próximo ciclo (questioning → research → requirements → roadmap).
+**Next milestone:** v1.2 Anexos Universais — em definição (research → requirements → roadmap).
+
+## Current Milestone: v1.2 Anexos Universais
+
+**Goal:** Permitir anexar um documento em qualquer tool de texto (Formula, SQL, Regex, Scripts, Template) para que a IA o leia e gere a saída combinando o conteúdo extraído + o tool selecionado + o prompt do usuário.
+
+**Target features:**
+- Botão de anexo universal nos 5 tools de texto (Formula, SQL, Regex, Scripts, Template)
+- Suporte a CSV/XLSX (schema parser), PNG/JPEG (OCR Vision), PDF (extrator novo) e TXT (leitura direta)
+- Conteúdo extraído persistido no thread de conversa (arquivo bruto pode ser apagado — preserva D-07); follow-ups reusam o documento
+- Recurso exclusivo Pro — free vê o botão com CTA de upgrade
+- 1 arquivo por mensagem, cap de 5 MB
+- Destino dos tools dedicados OCR/File Analysis a decidir no discuss/plan
 
 ## Requirements
 
@@ -50,7 +62,15 @@ O chat-thread visual do v1.0 virou uma experiência multi-turn real: cada troca 
 
 ### Active
 
-(All v1.0 + v1.1 requirements validated — see Validated section above. Next milestone requirements defined via `/gsd:new-milestone`.)
+Milestone v1.2 Anexos Universais — requirements detalhados em `.planning/REQUIREMENTS.md` (gerados neste ciclo). Resumo das capacidades-alvo:
+
+- Anexo universal nos 5 tools de texto (Formula, SQL, Regex, Scripts, Template)
+- Extração multi-formato: CSV/XLSX, PNG/JPEG (OCR), PDF (novo), TXT
+- Conteúdo extraído persistido no thread; arquivo bruto efêmero (D-07)
+- Gating Pro do recurso de anexo
+- Cap de 5 MB, 1 arquivo por mensagem
+
+(All v1.0 + v1.1 requirements validated — see Validated section above.)
 
 ### Out of Scope
 
@@ -123,4 +143,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-06-02 after v1.1 Conversas Persistentes milestone — multi-turn chat com histórico persistido, recarregado e reinjetado no LLM por tool*
+*Last updated: 2026-06-03 — started milestone v1.2 Anexos Universais (anexo universal de documentos em todos os tools de texto, extração multi-formato, gated Pro)*
