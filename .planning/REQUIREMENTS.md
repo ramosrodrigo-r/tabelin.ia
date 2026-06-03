@@ -45,7 +45,7 @@
 ### Segurança & Privacidade (SEC)
 
 - [ ] **SEC-01**: Conteúdo extraído injetado no prompt é cercado por delimitadores anti-injection, com instrução para tratar o documento como dados, não comandos
-- [ ] **SEC-02**: Upload valida magic bytes (não apenas extensão/MIME declarado) e protege contra XLSX malicioso (ZIP bomb) antes de processar
+- [x] **SEC-02**: Upload valida magic bytes (não apenas extensão/MIME declarado) e protege contra XLSX malicioso (ZIP bomb) antes de processar
 - [ ] **SEC-03**: Usuário é avisado na UI de que o conteúdo do documento fica salvo no histórico da conversa e pode ser limpo via "Nova conversa" (LGPD/D-07)
 
 ---
@@ -77,7 +77,7 @@
 | EXT-04 | Phase 9 | Pending |
 | EXT-05 | Phase 9 | Pending |
 | EXT-06 | Phase 9 | Pending |
-| SEC-02 | Phase 9 | Pending |
+| SEC-02 | Phase 9 | Complete |
 | CTX-01 | Phase 10 | Pending |
 | CTX-02 | Phase 10 | Pending |
 | CTX-03 | Phase 10 | Pending |
