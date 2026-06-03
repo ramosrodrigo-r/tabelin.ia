@@ -470,17 +470,19 @@ export async function extractPdf(bytes: Uint8Array): Promise<ExtractionResult> {
 | A4 | Exportar `formatSchemaForPrompt` é compatível com D-07 ("sem tocar rotas/repos") por ser mudança aditiva numa função pura | Pattern 4 | Baixo — alternativa (replicar lógica) sempre disponível. Decisão do planner/usuário. |
 | A5 | Caps anti-ZIP-bomb sugeridos (50 MB descompactado total, 1000 entradas) são razoáveis para planilhas reais | Pattern 3 | Médio — explicitamente Claude's discretion; XLSX legítimos grandes podem exceder. Ajustar após teste com planilhas reais do domínio. |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Limite exato de linhas por aba no fluxo de anexo (D-06 diz ~200)**
    - What we know: `parseFile` usa `MAX_ROWS=1000` e `extractSchema` já fatia `sampleRows` em 10. D-02 quer ~10 linhas completas; D-06 quer ~200 linhas/aba.
    - What's unclear: D-02 (~10 linhas) vs D-06 (~200 linhas/aba) — são propósitos diferentes? Provável: ~10 linhas no bloco de amostra serializado, ~200 é o teto de varredura/segurança. O serializador emite ~10; o cap de 200 limita quanto `parseFile` processa por aba.
    - Recommendation: Tratar ~10 como o tamanho do bloco de amostra serializado (D-02) e ~200 como teto de linhas lidas por aba (anti-DoS, D-06). Confirmar no planejamento.
+   - **RESOLVED (Plan 09-02, Task 1):** São propósitos distintos, confirmado. `~10` = tamanho do bloco de amostra serializado (D-02); `~200` = constante `MAX_ROWS_PER_SHEET` que clampa a **contagem efetiva serializada por aba** (`effectiveRowCount = Math.min(schema.rowCount, 200)`). Como `parseFile` só devolve `sampleRows` (≤10) + `rowCount`, o cap opera na camada de serialização (não no `MAX_ROWS=1000` interno do parser, que o extrator não controla). Teste referencia a constante e assevera o clamp para a aba não virar no-op.
 
 2. **Input canônico do dispatcher: `Buffer` vs `ArrayBuffer` vs `File`**
    - What we know: `parseFile` quer `ArrayBuffer`; `file-type`/`fflate` querem `Uint8Array`; `processImageOcr` quer base64. A integração nas rotas é Phase 10.
    - What's unclear: qual tipo a Phase 10 vai passar.
    - Recommendation: Padronizar o dispatcher em Node `Buffer` (mais geral em route handlers) e converter internamente. Centralizar conversões em um helper.
+   - **RESOLVED (Plan 09-04, Task 1):** Dispatcher `extractContent` padroniza o input em Node `Buffer` e centraliza as conversões internamente (ArrayBuffer p/ `parseFile`, Uint8Array p/ `file-type`/`fflate`, base64 p/ `processImageOcr` — Pitfall 6).
 
 ## Environment Availability
 
