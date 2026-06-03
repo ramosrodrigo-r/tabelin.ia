@@ -2,7 +2,7 @@
 
 **Goal:** Permitir anexar um documento em qualquer tool de texto (Formula, SQL, Regex, Scripts, Template) para que a IA o leia e gere a saída combinando o conteúdo extraído + o tool selecionado + o prompt do usuário. Recurso exclusivo Pro.
 
-**Status:** Defined — awaiting roadmap.
+**Status:** Roadmap defined — awaiting /gsd:plan-phase 9.
 
 ---
 
@@ -69,4 +69,30 @@
 
 ## Traceability
 
-(Preenchido pelo roadmap — mapeia cada REQ-ID à fase que o entrega.)
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| EXT-01 | Phase 9 | Pending |
+| EXT-02 | Phase 9 | Pending |
+| EXT-03 | Phase 9 | Pending |
+| EXT-04 | Phase 9 | Pending |
+| EXT-05 | Phase 9 | Pending |
+| EXT-06 | Phase 9 | Pending |
+| SEC-02 | Phase 9 | Pending |
+| CTX-01 | Phase 10 | Pending |
+| CTX-02 | Phase 10 | Pending |
+| CTX-03 | Phase 10 | Pending |
+| CTX-04 | Phase 10 | Pending |
+| CTX-05 | Phase 10 | Pending |
+| PRO-02 | Phase 10 | Pending |
+| PRO-03 | Phase 10 | Pending |
+| ATT-01 | Phase 11 | Pending |
+| ATT-02 | Phase 11 | Pending |
+| ATT-03 | Phase 11 | Pending |
+| ATT-04 | Phase 11 | Pending |
+| ATT-05 | Phase 11 | Pending |
+| ATT-06 | Phase 11 | Pending |
+| ATT-07 | Phase 11 | Pending |
+| ATT-08 | Phase 11 | Pending |
+| PRO-01 | Phase 11 | Pending |
+| SEC-01 | Phase 11 | Pending |
+| SEC-03 | Phase 11 | Pending |
