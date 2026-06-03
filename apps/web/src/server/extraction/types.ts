@@ -11,7 +11,8 @@ export type ExtractionErrorCode =
   | "INVALID_BYTES"
   | "ZIP_BOMB"
   | "EMPTY_EXTRACTION"
-  | "UNSUPPORTED_TYPE";
+  | "UNSUPPORTED_TYPE"
+  | "FILE_TOO_LARGE";
 
 export type ExtractionError = {
   ok: false;
