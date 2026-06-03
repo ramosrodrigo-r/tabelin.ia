@@ -121,14 +121,31 @@ function makeGifBuffer(): Buffer {
 
 /**
  * Cria um XLSX ZIP-bomb (excede MAX_ENTRIES = 1000 entradas).
+ *
+ * Estratégia: descompactar um XLSX real, adicionar entradas extras para exceder
+ * MAX_ENTRIES=1000, e recompactar. Resultado tem magic bytes de XLSX (não ZIP genérico)
+ * e é detectado corretamente por detectFileType como kind="xlsx".
  */
 async function makeZipBombBuffer(): Promise<Buffer> {
-  const { strToU8, zipSync } = await import("fflate");
-  const files: Record<string, Uint8Array> = {};
-  for (let i = 0; i <= 1000; i++) {
-    files[`file${i}.txt`] = strToU8("x");
+  const { strToU8, zipSync, unzipSync } = await import("fflate");
+
+  // 1. Criar XLSX base real
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.json_to_sheet([{ a: 1 }]);
+  XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
+  const xlsxNodeBuf = XLSX.write(wb, { type: "buffer", bookType: "xlsx" }) as Buffer;
+  const xlsxBytes = new Uint8Array(xlsxNodeBuf);
+
+  // 2. Descompactar para obter os arquivos internos do XLSX
+  const entries: Record<string, Uint8Array> = unzipSync(xlsxBytes);
+
+  // 3. Adicionar entradas extras para exceder MAX_ENTRIES (1000)
+  for (let i = 0; i <= 995; i++) {
+    entries[`extra/file${i}.txt`] = strToU8("x");
   }
-  const zipped = zipSync(files);
+
+  // 4. Recompactar — resulta em ZIP com magic bytes de XLSX ([Content_Types].xml presente)
+  const zipped = zipSync(entries);
   return Buffer.from(zipped);
 }
 
