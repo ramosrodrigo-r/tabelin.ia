@@ -9,9 +9,16 @@ import { extractTxt } from "../../src/server/extraction/txt-extractor";
 // Helpers para criar buffers de teste
 // ---------------------------------------------------------------------------
 
+function toArrayBuffer(buf: Buffer): ArrayBuffer {
+  const ab = new ArrayBuffer(buf.length);
+  const view = new Uint8Array(ab);
+  for (let i = 0; i < buf.length; i++) view[i] = buf[i]!;
+  return ab;
+}
+
 function makeCsvBuffer(rows: string[]): ArrayBuffer {
   const text = rows.join("\n");
-  return Buffer.from(text, "utf-8").buffer as ArrayBuffer;
+  return toArrayBuffer(Buffer.from(text, "utf-8"));
 }
 
 function makeXlsxBuffer(sheets: { name: string; rows: Record<string, unknown>[] }[]): ArrayBuffer {
@@ -20,8 +27,9 @@ function makeXlsxBuffer(sheets: { name: string; rows: Record<string, unknown>[] 
     const ws = XLSX.utils.json_to_sheet(sheet.rows);
     XLSX.utils.book_append_sheet(wb, ws, sheet.name);
   }
-  const buf = XLSX.write(wb, { type: "array", bookType: "xlsx" }) as ArrayBuffer;
-  return buf;
+  // XLSX.write com type "buffer" retorna Buffer Node.js; toArrayBuffer para ter ArrayBuffer puro
+  const nodeBuf = XLSX.write(wb, { type: "buffer", bookType: "xlsx" }) as Buffer;
+  return toArrayBuffer(nodeBuf);
 }
 
 function makeXlsxBufferWithManyRows(sheetName: string, count: number): ArrayBuffer {
@@ -187,7 +195,7 @@ describe("image/ocr — extrator", () => {
 describe("txt — extrator", () => {
   it("buffer UTF-8 com texto retorna { ok: true, text } com o conteúdo", async () => {
     const text = "olá mundo";
-    const buf = Buffer.from(text, "utf-8").buffer as ArrayBuffer;
+    const buf = toArrayBuffer(Buffer.from(text, "utf-8"));
     const result = extractTxt(buf);
 
     expect(result.ok).toBe(true);
@@ -196,7 +204,7 @@ describe("txt — extrator", () => {
   });
 
   it("buffer vazio → { ok: false, code: EMPTY_EXTRACTION }", async () => {
-    const buf = Buffer.from("", "utf-8").buffer as ArrayBuffer;
+    const buf = toArrayBuffer(Buffer.from("", "utf-8"));
     const result = extractTxt(buf);
 
     expect(result.ok).toBe(false);
@@ -205,7 +213,7 @@ describe("txt — extrator", () => {
   });
 
   it("buffer só whitespace → { ok: false, code: EMPTY_EXTRACTION }", async () => {
-    const buf = Buffer.from("   \n\t  ", "utf-8").buffer as ArrayBuffer;
+    const buf = toArrayBuffer(Buffer.from("   \n\t  ", "utf-8"));
     const result = extractTxt(buf);
 
     expect(result.ok).toBe(false);

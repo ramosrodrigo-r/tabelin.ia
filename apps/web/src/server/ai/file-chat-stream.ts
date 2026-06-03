@@ -14,7 +14,7 @@ type ChatHistoryMessage = {
  * T-04-01-04: dados do arquivo separados com delimitadores explícitos para
  * prevenir prompt injection.
  */
-function formatSchemaForPrompt(schema: FileSchema): string {
+export function formatSchemaForPrompt(schema: FileSchema): string {
   const colLines = schema.columns
     .map((c) => {
       const examples = (c.sampleValues as unknown[])
