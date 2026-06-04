@@ -39,8 +39,8 @@
 ### Gating Pro & Cota (PRO)
 
 - [ ] **PRO-01**: O recurso de anexo é exclusivo Pro — usuário free vê o botão com CTA de upgrade, sem conseguir anexar
-- [ ] **PRO-02**: A verificação de plano Pro ocorre no backend antes de qualquer I/O de extração (anti-bypass), retornando 403 para free
-- [ ] **PRO-03**: Uma geração com anexo consome 1 uso da cota normal, integrada ao padrão reserve/confirm/release existente
+- [x] **PRO-02**: A verificação de plano Pro ocorre no backend antes de qualquer I/O de extração (anti-bypass), retornando 403 para free
+- [x] **PRO-03**: Uma geração com anexo consome 1 uso da cota normal, integrada ao padrão reserve/confirm/release existente
 
 ### Segurança & Privacidade (SEC)
 
@@ -83,8 +83,8 @@
 | CTX-03 | Phase 10 | Complete |
 | CTX-04 | Phase 10 | Complete |
 | CTX-05 | Phase 10 | Complete |
-| PRO-02 | Phase 10 | Pending |
-| PRO-03 | Phase 10 | Pending |
+| PRO-02 | Phase 10 | Complete |
+| PRO-03 | Phase 10 | Complete |
 | ATT-01 | Phase 11 | Pending |
 | ATT-02 | Phase 11 | Pending |
 | ATT-03 | Phase 11 | Pending |
