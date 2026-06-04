@@ -109,8 +109,8 @@ Full details: `.planning/milestones/v1.1-ROADMAP.md`
 
 **Wave 1** *(paralelo — sem dependências entre si)*
 
-- [ ] 11-01-PLAN.md — Backend mini-wave: schemas attachment_grounded (5 tools) + stream emitters + routes + fix teste pré-existente (ATT-05..08, SEC-01)
-- [ ] 11-02-PLAN.md — Componentes compartilhados: AttachmentButton, AttachmentChip, AttachmentPanel, PrivacyNotice + CSS (ATT-01..04, ATT-06..08, PRO-01, SEC-01, SEC-03)
+- [x] 11-01-PLAN.md — Backend mini-wave: schemas attachment_grounded (5 tools) + stream emitters + routes + fix teste pré-existente (ATT-05..08, SEC-01)
+- [x] 11-02-PLAN.md — Componentes compartilhados: AttachmentButton, AttachmentChip, AttachmentPanel, PrivacyNotice + CSS (ATT-01..04, ATT-06..08, PRO-01, SEC-01, SEC-03)
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
@@ -135,4 +135,4 @@ Full details: `.planning/milestones/v1.1-ROADMAP.md`
 | 8. Multi-turn LLM Context | v1.1 | 4/4 | Complete | 2026-06-01 |
 | 9. Extraction Infrastructure | v1.2 | 5/5 | Complete   | 2026-06-03 |
 | 10. Persistence & LLM Context | v1.2 | 4/4 | Complete    | 2026-06-04 |
-| 11. Attachment UI & Pro Gating | v1.2 | 0/5 | Not started | - |
+| 11. Attachment UI & Pro Gating | v1.2 | 2/5 | In Progress|  |
