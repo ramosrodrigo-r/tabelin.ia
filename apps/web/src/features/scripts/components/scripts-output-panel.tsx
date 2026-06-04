@@ -5,6 +5,7 @@ import { useShikiHighlighter } from "react-shiki";
 import type { ScriptGenerateResponse, ScriptMetadata } from "@tabelin/shared";
 import { SCRIPT_TYPES } from "@tabelin/shared";
 
+import { AttachmentPanel } from "@/components/app/attachment-panel";
 import type { ScriptStreamStatus } from "../hooks/use-scripts-stream";
 import { CopyButton } from "../../formula/components/copy-button";
 
@@ -21,6 +22,7 @@ export function ScriptsOutputPanel({
   metadata,
   warnings,
   error,
+  attachmentMeta,
   onRetry,
 }: {
   status: ScriptStreamStatus;
@@ -29,6 +31,7 @@ export function ScriptsOutputPanel({
   metadata: ScriptMetadata | null;
   warnings: string[];
   error: string;
+  attachmentMeta?: { charCount: number; wasTruncated: boolean; extractedText: string } | null;
   onRetry: () => void;
 }) {
   const codeToHighlight = status === "streaming" ? draft : (result?.code ?? "");
@@ -97,6 +100,30 @@ export function ScriptsOutputPanel({
           <ul>
             {result.assumptions.map((assumption) => (
               <li key={assumption}>{assumption}</li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+
+      {attachmentMeta ? (
+        <div className="metadata-row">
+          <span aria-label="Gerado com base em documento anexado">Grounded por documento</span>
+        </div>
+      ) : null}
+
+      {attachmentMeta ? (
+        <AttachmentPanel
+          extractedText={attachmentMeta.extractedText}
+          wasTruncated={attachmentMeta.wasTruncated}
+        />
+      ) : null}
+
+      {warnings.length ? (
+        <div className="note-block warning">
+          <h3>Atenção</h3>
+          <ul>
+            {warnings.map((warning) => (
+              <li key={warning}>{warning}</li>
             ))}
           </ul>
         </div>

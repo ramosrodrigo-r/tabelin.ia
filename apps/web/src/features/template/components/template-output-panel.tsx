@@ -2,6 +2,8 @@
 
 import type { TemplateGenerateResponse, TemplateMetadata } from "@tabelin/shared";
 import { useShikiHighlighter } from "react-shiki";
+
+import { AttachmentPanel } from "@/components/app/attachment-panel";
 import type { TemplateStreamStatus } from "../hooks/use-template-stream";
 import { CopyButton } from "../../formula/components/copy-button";
 
@@ -12,6 +14,7 @@ export function TemplateOutputPanel({
   metadata,
   warnings,
   error,
+  attachmentMeta,
   onRetry,
 }: {
   status: TemplateStreamStatus;
@@ -20,6 +23,7 @@ export function TemplateOutputPanel({
   metadata: TemplateMetadata | null;
   warnings: string[];
   error: string;
+  attachmentMeta?: { charCount: number; wasTruncated: boolean; extractedText: string } | null;
   onRetry: () => void;
 }) {
   const codeToHighlight = status === "streaming" ? draft : (result?.output ?? "");
@@ -65,6 +69,30 @@ export function TemplateOutputPanel({
           <ul>
             {result.assumptions.map((assumption) => (
               <li key={assumption}>{assumption}</li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+
+      {attachmentMeta ? (
+        <div className="metadata-row">
+          <span aria-label="Gerado com base em documento anexado">Grounded por documento</span>
+        </div>
+      ) : null}
+
+      {attachmentMeta ? (
+        <AttachmentPanel
+          extractedText={attachmentMeta.extractedText}
+          wasTruncated={attachmentMeta.wasTruncated}
+        />
+      ) : null}
+
+      {warnings.length ? (
+        <div className="note-block warning">
+          <h3>Atenção</h3>
+          <ul>
+            {warnings.map((warning) => (
+              <li key={warning}>{warning}</li>
             ))}
           </ul>
         </div>

@@ -4,6 +4,7 @@ import type { TemplateGenerateResponse, TemplateMetadata, UserEntitlement } from
 import { useCallback, useState } from "react";
 
 import { useRegisterNewConversation } from "@/components/app/workspace-conversation-context";
+import { validateFile } from "@/components/app/attachment-button";
 import { TemplateInputPanel } from "./components/template-input-panel";
 import { TemplateOutputPanel } from "./components/template-output-panel";
 import { useTemplateStream } from "./hooks/use-template-stream";
@@ -16,6 +17,7 @@ type TemplateExchange = {
   metadata: TemplateMetadata | null;
   warnings: string[];
   error: string;
+  attachmentMeta?: { charCount: number; wasTruncated: boolean; extractedText: string } | null;
 };
 
 type PersistedExchange = {
@@ -51,9 +53,22 @@ export function TemplateTool({
     }))
   );
   const [submittedText, setSubmittedText] = useState("");
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [fileError, setFileError] = useState<string | null>(null);
+  const [dragOver, setDragOver] = useState(false);
   const stream = useTemplateStream();
   const pending = stream.status === "loading" || stream.status === "streaming";
   const isPro = entitlement.plan === "pro" && entitlement.status === "active";
+
+  function handleFileSelect(file: File) {
+    const err = validateFile(file);
+    if (err) {
+      setFileError(err);
+      return;
+    }
+    setFileError(null);
+    setPendingFile(file);
+  }
 
   const handleNewConversation = useCallback(() => {
     setExchanges([]);
@@ -80,19 +95,36 @@ export function TemplateTool({
           metadata: stream.metadata,
           warnings: stream.warnings,
           error: stream.error,
+          attachmentMeta: stream.attachmentMeta,
         },
       ]);
     }
 
     const snapshot = text;
+    const fileSnapshot = pendingFile;
     setText("");
+    setPendingFile(null);
+    setFileError(null);
     setSubmittedText(snapshot);
     setValidationError("");
-    await stream.submit({ text: snapshot });
+    await stream.submit({ text: snapshot, file: fileSnapshot ?? undefined });
   }
 
   return (
-    <div className="tool-chat" aria-label="Templates workspace">
+    <div
+      className="tool-chat"
+      aria-label="Templates workspace"
+      onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+      onDragLeave={() => setDragOver(false)}
+      onDrop={(e) => {
+        e.preventDefault();
+        setDragOver(false);
+        if (!isPro) return;
+        const file = e.dataTransfer.files[0];
+        if (file) handleFileSelect(file);
+      }}
+      data-drag-over={dragOver}
+    >
       {(exchanges.length > 0 || (submittedText && stream.status !== "idle")) ? (
         <div className="chat-thread">
           {exchanges.map((ex) => (
@@ -105,6 +137,7 @@ export function TemplateTool({
                 metadata={ex.metadata}
                 warnings={ex.warnings}
                 error={ex.error}
+                attachmentMeta={ex.attachmentMeta ?? null}
                 onRetry={submit}
               />
             </div>
@@ -120,11 +153,19 @@ export function TemplateTool({
                 metadata={stream.metadata}
                 warnings={stream.warnings}
                 error={stream.error}
+                attachmentMeta={stream.attachmentMeta}
                 onRetry={submit}
               />
             </div>
           ) : null}
         </div>
+      ) : null}
+
+      {stream.attachmentStatus === "uploading" ? (
+        <p className="privacy-notice" aria-live="polite">Enviando documento...</p>
+      ) : null}
+      {stream.attachmentStatus === "extracting" ? (
+        <p className="privacy-notice" aria-live="polite">Extraindo conteúdo...</p>
       ) : null}
 
       <TemplateInputPanel
@@ -135,8 +176,12 @@ export function TemplateTool({
         proBlocked={stream.proBlocked}
         quotaBlocked={stream.quotaBlocked}
         lastFreeUse={stream.lastFreeUse}
+        pendingFile={pendingFile}
+        fileError={fileError}
         onTextChange={setText}
         onSubmit={submit}
+        onFileSelect={handleFileSelect}
+        onFileRemove={() => { setPendingFile(null); setFileError(null); }}
       />
     </div>
   );
