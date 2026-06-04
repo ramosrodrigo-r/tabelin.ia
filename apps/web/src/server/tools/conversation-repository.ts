@@ -42,6 +42,7 @@ export async function saveConversationExchange(input: {
   dialect?: string;
   userPrompt: string;
   assistantPayload: unknown;
+  attachmentContext?: string;
 }) {
   try {
     return await prisma.$transaction(
@@ -71,6 +72,7 @@ export async function saveConversationExchange(input: {
             dialect: input.dialect ?? null,
             userPrompt: input.userPrompt,
             assistantPayload: guardPayloadSize(input.assistantPayload),
+            attachmentContext: input.attachmentContext ?? null,
           },
         });
       },
