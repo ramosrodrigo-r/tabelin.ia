@@ -17,6 +17,7 @@ import { getOpenAIModel } from "./openai-client";
 export async function resolveScriptPayload(input: {
   request: ScriptGenerateRequest;
   history?: ConversationExchange[];
+  attachmentContext?: string;
 }): Promise<ScriptGenerateResponse> {
   const { request } = input;
 
@@ -50,7 +51,8 @@ export async function resolveScriptPayload(input: {
         `Voce e um especialista em automacao de planilhas. Gere ${scriptTypeLabels[request.scriptType] ?? request.scriptType} em resposta ao pedido em portugues do usuario. Responda APENAS com JSON valido no formato: {"code": "...codigo completo...", "explanation": "...explicacao em portugues...", "assumptions": ["..."], "warnings": [], "isDestructive": false}`,
         input.history?.length ?? 0
       ),
-      request.prompt
+      request.prompt,
+      input.attachmentContext
     ),
     response_format: { type: "json_object" }
   });

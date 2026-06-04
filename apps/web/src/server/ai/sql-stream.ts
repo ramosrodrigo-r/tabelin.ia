@@ -17,6 +17,7 @@ import { getOpenAIModel } from "./openai-client";
 export async function resolveSqlPayload(input: {
   request: SqlGenerateRequest;
   history?: ConversationExchange[];
+  attachmentContext?: string;
 }): Promise<SqlGenerateResponse> {
   const { request } = input;
 
@@ -42,7 +43,8 @@ export async function resolveSqlPayload(input: {
         `Voce e um especialista em SQL. Gere uma consulta ${request.dialect.toUpperCase()} em resposta ao pedido em portugues. Responda APENAS com JSON valido: {"query": "...SQL completo...", "explanation": "...explicacao em portugues...", "assumptions": ["..."], "warnings": [], "isDestructive": false}`,
         input.history?.length ?? 0
       ),
-      request.prompt
+      request.prompt,
+      input.attachmentContext
     ),
     response_format: { type: "json_object" }
   });

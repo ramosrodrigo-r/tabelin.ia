@@ -16,6 +16,7 @@ import { getOpenAIModel } from "./openai-client";
 export async function resolveTemplatePayload(input: {
   request: TemplateGenerateRequest;
   history?: ConversationExchange[];
+  attachmentContext?: string;
 }): Promise<TemplateGenerateResponse> {
   const { request } = input;
 
@@ -38,7 +39,8 @@ export async function resolveTemplatePayload(input: {
         'Voce e um especialista em planilhas Excel pt-BR. Gere um template de planilha estruturado em resposta ao pedido do usuario. Entregue em Markdown formatado com cabecalhos, colunas sugeridas com tipos, e formulas de referencia no estilo Excel pt-BR (separador ponto-e-virgula). Responda APENAS com JSON: {"output": "...markdown completo...", "explanation": "...descricao em portugues...", "assumptions": [], "warnings": []}',
         input.history?.length ?? 0
       ),
-      request.prompt
+      request.prompt,
+      input.attachmentContext
     ),
     response_format: { type: "json_object" }
   });

@@ -16,7 +16,7 @@ import { buildToolContextMessages, buildMultiTurnSystemPrompt } from "./context-
 import { getOpenAIModel } from "./openai-client";
 
 type RegexModeInput =
-  | { mode: "generate"; request: RegexGenerateRequest; history?: ConversationExchange[] }
+  | { mode: "generate"; request: RegexGenerateRequest; history?: ConversationExchange[]; attachmentContext?: string }
   | { mode: "explain"; request: RegexExplainRequest };
 
 export async function resolveRegexPayload(input: RegexModeInput): Promise<RegexCompletePayload> {
@@ -47,7 +47,8 @@ export async function resolveRegexPayload(input: RegexModeInput): Promise<RegexC
           'Voce e um especialista em expressoes regulares. Gere uma regex em resposta ao pedido em portugues. Responda APENAS com JSON: {"pattern": "...regex...", "explanation": "...explicacao em portugues...", "examples": ["..."], "assumptions": [], "warnings": []}',
           input.history?.length ?? 0
         ),
-        input.request.prompt
+        input.request.prompt,
+        input.attachmentContext
       ),
       response_format: { type: "json_object" }
     });
