@@ -78,7 +78,7 @@ Full details: `.planning/milestones/v1.1-ROADMAP.md`
   4. Um usuário free que tenta enviar um arquivo recebe HTTP 403 do backend antes de qualquer extração ocorrer
   5. Uma geração com anexo debita 1 uso da cota normal via reserve/confirm/release
 
-**Plans**: 4 plansPlans:
+**Plans**: 4 plans
 **Wave 1**
 
 - [x] 10-01-PLAN.md — Fundação: schema Prisma + migration [BLOCKING] + conversation-repository + context-messages (CTX-01..05)
@@ -105,8 +105,21 @@ Full details: `.planning/milestones/v1.1-ROADMAP.md`
   4. Usuário free vê o botão de anexo desabilitado com CTA de upgrade — não consegue enviar arquivo
   5. A UI exibe aviso de que o conteúdo do documento fica salvo no histórico e pode ser limpo via "Nova conversa" (LGPD/D-07)
 
-**Plans**: TBD
-**UI hint**: yes
+**Plans**: 5 plans
+
+**Wave 1** *(paralelo — sem dependências entre si)*
+
+- [ ] 11-01-PLAN.md — Backend mini-wave: schemas attachment_grounded (5 tools) + stream emitters + routes + fix teste pré-existente (ATT-05..08, SEC-01)
+- [ ] 11-02-PLAN.md — Componentes compartilhados: AttachmentButton, AttachmentChip, AttachmentPanel, PrivacyNotice + CSS (ATT-01..04, ATT-06..08, PRO-01, SEC-01, SEC-03)
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 11-03-PLAN.md — Tool canônico Formula: hook FormData + tool state/DnD + painéis input/output (ATT-01..08, PRO-01, SEC-03)
+- [ ] 11-04-PLAN.md — Tools SQL/Regex/Scripts/Template: replicar padrão Formula nos 4 tools restantes (ATT-01..08, PRO-01, SEC-03)
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
+- [ ] 11-05-PLAN.md — Testes de UI: cobertura de chip, pro-gate, validação, grounding, truncagem, SEC-01 estrutural (ATT-01..08, PRO-01, SEC-01, SEC-03)
 
 ## Progress
 
@@ -122,4 +135,4 @@ Full details: `.planning/milestones/v1.1-ROADMAP.md`
 | 8. Multi-turn LLM Context | v1.1 | 4/4 | Complete | 2026-06-01 |
 | 9. Extraction Infrastructure | v1.2 | 5/5 | Complete   | 2026-06-03 |
 | 10. Persistence & LLM Context | v1.2 | 4/4 | Complete    | 2026-06-04 |
-| 11. Attachment UI & Pro Gating | v1.2 | 0/? | Not started | - |
+| 11. Attachment UI & Pro Gating | v1.2 | 0/5 | Not started | - |
