@@ -4,9 +4,11 @@ import { formulaGenerateRequestSchema } from "@tabelin/shared";
 
 import { createFormulaEventStream, resolveFormulaPayload } from "@/server/ai/formula-stream";
 import { getSessionFromCookieHeader } from "@/server/auth/session";
+import { getUserEntitlement } from "@/server/billing/entitlements";
+import { extractContent } from "@/server/extraction/dispatcher";
 import { recordFormulaToolRequest } from "@/server/tools/formula-repository";
+import { findConversationExchanges, saveConversationExchange } from "@/server/tools/conversation-repository";
 import { reserveToolUse, confirmToolUse, releaseToolUse } from "@/server/usage/quota-service";
-import { saveConversationExchange } from "@/server/tools/conversation-repository";
 
 export async function POST(request: Request) {
   const user = getSessionFromCookieHeader(request.headers.get("cookie"));
@@ -15,12 +17,41 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Autenticacao obrigatoria." }, { status: 401 });
   }
 
+  // Detectar Content-Type e parsear body (multipart ou JSON — backward-compat)
+  const contentType = request.headers.get("content-type") ?? "";
+  let body: unknown;
+  let file: File | null = null;
+
+  if (contentType.includes("multipart/form-data")) {
+    const formData = await request.formData();
+    body = {
+      prompt: formData.get("prompt"),
+      platform: formData.get("platform"),
+      formulaLanguage: formData.get("formulaLanguage")
+    };
+    file = formData.get("file") as File | null;
+  } else {
+    body = await request.json().catch(() => null);
+  }
+
   const startedAt = performance.now();
-  const body = await request.json().catch(() => null);
   const parsed = formulaGenerateRequestSchema.safeParse(body);
 
   if (!parsed.success) {
     return NextResponse.json({ error: "Pedido de formula invalido.", issues: parsed.error.issues }, { status: 400 });
+  }
+
+  // Pro-gate condicional: apenas quando há arquivo anexado
+  const hasFile = contentType.includes("multipart/form-data") && file !== null;
+  if (hasFile) {
+    const entitlement = await getUserEntitlement(user.id);
+    const isPro = entitlement.plan === "pro" && entitlement.status === "active";
+    if (!isPro) {
+      return NextResponse.json(
+        { code: "pro_required", feature: "attachment", cta: "pro_checkout" },
+        { status: 403 }
+      );
+    }
   }
 
   const quotaCheck = await reserveToolUse(user.id, "formula", "generate");
@@ -37,7 +68,31 @@ export async function POST(request: Request) {
   }
 
   try {
-    const payload = await resolveFormulaPayload({ mode: "generate", request: parsed.data });
+    // Extração de arquivo (se hasFile) — dentro do try para que o catch libere a reserva
+    let attachmentContext: string | undefined;
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        await releaseToolUse(quotaCheck.reservationKey);
+        return NextResponse.json({ code: "FILE_TOO_LARGE", message: "Arquivo excede 5 MB." }, { status: 413 });
+      }
+      const buffer = Buffer.from(await file.arrayBuffer());
+      const result = await extractContent(buffer, file.name);
+      if (!result.ok) {
+        await releaseToolUse(quotaCheck.reservationKey);
+        return NextResponse.json({ code: result.code, message: result.message }, { status: 422 });
+      }
+      attachmentContext = result.text;
+    }
+
+    // Gap Phase 8 corrigido: ler histórico multi-turn para formula (CTX-03)
+    const history = await findConversationExchanges(user.id, "formula");
+
+    const payload = await resolveFormulaPayload({
+      mode: "generate",
+      request: parsed.data,
+      history,
+      attachmentContext
+    });
     await confirmToolUse(quotaCheck.reservationKey);
     await recordFormulaToolRequest({
       userId: user.id,
@@ -45,7 +100,6 @@ export async function POST(request: Request) {
       status: "success",
       latencyMs: Math.round(performance.now() - startedAt)
     });
-    // NOVO — Phase 6
     await saveConversationExchange({
       userId: user.id,
       toolKind: "formula",
@@ -53,7 +107,8 @@ export async function POST(request: Request) {
       platform: parsed.data.platform,
       dialect: parsed.data.formulaLanguage,
       userPrompt: parsed.data.prompt,
-      assistantPayload: payload
+      assistantPayload: payload,
+      attachmentContext
     });
 
     return new Response(createFormulaEventStream(payload, quotaCheck.lastFreeUse), {
@@ -62,9 +117,9 @@ export async function POST(request: Request) {
         "cache-control": "no-store"
       }
     });
-  } catch {
+  } catch (err) {
+    console.error("tool generate failed", { toolKind: "formula", err });
     await releaseToolUse(quotaCheck.reservationKey);
     return NextResponse.json({ error: "Nao consegui validar a resposta." }, { status: 502 });
   }
 }
-
