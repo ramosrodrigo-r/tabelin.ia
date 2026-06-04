@@ -114,7 +114,7 @@ Full details: `.planning/milestones/v1.1-ROADMAP.md`
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 11-03-PLAN.md — Tool canônico Formula: hook FormData + tool state/DnD + painéis input/output (ATT-01..08, PRO-01, SEC-03)
+- [x] 11-03-PLAN.md — Tool canônico Formula: hook FormData + tool state/DnD + painéis input/output (ATT-01..08, PRO-01, SEC-03)
 - [ ] 11-04-PLAN.md — Tools SQL/Regex/Scripts/Template: replicar padrão Formula nos 4 tools restantes (ATT-01..08, PRO-01, SEC-03)
 
 **Wave 3** *(blocked on Wave 2 completion)*
@@ -135,4 +135,4 @@ Full details: `.planning/milestones/v1.1-ROADMAP.md`
 | 8. Multi-turn LLM Context | v1.1 | 4/4 | Complete | 2026-06-01 |
 | 9. Extraction Infrastructure | v1.2 | 5/5 | Complete   | 2026-06-03 |
 | 10. Persistence & LLM Context | v1.2 | 4/4 | Complete    | 2026-06-04 |
-| 11. Attachment UI & Pro Gating | v1.2 | 2/5 | In Progress|  |
+| 11. Attachment UI & Pro Gating | v1.2 | 3/5 | In Progress|  |
