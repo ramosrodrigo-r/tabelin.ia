@@ -10,6 +10,7 @@ import type {
 import { useCallback, useState } from "react";
 
 import { useRegisterNewConversation } from "@/components/app/workspace-conversation-context";
+import { validateFile } from "@/components/app/attachment-button";
 import { FormulaInputPanel } from "./components/formula-input-panel";
 import { FormulaOutputPanel } from "./components/formula-output-panel";
 import { type FormulaMode, useFormulaStream } from "./hooks/use-formula-stream";
@@ -22,6 +23,7 @@ type FormulaExchange = {
   metadata: FormulaMetadata | null;
   warnings: string[];
   error: string;
+  attachmentMeta?: { charCount: number; wasTruncated: boolean; extractedText: string } | null;
 };
 
 type PersistedExchange = {
@@ -63,9 +65,22 @@ export function FormulaTool({
     }))
   );
   const [submittedText, setSubmittedText] = useState("");
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [fileError, setFileError] = useState<string | null>(null);
+  const [dragOver, setDragOver] = useState(false);
   const stream = useFormulaStream();
   const pending = stream.status === "loading" || stream.status === "streaming";
   const isPro = entitlement.plan === "pro" && entitlement.status === "active";
+
+  function handleFileSelect(file: File) {
+    const err = validateFile(file);
+    if (err) {
+      setFileError(err);
+      return;
+    }
+    setFileError(null);
+    setPendingFile(file);
+  }
 
   const handleNewConversation = useCallback(() => {
     setExchanges([]);
@@ -100,19 +115,36 @@ export function FormulaTool({
           metadata: stream.metadata,
           warnings: stream.warnings,
           error: stream.error,
+          attachmentMeta: stream.attachmentMeta,
         },
       ]);
     }
 
     const snapshot = text;
+    const fileSnapshot = pendingFile;
     setText("");
+    setPendingFile(null);
+    setFileError(null);
     setSubmittedText(snapshot);
     setValidationError("");
-    await stream.submit({ mode, platform, formulaLanguage, text: snapshot });
+    await stream.submit({ mode, platform, formulaLanguage, text: snapshot, file: fileSnapshot ?? undefined });
   }
 
   return (
-    <div className="tool-chat" aria-label="Formula workspace">
+    <div
+      className="tool-chat"
+      aria-label="Formula workspace"
+      onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+      onDragLeave={() => setDragOver(false)}
+      onDrop={(e) => {
+        e.preventDefault();
+        setDragOver(false);
+        if (!isPro) return;
+        const file = e.dataTransfer.files[0];
+        if (file) handleFileSelect(file);
+      }}
+      data-drag-over={dragOver}
+    >
       {showRevokedNotice ? (
         <div className="revoked-notice">
           <p>Seu plano Pro foi cancelado. Voce retornou ao plano gratuito com 4 usos a cada 12 horas.</p>
@@ -134,6 +166,7 @@ export function FormulaTool({
                 metadata={ex.metadata}
                 warnings={ex.warnings}
                 error={ex.error}
+                attachmentMeta={ex.attachmentMeta ?? null}
                 onRetry={submit}
               />
             </div>
@@ -149,11 +182,19 @@ export function FormulaTool({
                 metadata={stream.metadata}
                 warnings={stream.warnings}
                 error={stream.error}
+                attachmentMeta={stream.attachmentMeta}
                 onRetry={submit}
               />
             </div>
           ) : null}
         </div>
+      ) : null}
+
+      {stream.attachmentStatus === "uploading" ? (
+        <p className="privacy-notice" aria-live="polite">Enviando documento...</p>
+      ) : null}
+      {stream.attachmentStatus === "extracting" ? (
+        <p className="privacy-notice" aria-live="polite">Extraindo conteúdo...</p>
       ) : null}
 
       <FormulaInputPanel
@@ -166,11 +207,15 @@ export function FormulaTool({
         isPro={isPro}
         quotaBlocked={stream.quotaBlocked}
         lastFreeUse={stream.lastFreeUse}
+        pendingFile={pendingFile}
+        fileError={fileError}
         onModeChange={setMode}
         onPlatformChange={setPlatform}
         onLanguageChange={setFormulaLanguage}
         onTextChange={setText}
         onSubmit={submit}
+        onFileSelect={handleFileSelect}
+        onFileRemove={() => { setPendingFile(null); setFileError(null); }}
       />
     </div>
   );

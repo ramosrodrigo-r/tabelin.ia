@@ -2,6 +2,7 @@
 
 import type { FormulaCompletePayload, FormulaMetadata } from "@tabelin/shared";
 
+import { AttachmentPanel } from "@/components/app/attachment-panel";
 import { CopyButton } from "./copy-button";
 import type { FormulaStreamStatus } from "../hooks/use-formula-stream";
 
@@ -18,6 +19,7 @@ export function FormulaOutputPanel({
   metadata,
   warnings,
   error,
+  attachmentMeta,
   onRetry,
 }: {
   status: FormulaStreamStatus;
@@ -26,6 +28,7 @@ export function FormulaOutputPanel({
   metadata: FormulaMetadata | null;
   warnings: string[];
   error: string;
+  attachmentMeta?: { charCount: number; wasTruncated: boolean; extractedText: string } | null;
   onRetry: () => void;
 }) {
   const completeText = copyValue(result);
@@ -85,6 +88,19 @@ export function FormulaOutputPanel({
             ))}
           </ul>
         </div>
+      ) : null}
+
+      {attachmentMeta ? (
+        <div className="metadata-row">
+          <span aria-label="Gerado com base em documento anexado">Grounded por documento</span>
+        </div>
+      ) : null}
+
+      {attachmentMeta ? (
+        <AttachmentPanel
+          extractedText={attachmentMeta.extractedText}
+          wasTruncated={attachmentMeta.wasTruncated}
+        />
       ) : null}
 
       {warnings.length ? (
