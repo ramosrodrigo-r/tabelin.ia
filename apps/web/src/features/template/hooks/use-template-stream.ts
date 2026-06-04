@@ -11,6 +11,7 @@ export type TemplateStreamStatus = "idle" | "loading" | "streaming" | "complete"
 
 export type SubmitTemplateInput = {
   text: string;
+  file?: File;
 };
 
 export function useTemplateStream() {
@@ -23,6 +24,12 @@ export function useTemplateStream() {
   const [quotaBlocked, setQuotaBlocked] = useState(false);
   const [lastFreeUse, setLastFreeUse] = useState(false);
   const [proBlocked, setProBlocked] = useState(false);
+  const [attachmentStatus, setAttachmentStatus] = useState<"uploading" | "extracting" | null>(null);
+  const [attachmentMeta, setAttachmentMeta] = useState<{
+    charCount: number;
+    wasTruncated: boolean;
+    extractedText: string;
+  } | null>(null);
 
   const submit = useCallback(async (input: SubmitTemplateInput) => {
     setStatus("loading");
@@ -34,23 +41,46 @@ export function useTemplateStream() {
     setQuotaBlocked(false);
     setLastFreeUse(false);
     setProBlocked(false);
+    setAttachmentStatus(null);
+    setAttachmentMeta(null);
 
-    const response = await fetch("/api/tools/template/generate", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ prompt: input.text })
-    });
+    let body: BodyInit;
+    let headers: HeadersInit = {};
+
+    if (input.file) {
+      setAttachmentStatus("uploading");
+      const fd = new FormData();
+      fd.append("prompt", input.text);
+      fd.append("file", input.file);
+      body = fd;
+      // NÃO setar Content-Type — browser define boundary automaticamente
+    } else {
+      body = JSON.stringify({ prompt: input.text });
+      headers = { "content-type": "application/json" };
+    }
+
+    const response = await fetch("/api/tools/template/generate", { method: "POST", headers, body });
 
     if (!response.ok) {
       if (response.status === 403) {
         const errorData = await response.json().catch(() => ({}));
-        if (errorData.code === "pro_required") {
+        // Pro-gate incondicional do template (sem feature:attachment) — preservado intacto
+        if (errorData.code === "pro_required" && !errorData.feature) {
           setStatus("idle");
           setProBlocked(true);
+          setAttachmentStatus(null);
           setError("");
           return;
         }
+        // 403 pro_required específico para attachment (com feature:attachment)
+        if (errorData.code === "pro_required" && errorData.feature === "attachment") {
+          setStatus("error");
+          setAttachmentStatus(null);
+          setError("Recurso exclusivo Pro. Assine o plano Pro para enviar documentos.");
+          return;
+        }
       }
+
       if (response.status === 429) {
         const errorData = await response.json().catch(() => ({}));
         if (errorData.code === "quota_exceeded") {
@@ -60,6 +90,7 @@ export function useTemplateStream() {
           return;
         }
       }
+
       setStatus("error");
       setError("Nao consegui validar a resposta. Ajuste o pedido e tente novamente.");
       return;
@@ -69,6 +100,10 @@ export function useTemplateStream() {
       setStatus("error");
       setError("Nao consegui validar a resposta. Ajuste o pedido e tente novamente.");
       return;
+    }
+
+    if (input.file) {
+      setAttachmentStatus("extracting");
     }
 
     setStatus("streaming");
@@ -85,15 +120,28 @@ export function useTemplateStream() {
       for (const line of lines) {
         if (!line.trim()) continue;
         const event = templateStreamEventSchema.parse(JSON.parse(line));
+
+        if (event.type === "attachment_grounded") {
+          setAttachmentMeta({
+            charCount: event.charCount,
+            wasTruncated: event.wasTruncated,
+            extractedText: event.extractedText,
+          });
+          setAttachmentStatus(null);
+        }
+
         if (event.type === "metadata") { setMetadata(event.metadata); }
         if (event.type === "warning") { setWarnings((current) => [...current, event.warning]); }
         if (event.type === "quota_warning") { setLastFreeUse(event.lastFreeUse); }
-        if (event.type === "delta") { setDraft((current) => `${current}${event.text}`); }
+        if (event.type === "delta") {
+          setAttachmentStatus(null); // garante reset mesmo se attachment_grounded não vier
+          setDraft((current) => `${current}${event.text}`);
+        }
         if (event.type === "complete") { setResult(event.payload); setMetadata(event.payload.metadata); setWarnings(event.payload.warnings); setStatus("complete"); }
         if (event.type === "error") { setError(event.message); setStatus("error"); }
       }
     }
   }, []);
 
-  return { status, draft, result, metadata, warnings, error, quotaBlocked, lastFreeUse, proBlocked, submit };
+  return { status, draft, result, metadata, warnings, error, quotaBlocked, lastFreeUse, proBlocked, attachmentStatus, attachmentMeta, submit };
 }

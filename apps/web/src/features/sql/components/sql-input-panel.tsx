@@ -4,7 +4,10 @@ import { useState } from "react";
 import { SQL_DIALECTS } from "@tabelin/shared";
 import type { SqlDialect } from "@tabelin/shared";
 
+import { AttachmentButton } from "@/components/app/attachment-button";
+import { AttachmentChip } from "@/components/app/attachment-chip";
 import { ChatInput } from "@/components/app/chat-input";
+import { PrivacyNotice } from "@/components/app/privacy-notice";
 import { ToolNav } from "@/components/app/tool-nav";
 
 export function SqlInputPanel({
@@ -15,9 +18,13 @@ export function SqlInputPanel({
   isPro,
   quotaBlocked,
   lastFreeUse,
+  pendingFile,
+  fileError,
   onDialectChange,
   onTextChange,
   onSubmit,
+  onFileSelect,
+  onFileRemove,
 }: {
   dialect: SqlDialect;
   text: string;
@@ -26,9 +33,13 @@ export function SqlInputPanel({
   isPro: boolean;
   quotaBlocked: boolean;
   lastFreeUse: boolean;
+  pendingFile: File | null;
+  fileError: string | null;
   onDialectChange: (dialect: SqlDialect) => void;
   onTextChange: (text: string) => void;
   onSubmit: () => void;
+  onFileSelect: (f: File) => void;
+  onFileRemove: () => void;
 }) {
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
 
@@ -62,8 +73,24 @@ export function SqlInputPanel({
         disabled={quotaBlocked}
         submitLabel={pending ? "Gerando..." : "Gerar SQL"}
         options={options}
+        leftAction={
+          <AttachmentButton
+            isPro={isPro}
+            disabled={pending || quotaBlocked}
+            onFileSelect={onFileSelect}
+          />
+        }
         bottomNav={<ToolNav />}
       />
+
+      {pendingFile ? (
+        <>
+          <AttachmentChip file={pendingFile} onRemove={onFileRemove} />
+          <PrivacyNotice />
+        </>
+      ) : null}
+
+      {fileError ? <div className="form-error mt-2">{fileError}</div> : null}
 
       {validationError ? <div className="form-error mt-2">{validationError}</div> : null}
 

@@ -5,6 +5,7 @@ import { useShikiHighlighter } from "react-shiki";
 import type { SqlGenerateResponse, SqlMetadata } from "@tabelin/shared";
 import { SQL_DIALECTS } from "@tabelin/shared";
 
+import { AttachmentPanel } from "@/components/app/attachment-panel";
 import type { SqlStreamStatus } from "../hooks/use-sql-stream";
 import { CopyButton } from "../../formula/components/copy-button";
 
@@ -29,6 +30,7 @@ export function SqlOutputPanel({
   metadata,
   warnings,
   error,
+  attachmentMeta,
   onRetry,
 }: {
   status: SqlStreamStatus;
@@ -37,6 +39,7 @@ export function SqlOutputPanel({
   metadata: SqlMetadata | null;
   warnings: string[];
   error: string;
+  attachmentMeta?: { charCount: number; wasTruncated: boolean; extractedText: string } | null;
   onRetry: () => void;
 }) {
   const codeToHighlight = status === "streaming" ? draft : (result?.query ?? "");
@@ -107,6 +110,30 @@ export function SqlOutputPanel({
           <ul>
             {result.assumptions.map((assumption) => (
               <li key={assumption}>{assumption}</li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+
+      {attachmentMeta ? (
+        <div className="metadata-row">
+          <span aria-label="Gerado com base em documento anexado">Grounded por documento</span>
+        </div>
+      ) : null}
+
+      {attachmentMeta ? (
+        <AttachmentPanel
+          extractedText={attachmentMeta.extractedText}
+          wasTruncated={attachmentMeta.wasTruncated}
+        />
+      ) : null}
+
+      {warnings.length ? (
+        <div className="note-block warning">
+          <h3>Atenção</h3>
+          <ul>
+            {warnings.map((warning) => (
+              <li key={warning}>{warning}</li>
             ))}
           </ul>
         </div>

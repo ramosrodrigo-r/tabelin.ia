@@ -2,7 +2,10 @@
 
 import { useState } from "react";
 
+import { AttachmentButton } from "@/components/app/attachment-button";
+import { AttachmentChip } from "@/components/app/attachment-chip";
 import { ChatInput } from "@/components/app/chat-input";
+import { PrivacyNotice } from "@/components/app/privacy-notice";
 import { ToolNav } from "@/components/app/tool-nav";
 
 export function TemplateInputPanel({
@@ -13,8 +16,12 @@ export function TemplateInputPanel({
   proBlocked,
   quotaBlocked,
   lastFreeUse,
+  pendingFile,
+  fileError,
   onTextChange,
   onSubmit,
+  onFileSelect,
+  onFileRemove,
 }: {
   text: string;
   validationError: string;
@@ -23,8 +30,12 @@ export function TemplateInputPanel({
   proBlocked: boolean;
   quotaBlocked: boolean;
   lastFreeUse: boolean;
+  pendingFile: File | null;
+  fileError: string | null;
   onTextChange: (text: string) => void;
   onSubmit: () => void;
+  onFileSelect: (f: File) => void;
+  onFileRemove: () => void;
 }) {
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const showProGate = !isPro || proBlocked;
@@ -41,8 +52,26 @@ export function TemplateInputPanel({
         pending={pending}
         disabled={showProGate || quotaBlocked}
         submitLabel={pending ? "Gerando..." : "Gerar template"}
+        leftAction={
+          !showProGate ? (
+            <AttachmentButton
+              isPro={true}
+              disabled={pending}
+              onFileSelect={onFileSelect}
+            />
+          ) : undefined
+        }
         bottomNav={<ToolNav />}
       />
+
+      {!showProGate && pendingFile ? (
+        <>
+          <AttachmentChip file={pendingFile} onRemove={onFileRemove} />
+          <PrivacyNotice />
+        </>
+      ) : null}
+
+      {!showProGate && fileError ? <div className="form-error mt-2">{fileError}</div> : null}
 
       {validationError ? <div className="form-error mt-2">{validationError}</div> : null}
 

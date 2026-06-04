@@ -2,7 +2,10 @@
 
 import { useState } from "react";
 
+import { AttachmentButton } from "@/components/app/attachment-button";
+import { AttachmentChip } from "@/components/app/attachment-chip";
 import { ChatInput } from "@/components/app/chat-input";
+import { PrivacyNotice } from "@/components/app/privacy-notice";
 import { ToolNav } from "@/components/app/tool-nav";
 import type { RegexMode } from "../hooks/use-regex-stream";
 
@@ -14,9 +17,13 @@ export function RegexInputPanel({
   isPro,
   quotaBlocked,
   lastFreeUse,
+  pendingFile,
+  fileError,
   onModeChange,
   onTextChange,
   onSubmit,
+  onFileSelect,
+  onFileRemove,
 }: {
   mode: RegexMode;
   text: string;
@@ -25,9 +32,13 @@ export function RegexInputPanel({
   isPro: boolean;
   quotaBlocked: boolean;
   lastFreeUse: boolean;
+  pendingFile: File | null;
+  fileError: string | null;
   onModeChange: (mode: RegexMode) => void;
   onTextChange: (text: string) => void;
   onSubmit: () => void;
+  onFileSelect: (f: File) => void;
+  onFileRemove: () => void;
 }) {
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
 
@@ -75,8 +86,24 @@ export function RegexInputPanel({
           pending ? "Gerando..." : mode === "generate" ? "Gerar regex" : "Explicar regex"
         }
         options={options}
+        leftAction={
+          <AttachmentButton
+            isPro={isPro}
+            disabled={pending || quotaBlocked}
+            onFileSelect={onFileSelect}
+          />
+        }
         bottomNav={<ToolNav />}
       />
+
+      {pendingFile ? (
+        <>
+          <AttachmentChip file={pendingFile} onRemove={onFileRemove} />
+          <PrivacyNotice />
+        </>
+      ) : null}
+
+      {fileError ? <div className="form-error mt-2">{fileError}</div> : null}
 
       {validationError ? <div className="form-error mt-2">{validationError}</div> : null}
 

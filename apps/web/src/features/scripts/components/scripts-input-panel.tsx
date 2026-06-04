@@ -4,7 +4,10 @@ import { useState } from "react";
 import { SCRIPT_TYPES } from "@tabelin/shared";
 import type { ScriptType } from "@tabelin/shared";
 
+import { AttachmentButton } from "@/components/app/attachment-button";
+import { AttachmentChip } from "@/components/app/attachment-chip";
 import { ChatInput } from "@/components/app/chat-input";
+import { PrivacyNotice } from "@/components/app/privacy-notice";
 import { ToolNav } from "@/components/app/tool-nav";
 
 export function ScriptsInputPanel({
@@ -15,9 +18,13 @@ export function ScriptsInputPanel({
   isPro,
   quotaBlocked,
   lastFreeUse,
+  pendingFile,
+  fileError,
   onScriptTypeChange,
   onTextChange,
   onSubmit,
+  onFileSelect,
+  onFileRemove,
 }: {
   scriptType: ScriptType;
   text: string;
@@ -26,9 +33,13 @@ export function ScriptsInputPanel({
   isPro: boolean;
   quotaBlocked: boolean;
   lastFreeUse: boolean;
+  pendingFile: File | null;
+  fileError: string | null;
   onScriptTypeChange: (type: ScriptType) => void;
   onTextChange: (text: string) => void;
   onSubmit: () => void;
+  onFileSelect: (f: File) => void;
+  onFileRemove: () => void;
 }) {
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
 
@@ -63,8 +74,24 @@ export function ScriptsInputPanel({
         disabled={quotaBlocked}
         submitLabel={pending ? "Gerando..." : "Gerar script"}
         options={options}
+        leftAction={
+          <AttachmentButton
+            isPro={isPro}
+            disabled={pending || quotaBlocked}
+            onFileSelect={onFileSelect}
+          />
+        }
         bottomNav={<ToolNav />}
       />
+
+      {pendingFile ? (
+        <>
+          <AttachmentChip file={pendingFile} onRemove={onFileRemove} />
+          <PrivacyNotice />
+        </>
+      ) : null}
+
+      {fileError ? <div className="form-error mt-2">{fileError}</div> : null}
 
       {validationError ? <div className="form-error mt-2">{validationError}</div> : null}
 
