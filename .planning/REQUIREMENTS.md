@@ -30,11 +30,11 @@
 
 ### Contexto LLM & Persistência (CTX)
 
-- [ ] **CTX-01**: O conteúdo extraído é injetado no system prompt do tool junto com o prompt do usuário, delimitado para grounding da geração
-- [ ] **CTX-02**: O conteúdo extraído é persistido na troca (`ConversationExchange.attachmentContext`) — o arquivo bruto não é persistido (preserva D-07)
-- [ ] **CTX-03**: Follow-ups reutilizam o conteúdo extraído da troca anterior sem o usuário precisar reanexar o documento
-- [ ] **CTX-04**: O conteúdo extraído é truncado a um limite de caracteres (`MAX_EXTRACTED_CHARS`) antes da injeção, respeitando o orçamento de tokens do contexto multi-turn existente
-- [ ] **CTX-05**: A IA pode sugerir proativamente o tool mais adequado ao documento anexado quando houver descompasso evidente (ex.: planilha de dados num tool não-tabular)
+- [x] **CTX-01**: O conteúdo extraído é injetado no system prompt do tool junto com o prompt do usuário, delimitado para grounding da geração
+- [x] **CTX-02**: O conteúdo extraído é persistido na troca (`ConversationExchange.attachmentContext`) — o arquivo bruto não é persistido (preserva D-07)
+- [x] **CTX-03**: Follow-ups reutilizam o conteúdo extraído da troca anterior sem o usuário precisar reanexar o documento
+- [x] **CTX-04**: O conteúdo extraído é truncado a um limite de caracteres (`MAX_EXTRACTED_CHARS`) antes da injeção, respeitando o orçamento de tokens do contexto multi-turn existente
+- [x] **CTX-05**: A IA pode sugerir proativamente o tool mais adequado ao documento anexado quando houver descompasso evidente (ex.: planilha de dados num tool não-tabular)
 
 ### Gating Pro & Cota (PRO)
 
@@ -78,11 +78,11 @@
 | EXT-05 | Phase 9 | Complete |
 | EXT-06 | Phase 9 | Complete |
 | SEC-02 | Phase 9 | Complete |
-| CTX-01 | Phase 10 | Pending |
-| CTX-02 | Phase 10 | Pending |
-| CTX-03 | Phase 10 | Pending |
-| CTX-04 | Phase 10 | Pending |
-| CTX-05 | Phase 10 | Pending |
+| CTX-01 | Phase 10 | Complete |
+| CTX-02 | Phase 10 | Complete |
+| CTX-03 | Phase 10 | Complete |
+| CTX-04 | Phase 10 | Complete |
+| CTX-05 | Phase 10 | Complete |
 | PRO-02 | Phase 10 | Pending |
 | PRO-03 | Phase 10 | Pending |
 | ATT-01 | Phase 11 | Pending |

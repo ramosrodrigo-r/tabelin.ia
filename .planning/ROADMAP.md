@@ -81,7 +81,7 @@ Full details: `.planning/milestones/v1.1-ROADMAP.md`
 **Plans**: 4 plansPlans:
 **Wave 1**
 
-- [ ] 10-01-PLAN.md — Fundação: schema Prisma + migration [BLOCKING] + conversation-repository + context-messages (CTX-01..05)
+- [x] 10-01-PLAN.md — Fundação: schema Prisma + migration [BLOCKING] + conversation-repository + context-messages (CTX-01..05)
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
@@ -121,5 +121,5 @@ Full details: `.planning/milestones/v1.1-ROADMAP.md`
 | 7. Frontend History | v1.1 | 4/4 | Complete | 2026-05-30 |
 | 8. Multi-turn LLM Context | v1.1 | 4/4 | Complete | 2026-06-01 |
 | 9. Extraction Infrastructure | v1.2 | 5/5 | Complete   | 2026-06-03 |
-| 10. Persistence & LLM Context | v1.2 | 0/4 | Not started | - |
+| 10. Persistence & LLM Context | v1.2 | 1/4 | In Progress|  |
 | 11. Attachment UI & Pro Gating | v1.2 | 0/? | Not started | - |
