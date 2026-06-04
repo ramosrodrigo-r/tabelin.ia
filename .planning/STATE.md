@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Anexos Universais
 status: executing
-last_updated: "2026-06-04T19:41:18.502Z"
-last_activity: 2026-06-04 -- Phase 11 planning complete
+last_updated: "2026-06-04T19:43:55.048Z"
+last_activity: 2026-06-04 -- Phase 11 execution started
 progress:
   total_phases: 3
   completed_phases: 2
@@ -20,14 +20,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-06-03)
 
 **Core value:** Brazilian spreadsheet users can describe the outcome they need in Portuguese and quickly receive correct, copy-ready formulas, code, queries, or structured table outputs that fit their actual tools.
-**Current focus:** Phase 11 — attachment ui & pro gating
+**Current focus:** Phase 11 — attachment-ui-pro-gating
 
 ## Current Position
 
-Phase: 11
-Plan: Not started
-Status: Ready to execute
-Last activity: 2026-06-04 -- Phase 11 planning complete
+Phase: 11 (attachment-ui-pro-gating) — EXECUTING
+Plan: 1 of 5
+Status: Executing Phase 11
+Last activity: 2026-06-04 -- Phase 11 execution started
 
 Progress: [██████████] 100%
 
