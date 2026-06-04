@@ -45,16 +45,20 @@ Full details: `.planning/milestones/v1.1-ROADMAP.md`
 ## Phase Details
 
 ### Phase 9: Extraction Infrastructure
+
 **Goal**: O sistema consegue extrair conteúdo textual de qualquer formato suportado (CSV/XLSX, PNG/JPEG, PDF, TXT) e retornar texto plano via dispatcher único, com validação de segurança de bytes e detecção de PDF sem camada de texto
 **Depends on**: Phase 8 (multi-turn infrastructure already in place)
 **Requirements**: EXT-01, EXT-02, EXT-03, EXT-04, EXT-05, EXT-06, SEC-02
 **Success Criteria** (what must be TRUE):
+
   1. Um CSV/XLSX enviado ao extrator retorna schema + amostra de dados como texto plano, sem erro
   2. Uma imagem PNG/JPEG de tabela enviada ao extrator retorna linhas/colunas reconstruídas via OCR
   3. Um PDF com camada de texto enviado ao extrator retorna o texto via `unpdf`; um PDF escaneado (sem camada) retorna erro acionável orientando o usuário ao tool de OCR
   4. Um arquivo TXT enviado ao extrator retorna seu conteúdo diretamente
   5. O dispatcher roteia cada tipo ao extrator correto sem lógica duplicada nos tools; upload com magic bytes inválidos ou ZIP bomb é rejeitado antes de processar
+
 **Plans**: 5 plans
+
 - [x] 09-01-PLAN.md — Fundação: contrato ExtractionResult (D-09) + instalar unpdf/file-type/fflate (checkpoint de legitimidade)
 - [x] 09-02-PLAN.md — Extratores de reuso: CSV/XLSX (schema+amostra+multi-aba), imagem OCR→Markdown, TXT
 - [x] 09-03-PLAN.md — Segurança/novas-libs: magic bytes (file-type), guard anti-ZIP-bomb (fflate), PDF (unpdf) + scanned-PDF
@@ -62,32 +66,45 @@ Full details: `.planning/milestones/v1.1-ROADMAP.md`
 - [x] 09-05-PLAN.md — Gap closure SEC-02: ratio cap + per-entry cap no zip-guard (CR-01) + MAX_INPUT_BYTES no dispatcher (CR-02)
 
 ### Phase 10: Persistence & LLM Context
+
 **Goal**: O conteúdo extraído é injetado no system prompt do tool, persistido na troca de conversa (sem guardar o arquivo bruto) e reutilizável em follow-ups; gerações com anexo passam pelo Pro-gate no backend
 **Depends on**: Phase 9
 **Requirements**: CTX-01, CTX-02, CTX-03, CTX-04, CTX-05, PRO-02, PRO-03
 **Success Criteria** (what must be TRUE):
+
   1. Uma geração com documento anexado inclui o conteúdo extraído no system prompt, delimitado para grounding, e produz resposta contextualizada ao documento
   2. Após a geração, o conteúdo extraído aparece no `ConversationExchange.attachmentContext` no banco; o arquivo bruto não é armazenado
   3. Um follow-up ("agora filtre pela coluna X") reutiliza automaticamente o conteúdo extraído da troca anterior, sem o usuário reanexar o documento
   4. Um usuário free que tenta enviar um arquivo recebe HTTP 403 do backend antes de qualquer extração ocorrer
   5. Uma geração com anexo debita 1 uso da cota normal via reserve/confirm/release
-**Plans**: 4 plans
-Plans:
+
+**Plans**: 4 plansPlans:
+**Wave 1**
+
 - [ ] 10-01-PLAN.md — Fundação: schema Prisma + migration [BLOCKING] + conversation-repository + context-messages (CTX-01..05)
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
 - [ ] 10-02-PLAN.md — formula route + formula-stream: gap Phase 8 + attachment (CTX-01..03, PRO-02, PRO-03)
 - [ ] 10-03-PLAN.md — sql/regex/scripts/template routes + stream modules: multipart + Pro-gate + attachment (CTX-01..03, PRO-02, PRO-03)
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
 - [ ] 10-04-PLAN.md — Testes de integração: cobertura CTX-01..04, PRO-02, PRO-03 (attachment-context.test.ts)
 
 ### Phase 11: Attachment UI & Pro Gating
+
 **Goal**: Usuários Pro podem anexar documentos nos 5 tools via botão e drag-and-drop, acompanham o processamento em dois estágios, veem transparência do conteúdo extraído e avisos de privacidade; usuários free veem CTA de upgrade
 **Depends on**: Phase 10
 **Requirements**: ATT-01, ATT-02, ATT-03, ATT-04, ATT-05, ATT-06, ATT-07, ATT-08, PRO-01, SEC-01, SEC-03
 **Success Criteria** (what must be TRUE):
+
   1. Usuário Pro consegue selecionar um arquivo via botão paperclip ou drag-and-drop, vê o chip de preview com ícone/nome/tamanho, e pode removê-lo antes de enviar
   2. Ao enviar, usuário vê feedback de dois estágios (upload → extração) antes da resposta do LLM iniciar; a resposta exibe badge de grounding indicando que foi gerada com base no documento
   3. Usuário pode expandir um painel que exibe o texto extraído; quando truncado, aparece aviso de extração parcial
   4. Usuário free vê o botão de anexo desabilitado com CTA de upgrade — não consegue enviar arquivo
   5. A UI exibe aviso de que o conteúdo do documento fica salvo no histórico e pode ser limpo via "Nova conversa" (LGPD/D-07)
+
 **Plans**: TBD
 **UI hint**: yes
 
