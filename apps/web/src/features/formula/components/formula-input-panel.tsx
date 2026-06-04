@@ -4,7 +4,10 @@ import { useState } from "react";
 import type { FormulaLanguage, FormulaPlatform } from "@tabelin/shared";
 import { FORMULA_LANGUAGES, FORMULA_PLATFORMS } from "@tabelin/shared";
 
+import { AttachmentButton } from "@/components/app/attachment-button";
+import { AttachmentChip } from "@/components/app/attachment-chip";
 import { ChatInput } from "@/components/app/chat-input";
+import { PrivacyNotice } from "@/components/app/privacy-notice";
 import { ToolNav } from "@/components/app/tool-nav";
 import type { FormulaMode } from "../hooks/use-formula-stream";
 
@@ -18,11 +21,15 @@ export function FormulaInputPanel({
   isPro,
   quotaBlocked,
   lastFreeUse,
+  pendingFile,
+  fileError,
   onModeChange,
   onPlatformChange,
   onLanguageChange,
   onTextChange,
   onSubmit,
+  onFileSelect,
+  onFileRemove,
 }: {
   mode: FormulaMode;
   platform: FormulaPlatform;
@@ -33,11 +40,15 @@ export function FormulaInputPanel({
   isPro: boolean;
   quotaBlocked: boolean;
   lastFreeUse: boolean;
+  pendingFile: File | null;
+  fileError: string | null;
   onModeChange: (mode: FormulaMode) => void;
   onPlatformChange: (platform: FormulaPlatform) => void;
   onLanguageChange: (language: FormulaLanguage) => void;
   onTextChange: (text: string) => void;
   onSubmit: () => void;
+  onFileSelect: (f: File) => void;
+  onFileRemove: () => void;
 }) {
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
 
@@ -116,8 +127,24 @@ export function FormulaInputPanel({
         disabled={quotaBlocked}
         submitLabel={submitLabel}
         options={options}
+        leftAction={
+          <AttachmentButton
+            isPro={isPro}
+            disabled={pending || quotaBlocked}
+            onFileSelect={onFileSelect}
+          />
+        }
         bottomNav={<ToolNav />}
       />
+
+      {pendingFile ? (
+        <>
+          <AttachmentChip file={pendingFile} onRemove={onFileRemove} />
+          <PrivacyNotice />
+        </>
+      ) : null}
+
+      {fileError ? <div className="form-error mt-2">{fileError}</div> : null}
 
       {validationError ? <div className="form-error mt-2">{validationError}</div> : null}
 
