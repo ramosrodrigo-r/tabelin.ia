@@ -39,6 +39,7 @@ export const regexCompletePayloadSchema = z.discriminatedUnion("kind", [
 
 export const regexStreamEventSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("metadata"), metadata: regexMetadataSchema }),
+  z.object({ type: z.literal("attachment_grounded"), charCount: z.number().int().nonnegative(), wasTruncated: z.boolean(), extractedText: z.string() }),
   z.object({ type: z.literal("delta"), text: z.string() }),
   z.object({ type: z.literal("warning"), warning: z.string() }),
   z.object({ type: z.literal("quota_warning"), lastFreeUse: z.boolean() }),
@@ -53,3 +54,4 @@ export type RegexGenerateResponse = z.infer<typeof regexGenerateResponseSchema>;
 export type RegexExplainResponse = z.infer<typeof regexExplainResponseSchema>;
 export type RegexCompletePayload = z.infer<typeof regexCompletePayloadSchema>;
 export type RegexStreamEvent = z.infer<typeof regexStreamEventSchema>;
+export type RegexAttachmentGroundedEvent = Extract<RegexStreamEvent, { type: "attachment_grounded" }>;

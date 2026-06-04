@@ -38,6 +38,7 @@ export const scriptGenerateResponseSchema = z.object({
 
 export const scriptStreamEventSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("metadata"), metadata: scriptMetadataSchema }),
+  z.object({ type: z.literal("attachment_grounded"), charCount: z.number().int().nonnegative(), wasTruncated: z.boolean(), extractedText: z.string() }),
   z.object({ type: z.literal("delta"), text: z.string() }),
   z.object({ type: z.literal("warning"), warning: z.string() }),
   z.object({ type: z.literal("quota_warning"), lastFreeUse: z.boolean() }),
@@ -49,3 +50,4 @@ export type ScriptGenerateRequest = z.infer<typeof scriptGenerateRequestSchema>;
 export type ScriptMetadata = z.infer<typeof scriptMetadataSchema>;
 export type ScriptGenerateResponse = z.infer<typeof scriptGenerateResponseSchema>;
 export type ScriptStreamEvent = z.infer<typeof scriptStreamEventSchema>;
+export type ScriptAttachmentGroundedEvent = Extract<ScriptStreamEvent, { type: "attachment_grounded" }>;

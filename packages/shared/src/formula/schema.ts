@@ -64,6 +64,7 @@ export const formulaCompletePayloadSchema = z.discriminatedUnion("kind", [
 
 export const formulaStreamEventSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("metadata"), metadata: formulaMetadataSchema }),
+  z.object({ type: z.literal("attachment_grounded"), charCount: z.number().int().nonnegative(), wasTruncated: z.boolean(), extractedText: z.string() }),
   z.object({ type: z.literal("delta"), text: z.string() }),
   z.object({ type: z.literal("warning"), warning: z.string() }),
   z.object({ type: z.literal("quota_warning"), lastFreeUse: z.boolean() }),
@@ -78,4 +79,5 @@ export type FormulaGenerateResponse = z.infer<typeof formulaGenerateResponseSche
 export type FormulaExplainResponse = z.infer<typeof formulaExplainResponseSchema>;
 export type FormulaCompletePayload = z.infer<typeof formulaCompletePayloadSchema>;
 export type FormulaStreamEvent = z.infer<typeof formulaStreamEventSchema>;
+export type FormulaAttachmentGroundedEvent = Extract<FormulaStreamEvent, { type: "attachment_grounded" }>;
 

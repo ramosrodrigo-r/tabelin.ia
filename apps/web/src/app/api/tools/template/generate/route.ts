@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { templateGenerateRequestSchema } from "@tabelin/shared";
 
 import { createTemplateEventStream, resolveTemplatePayload } from "@/server/ai/template-stream";
+import { MAX_EXTRACTED_CHARS } from "@/server/ai/context-messages";
 import { getSessionFromCookieHeader } from "@/server/auth/session";
 import { getUserEntitlement } from "@/server/billing/entitlements";
 import { extractContent } from "@/server/extraction/dispatcher";
@@ -87,7 +88,15 @@ export async function POST(request: Request) {
       assistantPayload: payload,
       attachmentContext
     });
-    return new Response(createTemplateEventStream(payload, quotaCheck.lastFreeUse), {
+    const attachmentMeta = attachmentContext
+      ? {
+          charCount: attachmentContext.length,
+          wasTruncated: attachmentContext.length > MAX_EXTRACTED_CHARS,
+          extractedText: attachmentContext.slice(0, MAX_EXTRACTED_CHARS),
+        }
+      : undefined;
+
+    return new Response(createTemplateEventStream(payload, quotaCheck.lastFreeUse, attachmentMeta), {
       headers: { "content-type": "application/x-ndjson; charset=utf-8", "cache-control": "no-store" }
     });
   } catch (err) {

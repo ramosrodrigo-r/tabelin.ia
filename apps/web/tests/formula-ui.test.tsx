@@ -80,7 +80,7 @@ describe("FormulaTool", () => {
 
     render(<FormulaTool entitlement={freeEntitlement} />);
 
-    expect(screen.getByRole("button", { name: "Copiar resultado" })).toBeDisabled();
+    expect(screen.queryByRole("button", { name: "Copiar resultado" })).not.toBeInTheDocument();
     await user.type(screen.getByLabelText("Pedido"), "Quero somar a coluna B se a coluna C for Pago");
     await user.click(screen.getByRole("button", { name: "Gerar formula" }));
 

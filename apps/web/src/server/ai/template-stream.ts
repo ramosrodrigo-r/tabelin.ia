@@ -60,9 +60,14 @@ function splitTemplateForStreaming(payload: TemplateGenerateResponse): string[] 
   return [payload.output, "\n", payload.explanation];
 }
 
-export function createTemplateEventStream(payload: TemplateGenerateResponse, lastFreeUse?: boolean) {
+export function createTemplateEventStream(
+  payload: TemplateGenerateResponse,
+  lastFreeUse?: boolean,
+  attachmentMeta?: { charCount: number; wasTruncated: boolean; extractedText: string }
+) {
   const encoder = new TextEncoder();
   const events: TemplateStreamEvent[] = [
+    ...(attachmentMeta ? [{ type: "attachment_grounded" as const, ...attachmentMeta }] : []),
     { type: "metadata", metadata: payload.metadata },
     ...payload.warnings.map((warning): TemplateStreamEvent => ({ type: "warning", warning })),
     ...(lastFreeUse ? [{ type: "quota_warning" as const, lastFreeUse: true }] : []),
