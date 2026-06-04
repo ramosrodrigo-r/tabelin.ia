@@ -71,8 +71,12 @@ Full details: `.planning/milestones/v1.1-ROADMAP.md`
   3. Um follow-up ("agora filtre pela coluna X") reutiliza automaticamente o conteúdo extraído da troca anterior, sem o usuário reanexar o documento
   4. Um usuário free que tenta enviar um arquivo recebe HTTP 403 do backend antes de qualquer extração ocorrer
   5. Uma geração com anexo debita 1 uso da cota normal via reserve/confirm/release
-**Plans**: TBD
-**UI hint**: yes
+**Plans**: 4 plans
+Plans:
+- [ ] 10-01-PLAN.md — Fundação: schema Prisma + migration [BLOCKING] + conversation-repository + context-messages (CTX-01..05)
+- [ ] 10-02-PLAN.md — formula route + formula-stream: gap Phase 8 + attachment (CTX-01..03, PRO-02, PRO-03)
+- [ ] 10-03-PLAN.md — sql/regex/scripts/template routes + stream modules: multipart + Pro-gate + attachment (CTX-01..03, PRO-02, PRO-03)
+- [ ] 10-04-PLAN.md — Testes de integração: cobertura CTX-01..04, PRO-02, PRO-03 (attachment-context.test.ts)
 
 ### Phase 11: Attachment UI & Pro Gating
 **Goal**: Usuários Pro podem anexar documentos nos 5 tools via botão e drag-and-drop, acompanham o processamento em dois estágios, veem transparência do conteúdo extraído e avisos de privacidade; usuários free veem CTA de upgrade
@@ -100,5 +104,5 @@ Full details: `.planning/milestones/v1.1-ROADMAP.md`
 | 7. Frontend History | v1.1 | 4/4 | Complete | 2026-05-30 |
 | 8. Multi-turn LLM Context | v1.1 | 4/4 | Complete | 2026-06-01 |
 | 9. Extraction Infrastructure | v1.2 | 5/5 | Complete   | 2026-06-03 |
-| 10. Persistence & LLM Context | v1.2 | 0/? | Not started | - |
+| 10. Persistence & LLM Context | v1.2 | 0/4 | Not started | - |
 | 11. Attachment UI & Pro Gating | v1.2 | 0/? | Not started | - |
