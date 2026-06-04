@@ -42,6 +42,7 @@ export const sqlGenerateResponseSchema = z.object({
 
 export const sqlStreamEventSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("metadata"), metadata: sqlMetadataSchema }),
+  z.object({ type: z.literal("attachment_grounded"), charCount: z.number().int().nonnegative(), wasTruncated: z.boolean(), extractedText: z.string() }),
   z.object({ type: z.literal("delta"), text: z.string() }),
   z.object({ type: z.literal("warning"), warning: z.string() }),
   z.object({ type: z.literal("quota_warning"), lastFreeUse: z.boolean() }),
@@ -53,3 +54,4 @@ export type SqlGenerateRequest = z.infer<typeof sqlGenerateRequestSchema>;
 export type SqlMetadata = z.infer<typeof sqlMetadataSchema>;
 export type SqlGenerateResponse = z.infer<typeof sqlGenerateResponseSchema>;
 export type SqlStreamEvent = z.infer<typeof sqlStreamEventSchema>;
+export type SqlAttachmentGroundedEvent = Extract<SqlStreamEvent, { type: "attachment_grounded" }>;
