@@ -86,7 +86,7 @@ Full details: `.planning/milestones/v1.1-ROADMAP.md`
 **Wave 2** *(blocked on Wave 1 completion)*
 
 - [x] 10-02-PLAN.md — formula route + formula-stream: gap Phase 8 + attachment (CTX-01..03, PRO-02, PRO-03)
-- [ ] 10-03-PLAN.md — sql/regex/scripts/template routes + stream modules: multipart + Pro-gate + attachment (CTX-01..03, PRO-02, PRO-03)
+- [x] 10-03-PLAN.md — sql/regex/scripts/template routes + stream modules: multipart + Pro-gate + attachment (CTX-01..03, PRO-02, PRO-03)
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
@@ -121,5 +121,5 @@ Full details: `.planning/milestones/v1.1-ROADMAP.md`
 | 7. Frontend History | v1.1 | 4/4 | Complete | 2026-05-30 |
 | 8. Multi-turn LLM Context | v1.1 | 4/4 | Complete | 2026-06-01 |
 | 9. Extraction Infrastructure | v1.2 | 5/5 | Complete   | 2026-06-03 |
-| 10. Persistence & LLM Context | v1.2 | 2/4 | In Progress|  |
+| 10. Persistence & LLM Context | v1.2 | 3/4 | In Progress|  |
 | 11. Attachment UI & Pro Gating | v1.2 | 0/? | Not started | - |
