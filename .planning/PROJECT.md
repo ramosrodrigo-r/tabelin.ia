@@ -59,6 +59,9 @@ O chat-thread visual do v1.0 virou uma experiência multi-turn real: cada troca 
 - ✓ Backend injeta trocas anteriores como contexto no LLM; follow-ups funcionam sem repetir contexto — Phase 8 (MULTI-01)
 - ✓ Truncagem automática de contexto (híbrida: últimas N=10 + limite de tokens) — Phase 8 (MULTI-02)
 - ✓ Contexto de conversa isolado por tool — cada tool injeta apenas seu próprio thread — Phase 8 (MULTI-03)
+- ✓ Pipeline de extração multi-formato (CSV/XLSX, PNG/JPEG OCR, PDF via unpdf, TXT) com dispatcher único e validação de bytes (magic bytes + anti-ZIP-bomb) — Phase 9 (EXT-01..06, SEC-02)
+- ✓ Conteúdo extraído injetado no system prompt (grounding delimitado), persistido em `ConversationExchange.attachmentContext` (arquivo bruto nunca salvo — D-07), reutilizado em follow-ups, com truncagem `MAX_EXTRACTED_CHARS=8000` — Phase 10 (CTX-01..05)
+- ✓ Pro-gate backend (403 antes de qualquer extração) e débito de cota reserve/confirm/release (release em falha de extração) para gerações com anexo — Phase 10 (PRO-02, PRO-03)
 
 ### Active
 
@@ -143,4 +146,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-06-03 — started milestone v1.2 Anexos Universais (anexo universal de documentos em todos os tools de texto, extração multi-formato, gated Pro)*
+*Last updated: 2026-06-04 — Phase 10 (Persistence & LLM Context) complete: extração injetada no prompt, persistida em attachmentContext, reusada em follow-ups, com Pro-gate + cota no backend. Restante do milestone v1.2: Phase 11 (Attachment UI & Pro Gating).*

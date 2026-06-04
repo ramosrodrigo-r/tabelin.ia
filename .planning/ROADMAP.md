@@ -121,5 +121,5 @@ Full details: `.planning/milestones/v1.1-ROADMAP.md`
 | 7. Frontend History | v1.1 | 4/4 | Complete | 2026-05-30 |
 | 8. Multi-turn LLM Context | v1.1 | 4/4 | Complete | 2026-06-01 |
 | 9. Extraction Infrastructure | v1.2 | 5/5 | Complete   | 2026-06-03 |
-| 10. Persistence & LLM Context | v1.2 | 4/4 | Complete   | 2026-06-04 |
+| 10. Persistence & LLM Context | v1.2 | 4/4 | Complete    | 2026-06-04 |
 | 11. Attachment UI & Pro Gating | v1.2 | 0/? | Not started | - |

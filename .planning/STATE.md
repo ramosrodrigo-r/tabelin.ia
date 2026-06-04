@@ -2,8 +2,8 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Anexos Universais
-status: verifying
-last_updated: "2026-06-04T15:00:30.734Z"
+status: ready_to_plan
+last_updated: 2026-06-04T15:11:15.927Z
 last_activity: 2026-06-04
 progress:
   total_phases: 3
@@ -11,6 +11,7 @@ progress:
   total_plans: 9
   completed_plans: 9
   percent: 67
+stopped_at: Phase 10 complete (4/4) — ready to discuss Phase 11
 ---
 
 # Project State
@@ -20,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-06-03)
 
 **Core value:** Brazilian spreadsheet users can describe the outcome they need in Portuguese and quickly receive correct, copy-ready formulas, code, queries, or structured table outputs that fit their actual tools.
-**Current focus:** Phase 10 — persistence-llm-context
+**Current focus:** Phase 11 — attachment ui & pro gating
 
 ## Current Position
 
-Phase: 10 (persistence-llm-context) — EXECUTING
-Plan: 4 of 4
-Status: Phase complete — ready for verification
+Phase: 11
+Plan: Not started
+Status: Ready to plan
 Last activity: 2026-06-04
 
 Progress: [██████████] 100%
@@ -35,7 +36,7 @@ Progress: [██████████] 100%
 
 **Velocity:**
 
-- Total plans completed: 37 (v1.0) + 10 (v1.1) = 47
+- Total plans completed: 41 (v1.0) + 10 (v1.1) = 47
 - Average duration: ~10 min/plan
 - Total execution time: ~7.8 hours (histórico acumulado)
 
