@@ -39,7 +39,7 @@ Full details: `.planning/milestones/v1.1-ROADMAP.md`
 **Milestone Goal:** Permitir que usuários Pro anexem documentos (CSV/XLSX, PNG/JPEG, PDF, TXT) em qualquer um dos 5 tools de texto, com extração automática, injeção no contexto LLM e persistência do conteúdo extraído no thread.
 
 - [x] **Phase 9: Extraction Infrastructure** — Pipeline de extração multi-formato (backend isolado, `unpdf` front-loaded) (completed 2026-06-03)
-- [ ] **Phase 10: Persistence & LLM Context** — Persistência do conteúdo extraído, injeção no system prompt e Pro-gate nos route handlers
+- [x] **Phase 10: Persistence & LLM Context** — Persistência do conteúdo extraído, injeção no system prompt e Pro-gate nos route handlers (completed 2026-06-04)
 - [ ] **Phase 11: Attachment UI & Pro Gating** — Interface de anexo nos 5 tools, Pro CTA para free, painel de transparência e UAT
 
 ## Phase Details
@@ -90,7 +90,7 @@ Full details: `.planning/milestones/v1.1-ROADMAP.md`
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 10-04-PLAN.md — Testes de integração: cobertura CTX-01..04, PRO-02, PRO-03 (attachment-context.test.ts)
+- [x] 10-04-PLAN.md — Testes de integração: cobertura CTX-01..04, PRO-02, PRO-03 (attachment-context.test.ts)
 
 ### Phase 11: Attachment UI & Pro Gating
 
@@ -121,5 +121,5 @@ Full details: `.planning/milestones/v1.1-ROADMAP.md`
 | 7. Frontend History | v1.1 | 4/4 | Complete | 2026-05-30 |
 | 8. Multi-turn LLM Context | v1.1 | 4/4 | Complete | 2026-06-01 |
 | 9. Extraction Infrastructure | v1.2 | 5/5 | Complete   | 2026-06-03 |
-| 10. Persistence & LLM Context | v1.2 | 3/4 | In Progress|  |
+| 10. Persistence & LLM Context | v1.2 | 4/4 | Complete   | 2026-06-04 |
 | 11. Attachment UI & Pro Gating | v1.2 | 0/? | Not started | - |
