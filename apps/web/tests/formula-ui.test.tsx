@@ -1,7 +1,10 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import * as fs from "node:fs";
+import * as path from "node:path";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { validateFile } from "@/components/app/attachment-button";
 import { FormulaTool } from "@/features/formula/formula-tool";
 import type { UserEntitlement } from "@tabelin/shared";
 
@@ -105,5 +108,81 @@ describe("FormulaTool", () => {
 
     // Pro badge presence would be tested at workspace/topbar level, not in FormulaTool
     // FormulaTool receives isPro state for quota bypass only
+  });
+
+  describe("attachment UI", () => {
+    it("free user sees disabled attachment button", () => {
+      render(<FormulaTool entitlement={freeEntitlement} />);
+
+      const btn = screen.getByRole("button", { name: "Anexar arquivo (exclusivo Pro)" });
+      expect(btn).toBeDisabled();
+    });
+
+    it("pro user sees enabled attachment button", () => {
+      render(<FormulaTool entitlement={proEntitlement} />);
+
+      const btn = screen.getByRole("button", { name: "Anexar arquivo" });
+      expect(btn).not.toBeDisabled();
+    });
+
+    it("pro user sees attachment chip after file select", async () => {
+      const user = userEvent.setup();
+      render(<FormulaTool entitlement={proEntitlement} />);
+
+      const file = new File(["col1,col2\n1,2"], "dados.csv", { type: "text/csv" });
+      const input = document.querySelector('input[type="file"]') as HTMLInputElement;
+      await user.upload(input, file);
+
+      expect(screen.getByRole("status", { name: /Arquivo anexado/ })).toBeInTheDocument();
+      expect(screen.getByText("dados.csv")).toBeInTheDocument();
+    });
+
+    it("file type validation rejects unsupported type", async () => {
+      render(<FormulaTool entitlement={proEntitlement} />);
+
+      const file = new File(["binary"], "malware.exe", { type: "application/exe" });
+      const input = document.querySelector('input[type="file"]') as HTMLInputElement;
+      // Use fireEvent.change to bypass userEvent's accept-filter (applyAccept defaults to true in v14)
+      // This simulates the browser delivering the file despite the accept attribute (e.g. drag-and-drop or manual path entry)
+      Object.defineProperty(input, "files", { value: [file], configurable: true });
+      fireEvent.change(input);
+
+      expect(screen.getByText(/Tipo não suportado/)).toBeInTheDocument();
+      expect(screen.queryByRole("status", { name: /Arquivo anexado/ })).not.toBeInTheDocument();
+    });
+
+    it("file size validation rejects files over 5MB", () => {
+      const bigFile = new File(["x"], "grande.csv", { type: "text/csv" });
+      Object.defineProperty(bigFile, "size", { value: 6 * 1024 * 1024 });
+
+      const err = validateFile(bigFile);
+      expect(err).toContain("Arquivo muito grande");
+    });
+
+    it("pro user can remove attachment chip", async () => {
+      const user = userEvent.setup();
+      render(<FormulaTool entitlement={proEntitlement} />);
+
+      const file = new File(["col1,col2\n1,2"], "dados.csv", { type: "text/csv" });
+      const input = document.querySelector('input[type="file"]') as HTMLInputElement;
+      await user.upload(input, file);
+
+      expect(screen.getByRole("status", { name: /Arquivo anexado/ })).toBeInTheDocument();
+
+      await user.click(screen.getByRole("button", { name: "Remover arquivo" }));
+
+      expect(screen.queryByRole("status", { name: /Arquivo anexado/ })).not.toBeInTheDocument();
+    });
+
+    it("privacy notice appears with pending file", async () => {
+      const user = userEvent.setup();
+      render(<FormulaTool entitlement={proEntitlement} />);
+
+      const file = new File(["col1,col2\n1,2"], "dados.csv", { type: "text/csv" });
+      const input = document.querySelector('input[type="file"]') as HTMLInputElement;
+      await user.upload(input, file);
+
+      expect(screen.getByText(/Nova conversa/)).toBeInTheDocument();
+    });
   });
 });
