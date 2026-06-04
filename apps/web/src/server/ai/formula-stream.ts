@@ -115,9 +115,14 @@ function splitForStreaming(payload: FormulaCompletePayload) {
   return [payload.formula, "\n", ...payload.steps.map((step, index) => `${index + 1}. ${step}\n`)];
 }
 
-export function createFormulaEventStream(payload: FormulaCompletePayload, lastFreeUse?: boolean) {
+export function createFormulaEventStream(
+  payload: FormulaCompletePayload,
+  lastFreeUse?: boolean,
+  attachmentMeta?: { charCount: number; wasTruncated: boolean; extractedText: string }
+) {
   const encoder = new TextEncoder();
   const events: FormulaStreamEvent[] = [
+    ...(attachmentMeta ? [{ type: "attachment_grounded" as const, ...attachmentMeta }] : []),
     { type: "metadata", metadata: payload.metadata },
     ...payload.warnings.map((warning): FormulaStreamEvent => ({ type: "warning", warning })),
     ...(lastFreeUse ? [{ type: "quota_warning" as const, lastFreeUse: true }] : []),

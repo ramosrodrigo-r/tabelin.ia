@@ -96,9 +96,14 @@ function splitRegexForStreaming(payload: RegexCompletePayload): string[] {
   return [payload.pattern, "\n", ...payload.steps.map((step, i) => `${i + 1}. ${step}\n`)];
 }
 
-export function createRegexEventStream(payload: RegexCompletePayload, lastFreeUse?: boolean) {
+export function createRegexEventStream(
+  payload: RegexCompletePayload,
+  lastFreeUse?: boolean,
+  attachmentMeta?: { charCount: number; wasTruncated: boolean; extractedText: string }
+) {
   const encoder = new TextEncoder();
   const events: RegexStreamEvent[] = [
+    ...(attachmentMeta ? [{ type: "attachment_grounded" as const, ...attachmentMeta }] : []),
     { type: "metadata", metadata: payload.metadata },
     ...payload.warnings.map((warning): RegexStreamEvent => ({ type: "warning", warning })),
     ...(lastFreeUse ? [{ type: "quota_warning" as const, lastFreeUse: true }] : []),
