@@ -17,6 +17,7 @@ export type SubmitFormulaInput = {
   platform: FormulaPlatform;
   formulaLanguage: FormulaLanguage;
   text: string;
+  file?: File;
 };
 
 export function useFormulaStream() {
@@ -28,6 +29,12 @@ export function useFormulaStream() {
   const [error, setError] = useState("");
   const [quotaBlocked, setQuotaBlocked] = useState(false);
   const [lastFreeUse, setLastFreeUse] = useState(false);
+  const [attachmentStatus, setAttachmentStatus] = useState<"uploading" | "extracting" | null>(null);
+  const [attachmentMeta, setAttachmentMeta] = useState<{
+    charCount: number;
+    wasTruncated: boolean;
+    extractedText: string;
+  } | null>(null);
 
   const submit = useCallback(async (input: SubmitFormulaInput) => {
     setStatus("loading");
@@ -38,27 +45,46 @@ export function useFormulaStream() {
     setError("");
     setQuotaBlocked(false);
     setLastFreeUse(false);
+    setAttachmentStatus(null);
+    setAttachmentMeta(null);
 
     const endpoint = input.mode === "generate" ? "/api/tools/formula/generate" : "/api/tools/formula/explain";
-    const response = await fetch(endpoint, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify(
+
+    let body: BodyInit;
+    let headers: HeadersInit = {};
+
+    if (input.file) {
+      setAttachmentStatus("uploading");
+      const fd = new FormData();
+      fd.append("prompt", input.text);
+      fd.append("platform", input.platform);
+      fd.append("formulaLanguage", input.formulaLanguage);
+      fd.append("mode", input.mode);
+      fd.append("file", input.file);
+      body = fd;
+      // NÃO setar Content-Type — browser define boundary automaticamente
+    } else {
+      body = JSON.stringify(
         input.mode === "generate"
-          ? {
-              platform: input.platform,
-              formulaLanguage: input.formulaLanguage,
-              prompt: input.text
-            }
-          : {
-              platform: input.platform,
-              formulaLanguage: input.formulaLanguage,
-              formula: input.text
-            }
-      )
-    });
+          ? { platform: input.platform, formulaLanguage: input.formulaLanguage, prompt: input.text }
+          : { platform: input.platform, formulaLanguage: input.formulaLanguage, formula: input.text }
+      );
+      headers = { "content-type": "application/json" };
+    }
+
+    const response = await fetch(endpoint, { method: "POST", headers, body });
 
     if (!response.ok) {
+      if (response.status === 403) {
+        const errorData = await response.json().catch(() => ({}));
+        if (errorData.code === "pro_required" && errorData.feature === "attachment") {
+          setStatus("error");
+          setAttachmentStatus(null);
+          setError("Recurso exclusivo Pro. Assine o plano Pro para enviar documentos.");
+          return;
+        }
+      }
+
       if (response.status === 429) {
         const errorData = await response.json().catch(() => ({}));
         if (errorData.code === "quota_exceeded") {
@@ -78,6 +104,10 @@ export function useFormulaStream() {
       setStatus("error");
       setError("Nao consegui validar a resposta. Ajuste o pedido e tente novamente.");
       return;
+    }
+
+    if (input.file) {
+      setAttachmentStatus("extracting");
     }
 
     setStatus("streaming");
@@ -104,6 +134,15 @@ export function useFormulaStream() {
 
         const event = formulaStreamEventSchema.parse(JSON.parse(line));
 
+        if (event.type === "attachment_grounded") {
+          setAttachmentMeta({
+            charCount: event.charCount,
+            wasTruncated: event.wasTruncated,
+            extractedText: event.extractedText,
+          });
+          setAttachmentStatus(null);
+        }
+
         if (event.type === "metadata") {
           setMetadata(event.metadata);
         }
@@ -117,6 +156,7 @@ export function useFormulaStream() {
         }
 
         if (event.type === "delta") {
+          setAttachmentStatus(null); // garante reset mesmo se attachment_grounded não vier
           setDraft((current) => `${current}${event.text}`);
         }
 
@@ -144,6 +184,8 @@ export function useFormulaStream() {
     error,
     quotaBlocked,
     lastFreeUse,
+    attachmentStatus,
+    attachmentMeta,
     submit
   };
 }
