@@ -40,7 +40,7 @@ Full details: `.planning/milestones/v1.1-ROADMAP.md`
 
 - [x] **Phase 9: Extraction Infrastructure** — Pipeline de extração multi-formato (backend isolado, `unpdf` front-loaded) (completed 2026-06-03)
 - [x] **Phase 10: Persistence & LLM Context** — Persistência do conteúdo extraído, injeção no system prompt e Pro-gate nos route handlers (completed 2026-06-04)
-- [ ] **Phase 11: Attachment UI & Pro Gating** — Interface de anexo nos 5 tools, Pro CTA para free, painel de transparência e UAT
+- [x] **Phase 11: Attachment UI & Pro Gating** — Interface de anexo nos 5 tools, Pro CTA para free, painel de transparência e UAT (completed 2026-06-04)
 
 ## Phase Details
 
@@ -119,7 +119,7 @@ Full details: `.planning/milestones/v1.1-ROADMAP.md`
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 11-05-PLAN.md — Testes de UI: cobertura de chip, pro-gate, validação, grounding, truncagem, SEC-01 estrutural (ATT-01..08, PRO-01, SEC-01, SEC-03)
+- [x] 11-05-PLAN.md — Testes de UI: cobertura de chip, pro-gate, validação, grounding, truncagem, SEC-01 estrutural (ATT-01..08, PRO-01, SEC-01, SEC-03)
 
 ## Progress
 
@@ -135,4 +135,4 @@ Full details: `.planning/milestones/v1.1-ROADMAP.md`
 | 8. Multi-turn LLM Context | v1.1 | 4/4 | Complete | 2026-06-01 |
 | 9. Extraction Infrastructure | v1.2 | 5/5 | Complete   | 2026-06-03 |
 | 10. Persistence & LLM Context | v1.2 | 4/4 | Complete    | 2026-06-04 |
-| 11. Attachment UI & Pro Gating | v1.2 | 4/5 | In Progress|  |
+| 11. Attachment UI & Pro Gating | v1.2 | 5/5 | Complete   | 2026-06-04 |
