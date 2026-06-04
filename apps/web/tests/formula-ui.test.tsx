@@ -185,4 +185,172 @@ describe("FormulaTool", () => {
       expect(screen.getByText(/Nova conversa/)).toBeInTheDocument();
     });
   });
+
+  describe("grounding and transparency", () => {
+    it("shows grounding badge after submit with attachment", async () => {
+      const user = userEvent.setup();
+      vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        streamResponse([
+          { type: "attachment_grounded", charCount: 1234, wasTruncated: false, extractedText: "col1,col2\n1,2" },
+          {
+            type: "metadata",
+            metadata: { mode: "generate", platform: "excel", formulaLanguage: "pt-BR", separator: ";", providerModel: "test" }
+          },
+          { type: "delta", text: "=SOMA(A:A)" },
+          {
+            type: "complete",
+            payload: {
+              kind: "formula",
+              formula: "=SOMA(A:A)",
+              explanation: "Soma a coluna A.",
+              assumptions: [],
+              warnings: [],
+              metadata: { mode: "generate", platform: "excel", formulaLanguage: "pt-BR", separator: ";", providerModel: "test" }
+            }
+          }
+        ])
+      );
+
+      render(<FormulaTool entitlement={proEntitlement} />);
+
+      const file = new File(["col1,col2\n1,2"], "dados.csv", { type: "text/csv" });
+      const input = document.querySelector('input[type="file"]') as HTMLInputElement;
+      await user.upload(input, file);
+
+      await user.type(screen.getByLabelText("Pedido"), "Some a coluna A");
+      await user.click(screen.getByRole("button", { name: "Gerar formula" }));
+
+      await waitFor(() =>
+        expect(screen.getByRole("generic", { name: "Gerado com base em documento anexado" })).toBeInTheDocument()
+      );
+    });
+
+    it("shows attachment panel with extracted text", async () => {
+      const user = userEvent.setup();
+      vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        streamResponse([
+          { type: "attachment_grounded", charCount: 14, wasTruncated: false, extractedText: "col1,col2\n1,2" },
+          {
+            type: "metadata",
+            metadata: { mode: "generate", platform: "excel", formulaLanguage: "pt-BR", separator: ";", providerModel: "test" }
+          },
+          { type: "delta", text: "=SOMA(A:A)" },
+          {
+            type: "complete",
+            payload: {
+              kind: "formula",
+              formula: "=SOMA(A:A)",
+              explanation: "Soma a coluna A.",
+              assumptions: [],
+              warnings: [],
+              metadata: { mode: "generate", platform: "excel", formulaLanguage: "pt-BR", separator: ";", providerModel: "test" }
+            }
+          }
+        ])
+      );
+
+      render(<FormulaTool entitlement={proEntitlement} />);
+
+      const file = new File(["col1,col2\n1,2"], "dados.csv", { type: "text/csv" });
+      const input = document.querySelector('input[type="file"]') as HTMLInputElement;
+      await user.upload(input, file);
+
+      await user.type(screen.getByLabelText("Pedido"), "Some a coluna A");
+      await user.click(screen.getByRole("button", { name: "Gerar formula" }));
+
+      await waitFor(() =>
+        expect(screen.getByText("Texto extraído do documento")).toBeInTheDocument()
+      );
+
+      // Open the details to see extracted text
+      await user.click(screen.getByText("Texto extraído do documento"));
+
+      await waitFor(() => {
+        const pre = document.querySelector(".attachment-panel-content");
+        expect(pre).toBeInTheDocument();
+        expect(pre?.textContent).toContain("col1,col2");
+      });
+    });
+
+    it("shows truncation warning when wasTruncated=true", async () => {
+      const user = userEvent.setup();
+      vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        streamResponse([
+          { type: "attachment_grounded", charCount: 9000, wasTruncated: true, extractedText: "...texto longo..." },
+          {
+            type: "metadata",
+            metadata: { mode: "generate", platform: "excel", formulaLanguage: "pt-BR", separator: ";", providerModel: "test" }
+          },
+          { type: "delta", text: "=SOMA(A:A)" },
+          {
+            type: "complete",
+            payload: {
+              kind: "formula",
+              formula: "=SOMA(A:A)",
+              explanation: "Soma a coluna A.",
+              assumptions: [],
+              warnings: [],
+              metadata: { mode: "generate", platform: "excel", formulaLanguage: "pt-BR", separator: ";", providerModel: "test" }
+            }
+          }
+        ])
+      );
+
+      render(<FormulaTool entitlement={proEntitlement} />);
+
+      const file = new File(["...texto longo..."], "grande.csv", { type: "text/csv" });
+      const input = document.querySelector('input[type="file"]') as HTMLInputElement;
+      await user.upload(input, file);
+
+      await user.type(screen.getByLabelText("Pedido"), "Analise o arquivo");
+      await user.click(screen.getByRole("button", { name: "Gerar formula" }));
+
+      await waitFor(() =>
+        expect(screen.getByText("extração parcial")).toBeInTheDocument()
+      );
+    });
+
+    it("does not show grounding badge without attachment", async () => {
+      const user = userEvent.setup();
+      vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        streamResponse([
+          {
+            type: "metadata",
+            metadata: { mode: "generate", platform: "excel", formulaLanguage: "pt-BR", separator: ";", providerModel: "test" }
+          },
+          { type: "delta", text: "=SOMA(A:A)" },
+          {
+            type: "complete",
+            payload: {
+              kind: "formula",
+              formula: "=SOMA(A:A)",
+              explanation: "Soma a coluna A.",
+              assumptions: [],
+              warnings: [],
+              metadata: { mode: "generate", platform: "excel", formulaLanguage: "pt-BR", separator: ";", providerModel: "test" }
+            }
+          }
+        ])
+      );
+
+      render(<FormulaTool entitlement={freeEntitlement} />);
+
+      await user.type(screen.getByLabelText("Pedido"), "Some a coluna A");
+      await user.click(screen.getByRole("button", { name: "Gerar formula" }));
+
+      await waitFor(() =>
+        expect(screen.getByText("=SOMA(A:A)")).toBeInTheDocument()
+      );
+
+      expect(screen.queryByText("Gerado com base em documento")).toBeNull();
+    });
+
+    it("attachment-panel never uses dangerouslySetInnerHTML (SEC-01)", () => {
+      const panelFile = fs.readFileSync(
+        path.join(__dirname, "../src/components/app/attachment-panel.tsx"),
+        "utf-8"
+      );
+      expect(panelFile).not.toContain("dangerouslySetInnerHTML");
+    });
+  });
 });
