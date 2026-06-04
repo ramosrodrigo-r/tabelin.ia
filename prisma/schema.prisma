@@ -197,9 +197,10 @@ model ConversationExchange {
   mode             String
   platform         String?
   dialect          String?
-  userPrompt       String   @db.Text
-  assistantPayload Json     @db.Json
-  createdAt        DateTime @default(now())
+  userPrompt        String   @db.Text
+  assistantPayload  Json     @db.Json
+  attachmentContext String?  @db.Text
+  createdAt         DateTime @default(now())
   user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, toolKind, createdAt])

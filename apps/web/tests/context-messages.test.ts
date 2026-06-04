@@ -9,6 +9,7 @@ function makeExchange(overrides: {
   mode?: string;
   toolKind?: string;
   createdAt?: Date;
+  attachmentContext?: string | null;
 }) {
   return {
     id: "cuid-test",
@@ -19,6 +20,7 @@ function makeExchange(overrides: {
     dialect: null,
     userPrompt: overrides.userPrompt ?? "Prompt do usuário",
     assistantPayload: overrides.assistantPayload ?? { kind: "sql", query: "SELECT 1", explanation: "Seleciona 1" },
+    attachmentContext: overrides.attachmentContext ?? null,
     createdAt: overrides.createdAt ?? new Date("2026-01-01T00:00:00Z"),
     user: { id: "user-1", name: "Ana", email: "ana@empresa.com" }
   };
