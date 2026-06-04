@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { formulaGenerateRequestSchema } from "@tabelin/shared";
 
 import { createFormulaEventStream, resolveFormulaPayload } from "@/server/ai/formula-stream";
+import { MAX_EXTRACTED_CHARS } from "@/server/ai/context-messages";
 import { getSessionFromCookieHeader } from "@/server/auth/session";
 import { getUserEntitlement } from "@/server/billing/entitlements";
 import { extractContent } from "@/server/extraction/dispatcher";
@@ -111,7 +112,15 @@ export async function POST(request: Request) {
       attachmentContext
     });
 
-    return new Response(createFormulaEventStream(payload, quotaCheck.lastFreeUse), {
+    const attachmentMeta = attachmentContext
+      ? {
+          charCount: attachmentContext.length,
+          wasTruncated: attachmentContext.length > MAX_EXTRACTED_CHARS,
+          extractedText: attachmentContext.slice(0, MAX_EXTRACTED_CHARS),
+        }
+      : undefined;
+
+    return new Response(createFormulaEventStream(payload, quotaCheck.lastFreeUse, attachmentMeta), {
       headers: {
         "content-type": "application/x-ndjson; charset=utf-8",
         "cache-control": "no-store"
