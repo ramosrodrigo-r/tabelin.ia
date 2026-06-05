@@ -10,14 +10,14 @@
 
 ### Anexo & UX (ATT)
 
-- [ ] **ATT-01**: Usuário Pro pode anexar 1 documento por mensagem em qualquer um dos 5 tools de texto (Formula, SQL, Regex, Scripts, Template) via botão paperclip à esquerda do textarea
-- [ ] **ATT-02**: Usuário pode anexar arrastando o arquivo para a área do chat (drag-and-drop)
-- [ ] **ATT-03**: Após selecionar, usuário vê um chip de preview com ícone do tipo, nome e tamanho do arquivo, e pode removê-lo antes de enviar (botão ×)
-- [ ] **ATT-04**: Validação client-side rejeita tipo não suportado e arquivo acima de 5 MB antes do envio, com mensagem clara
-- [ ] **ATT-05**: Usuário vê feedback em dois estágios — upload do arquivo e depois extração/processamento — antes da resposta começar
-- [ ] **ATT-06**: A resposta exibe um badge de grounding indicando que foi gerada com base no documento anexado
-- [ ] **ATT-07**: Usuário pode expandir/colapsar um painel mostrando o texto que a IA extraiu do documento (transparência)
-- [ ] **ATT-08**: Quando o conteúdo extraído for truncado (cap de caracteres) ou parcialmente lido, usuário vê um aviso de extração parcial
+- [x] **ATT-01**: Usuário Pro pode anexar 1 documento por mensagem em qualquer um dos 5 tools de texto (Formula, SQL, Regex, Scripts, Template) via botão paperclip à esquerda do textarea
+- [x] **ATT-02**: Usuário pode anexar arrastando o arquivo para a área do chat (drag-and-drop)
+- [x] **ATT-03**: Após selecionar, usuário vê um chip de preview com ícone do tipo, nome e tamanho do arquivo, e pode removê-lo antes de enviar (botão ×)
+- [x] **ATT-04**: Validação client-side rejeita tipo não suportado e arquivo acima de 5 MB antes do envio, com mensagem clara
+- [x] **ATT-05**: Usuário vê feedback em dois estágios — upload do arquivo e depois extração/processamento — antes da resposta começar
+- [x] **ATT-06**: A resposta exibe um badge de grounding indicando que foi gerada com base no documento anexado
+- [x] **ATT-07**: Usuário pode expandir/colapsar um painel mostrando o texto que a IA extraiu do documento (transparência)
+- [x] **ATT-08**: Quando o conteúdo extraído for truncado (cap de caracteres) ou parcialmente lido, usuário vê um aviso de extração parcial
 
 ### Extração multi-formato (EXT)
 
@@ -38,15 +38,15 @@
 
 ### Gating Pro & Cota (PRO)
 
-- [ ] **PRO-01**: O recurso de anexo é exclusivo Pro — usuário free vê o botão com CTA de upgrade, sem conseguir anexar
+- [x] **PRO-01**: O recurso de anexo é exclusivo Pro — usuário free vê o botão com CTA de upgrade, sem conseguir anexar
 - [x] **PRO-02**: A verificação de plano Pro ocorre no backend antes de qualquer I/O de extração (anti-bypass), retornando 403 para free
 - [x] **PRO-03**: Uma geração com anexo consome 1 uso da cota normal, integrada ao padrão reserve/confirm/release existente
 
 ### Segurança & Privacidade (SEC)
 
-- [ ] **SEC-01**: Conteúdo extraído injetado no prompt é cercado por delimitadores anti-injection, com instrução para tratar o documento como dados, não comandos
+- [x] **SEC-01**: Conteúdo extraído injetado no prompt é cercado por delimitadores anti-injection, com instrução para tratar o documento como dados, não comandos
 - [x] **SEC-02**: Upload valida magic bytes (não apenas extensão/MIME declarado) e protege contra XLSX malicioso (ZIP bomb) antes de processar
-- [ ] **SEC-03**: Usuário é avisado na UI de que o conteúdo do documento fica salvo no histórico da conversa e pode ser limpo via "Nova conversa" (LGPD/D-07)
+- [x] **SEC-03**: Usuário é avisado na UI de que o conteúdo do documento fica salvo no histórico da conversa e pode ser limpo via "Nova conversa" (LGPD/D-07)
 
 ---
 
@@ -85,14 +85,14 @@
 | CTX-05 | Phase 10 | Complete |
 | PRO-02 | Phase 10 | Complete |
 | PRO-03 | Phase 10 | Complete |
-| ATT-01 | Phase 11 | Pending |
-| ATT-02 | Phase 11 | Pending |
-| ATT-03 | Phase 11 | Pending |
-| ATT-04 | Phase 11 | Pending |
-| ATT-05 | Phase 11 | Pending |
-| ATT-06 | Phase 11 | Pending |
-| ATT-07 | Phase 11 | Pending |
-| ATT-08 | Phase 11 | Pending |
-| PRO-01 | Phase 11 | Pending |
-| SEC-01 | Phase 11 | Pending |
-| SEC-03 | Phase 11 | Pending |
+| ATT-01 | Phase 11 | Complete |
+| ATT-02 | Phase 11 | Complete |
+| ATT-03 | Phase 11 | Complete |
+| ATT-04 | Phase 11 | Complete |
+| ATT-05 | Phase 11 | Complete |
+| ATT-06 | Phase 11 | Complete |
+| ATT-07 | Phase 11 | Complete |
+| ATT-08 | Phase 11 | Complete |
+| PRO-01 | Phase 11 | Complete |
+| SEC-01 | Phase 11 | Complete |
+| SEC-03 | Phase 11 | Complete |
