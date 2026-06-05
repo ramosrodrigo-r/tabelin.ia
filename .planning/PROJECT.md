@@ -12,23 +12,11 @@ Brazilian spreadsheet users can describe the outcome they need in Portuguese and
 
 ## Current State
 
-**Shipped:** v1.1 Conversas Persistentes (2026-06-02) — Phases 6–8.
+**Shipped:** v1.2 Anexos Universais (2026-06-05) — Phases 9–11.
 
-O chat-thread visual do v1.0 virou uma experiência multi-turn real: cada troca é persistida por usuário+tool (cap 50), recarregada ao abrir o workspace, e reinjetada no LLM como contexto a cada mensagem, com truncagem por tokens e isolamento de thread entre tools. Follow-ups funcionam sem repetir contexto.
+Usuários Pro agora anexam documentos (CSV/XLSX, PNG/JPEG, PDF, TXT) em qualquer um dos 5 tools de texto via botão paperclip ou drag-and-drop. Um pipeline de extração multi-formato (dispatcher único, validação de magic bytes + anti-ZIP-bomb) gera texto plano que é injetado no system prompt com delimitadores anti-injection, persistido em `attachmentContext` (arquivo bruto nunca salvo — D-07) e reusado em follow-ups. Pro-gate e cota são aplicados no backend antes de qualquer extração; free vê CTA de upgrade. Auditoria de milestone `passed` (25/25 requisitos), Nyquist 100% compliant, UAT humano 3/3.
 
-**Next milestone:** v1.2 Anexos Universais — em definição (research → requirements → roadmap).
-
-## Current Milestone: v1.2 Anexos Universais
-
-**Goal:** Permitir anexar um documento em qualquer tool de texto (Formula, SQL, Regex, Scripts, Template) para que a IA o leia e gere a saída combinando o conteúdo extraído + o tool selecionado + o prompt do usuário.
-
-**Target features:**
-- Botão de anexo universal nos 5 tools de texto (Formula, SQL, Regex, Scripts, Template)
-- Suporte a CSV/XLSX (schema parser), PNG/JPEG (OCR Vision), PDF (extrator novo) e TXT (leitura direta)
-- Conteúdo extraído persistido no thread de conversa (arquivo bruto pode ser apagado — preserva D-07); follow-ups reusam o documento
-- Recurso exclusivo Pro — free vê o botão com CTA de upgrade
-- 1 arquivo por mensagem, cap de 5 MB
-- Destino dos tools dedicados OCR/File Analysis a decidir no discuss/plan
+**Next milestone:** a definir — `/gsd:new-milestone` (research → requirements → roadmap).
 
 ## Requirements
 
@@ -62,18 +50,16 @@ O chat-thread visual do v1.0 virou uma experiência multi-turn real: cada troca 
 - ✓ Pipeline de extração multi-formato (CSV/XLSX, PNG/JPEG OCR, PDF via unpdf, TXT) com dispatcher único e validação de bytes (magic bytes + anti-ZIP-bomb) — Phase 9 (EXT-01..06, SEC-02)
 - ✓ Conteúdo extraído injetado no system prompt (grounding delimitado), persistido em `ConversationExchange.attachmentContext` (arquivo bruto nunca salvo — D-07), reutilizado em follow-ups, com truncagem `MAX_EXTRACTED_CHARS=8000` — Phase 10 (CTX-01..05)
 - ✓ Pro-gate backend (403 antes de qualquer extração) e débito de cota reserve/confirm/release (release em falha de extração) para gerações com anexo — Phase 10 (PRO-02, PRO-03)
+- ✓ UI de anexo nos 5 tools de texto: botão paperclip + drag-and-drop, chip de preview, validação client-side (tipo + 5 MB), feedback em dois estágios e badge de grounding — Phase 11 (ATT-01..06)
+- ✓ Transparência do conteúdo extraído (painel expansível + aviso de extração parcial em truncagem) e CTA de upgrade para usuário free — Phase 11 (ATT-07, ATT-08, PRO-01)
+- ✓ Delimitadores anti-injection no prompt + render seguro sem `dangerouslySetInnerHTML`; aviso LGPD de que o conteúdo fica no histórico e é limpo via "Nova conversa" — Phase 11 (SEC-01, SEC-03)
+- ✓ Erros acionáveis de extração (PDF escaneado, tipo não suportado, arquivo grande) surfacados ao usuário nos 5 hooks — v1.2 pós-auditoria (SEAM-05)
 
 ### Active
 
-Milestone v1.2 Anexos Universais — requirements detalhados em `.planning/REQUIREMENTS.md` (gerados neste ciclo). Resumo das capacidades-alvo:
+(Nenhum — milestone v1.2 concluído. Próximo milestone a definir via `/gsd:new-milestone`.)
 
-- Anexo universal nos 5 tools de texto (Formula, SQL, Regex, Scripts, Template)
-- Extração multi-formato: CSV/XLSX, PNG/JPEG (OCR), PDF (novo), TXT
-- Conteúdo extraído persistido no thread; arquivo bruto efêmero (D-07)
-- Gating Pro do recurso de anexo
-- Cap de 5 MB, 1 arquivo por mensagem
-
-(All v1.0 + v1.1 requirements validated — see Validated section above.)
+All v1.0 + v1.1 + v1.2 requirements validated — see Validated section above.
 
 ### Out of Scope
 
@@ -127,6 +113,12 @@ The recommended technical direction from the PRD is a web SaaS with a Next.js/Ta
 | Truncagem híbrida de contexto (últimas N=10 + limite de tokens) | Evita erro de limite de tokens em conversas longas sem perder os turns recentes mais relevantes | Validado — v1.1 (Phase 8) |
 | Rótulo `[Resposta anterior]` no histórico serializado + `buildMultiTurnSystemPrompt` DRY | UAT revelou que o LLM repetia a resposta anterior verbatim; rotular o histórico e unificar o system prompt corrigiu follow-ups | Validado — v1.1 (Phase 8 / 08-04, 2/2 UAT ao vivo) |
 | File Analysis permanece efêmero (sem persistência de histórico) | Privacidade: arquivos enviados são dados de sessão temporários (D-07) | Aplicado — v1.1 (Phase 7) |
+| Dispatcher único de extração com `ExtractionResult` tipado (D-09) | Roteamento por tipo sem lógica duplicada nos 5 tools; contrato de erro acionável reutilizável | Validado — v1.2 (Phase 9) |
+| Validar magic bytes + anti-ZIP-bomb antes de qualquer parse (SEC-02) | Extensão/MIME declarado é falsificável; XLSX é ZIP e pode ser bomba; ratio check usa tamanho comprimido (não controlado pelo atacante) | Validado — v1.2 (Phase 9, CR-01/CR-02) |
+| Persistir só o texto extraído em `attachmentContext`, nunca o arquivo bruto (D-07) | LGPD/privacidade: arquivo é efêmero; conteúdo reusável em follow-ups sem re-extração (evita custo de OCR repetido) | Validado — v1.2 (Phase 10) |
+| Pro-gate no backend ANTES de qualquer I/O de extração | Anti-bypass: free não deve disparar OCR/parse; 403 antes de reservar cota | Validado — v1.2 (Phase 10, PRO-02) |
+| PDF escaneado → erro acionável (sem fallback OCR automático) | Custo/latência de converter páginas→Vision a validar com uso Pro real; orienta usuário ao tool de OCR dedicado | Validado — v1.2 (Phase 9, EXT-06); erro surfacado na UI pós-auditoria (SEAM-05) |
+| Formula como amostra Nyquist representativa dos 5 tools | Os 5 tools compartilham componentes e replicam o mesmo padrão de hook; testar render completo no Formula + grep/code-review nos demais | Validado — v1.2 (Phase 11) |
 
 ## Evolution
 
@@ -146,4 +138,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-06-04 — Phase 10 (Persistence & LLM Context) complete: extração injetada no prompt, persistida em attachmentContext, reusada em follow-ups, com Pro-gate + cota no backend. Restante do milestone v1.2: Phase 11 (Attachment UI & Pro Gating).*
+*Last updated: 2026-06-05 after v1.2 Anexos Universais milestone — anexo universal Pro nos 5 tools com extração multi-formato, injeção no contexto LLM, persistência do conteúdo (D-07) e Pro-gate backend. Auditoria passed, Nyquist compliant, SEAM-05 fechado.*

@@ -2,34 +2,32 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Anexos Universais
-status: verifying
-last_updated: "2026-06-05T00:00:00.000Z"
-last_activity: 2026-06-05 -- Phase 11 code review fixes + UAT 3/3 pass
+status: Awaiting next milestone
+last_updated: "2026-06-05T20:43:39.225Z"
+last_activity: 2026-06-05 — Milestone v1.2 completed and archived
 progress:
   total_phases: 3
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 14
   completed_plans: 14
-  percent: 95
+  percent: 100
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-06-03)
+See: .planning/PROJECT.md (updated 2026-06-05)
 
 **Core value:** Brazilian spreadsheet users can describe the outcome they need in Portuguese and quickly receive correct, copy-ready formulas, code, queries, or structured table outputs that fit their actual tools.
-**Current focus:** Phase 11 — attachment-ui-pro-gating
+**Current focus:** Planning next milestone (v1.2 shipped 2026-06-05)
 
 ## Current Position
 
-Phase: 11 (attachment-ui-pro-gating) — VERIFYING
-Plan: 5 of 5 (todos executados)
-Status: Code review resolvido + UAT humana 3/3 pass — aguardando gate de segurança
-Last activity: 2026-06-05 -- Phase 11 code review fixes + UAT 3/3 pass
-
-Progress: [██████████] 100%
+Phase: Milestone v1.2 complete
+Plan: —
+Status: Awaiting next milestone
+Last activity: 2026-06-05 — Milestone v1.2 completed and archived
 
 ## Performance Metrics
 
@@ -70,8 +68,7 @@ None yet.
 
 ### Blockers/Concerns
 
-- `unpdf` é o único pacote novo não testado no projeto — validar extração de texto e comportamento com PDF escaneado cedo (Phase 9)
-- Definir `MAX_EXTRACTED_CHARS` antes de Phase 10 (orçamento de tokens disponível com histórico multi-turn já em uso)
+None — v1.2 shipped. (Resolvidos no ciclo: `unpdf` validado na Phase 9; `MAX_EXTRACTED_CHARS=8000` definido na Phase 10; gate de segurança Phase 11 satisfeito — 11-SECURITY.md presente.)
 
 ## Deferred Items
 
@@ -87,18 +84,17 @@ Items acknowledged and carried forward:
 | Attachments | Suporte a .docx / .odt | Post-v1.2 | v1.2 requirements |
 | Attachments | Múltiplos arquivos por mensagem | Post-v1.2 | v1.2 requirements |
 | Attachments | Redação automática de CPF/CNPJ no conteúdo extraído | Post-v1.2 | v1.2 requirements |
-| Phase 09-extraction-infrastructure P01 | 20 | 3 tasks | 4 files |
-| Phase 09 P02 | 8 | 3 tasks | 5 files |
-| Phase 09 P03 | 12 | 3 tasks | 4 files |
-| Phase 09 P04 | 10 | 2 tasks | 2 files |
-| Phase 10-persistence-llm-context P01 | 15 | 3 tasks | 4 files |
-| Phase 10 P02 | 18 | 2 tasks | 2 files |
-| Phase 10 P03 | 15 | 3 tasks | 8 files |
-| Phase 10-persistence-llm-context P04 | 25 | 1 tasks | 1 files |
+| UAT | 10-UAT.md status `partial` (0 cenários pendentes; cenários `blocked_by: prior-phase` cobertos retroativamente pelo UAT humano da Phase 11 + testes automatizados) | Acknowledged | v1.2 close |
+| Tech debt | Phase 9 zip-guard `_lastOriginalSizes` estado global entre requisições (WR-07) | Backlog | v1.2 close |
+| Tech debt | Phase 9 csv-xlsx N+1 read multi-aba + `catch {}` mascara INVALID_BYTES | Backlog | v1.2 close |
 
 ## Session Continuity
 
 Last session: 2026-06-05
-Stopped at: Phase 11 — code review (CR-01 + WR-01..04 + IN-03) resolvido e commitado (286a3be); UAT humana conduzida com 3/3 pass (Test 3 validado com OPENAI_API_KEY real). Artefatos 11-UAT/11-HUMAN-UAT/11-VERIFICATION reconciliados.
-Próximo passo: gate de segurança — `security_enforcement=true` e ainda não há `11-SECURITY.md`; rodar `/gsd:secure-phase 11` antes de fechar a milestone v1.2.
+Stopped at: Milestone v1.2 auditado (passed), Nyquist validado nas Phases 9/10, SEAM-05 fechado, e milestone completado/arquivado. Tag v1.2 criada.
+Próximo passo: iniciar o próximo milestone com `/gsd:new-milestone`.
 Resume file: None
+
+## Operator Next Steps
+
+- Start the next milestone with /gsd-new-milestone

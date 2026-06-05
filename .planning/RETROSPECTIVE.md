@@ -127,14 +127,74 @@
 
 ---
 
+## Milestone: v1.2 — Anexos Universais
+
+**Shipped:** 2026-06-05
+**Phases:** 3 (9–11) | **Plans:** 14
+
+---
+
+### What Was Built
+
+1. Pipeline de extração multi-formato no backend (Phase 9): dispatcher único com `ExtractionResult` tipado roteando CSV/XLSX, PNG/JPEG (OCR), PDF (`unpdf`) e TXT; segurança de bytes (magic bytes via file-type, anti-ZIP-bomb com ratio em tamanho comprimido + per-entry/total caps).
+2. Injeção e persistência no contexto LLM (Phase 10): conteúdo extraído injetado no system prompt com delimitadores anti-injection, persistido em `ConversationExchange.attachmentContext` (arquivo bruto nunca salvo — D-07), reusado em follow-ups via `latestWithAttachment`, truncado a `MAX_EXTRACTED_CHARS=8000`; Pro-gate backend (403 antes de extração) + cota reserve/confirm/release.
+3. UI de anexo nos 5 tools (Phase 11): componentes compartilhados (AttachmentButton/Chip/Panel, PrivacyNotice), botão paperclip + drag-and-drop, feedback em dois estágios, badge de grounding, painel de transparência, aviso LGPD e CTA de upgrade para free.
+4. Gap closure pós-auditoria: SEAM-05 — os 5 hooks passaram a surfacar erros acionáveis de extração (422/413) ao usuário, com teste de regressão.
+
+---
+
+### What Worked
+
+- **Backend front-loaded antes da UI:** isolar a extração (Phase 9) e a persistência/contexto (Phase 10) antes de qualquer pixel manteve o único unknown técnico (`unpdf`) validado cedo, com smoke test dedicado.
+- **Reuso agressivo do v1.0/v1.1:** `context-messages.ts` (truncagem híbrida do v1.1), o parser de schema do File Analysis e o OCR Vision foram embrulhados como extratores em vez de reimplementados.
+- **Componentes compartilhados + amostra Nyquist representativa:** os 5 tools compartilham os componentes de anexo; testar render completo no Formula + grep/code-review nos demais evitou 5× o custo de teste sem perder cobertura real.
+- **Auditoria de milestone pegou o que os testes verdes não pegaram:** o integration checker encontrou o SEAM-05 (hooks engoliam o erro acionável do backend) mesmo com 206 testes verdes — seam entre fases que nenhum teste unitário de fase cobria.
+
+---
+
+### What Was Inefficient
+
+- **Tabela de rastreabilidade defasou da verificação:** os 11 requisitos da Phase 11 ficaram marcados `Pending`/`[ ]` no REQUIREMENTS.md mesmo após o 11-VERIFICATION.md `verified` + UAT humano 3/3 — corrigido manualmente na auditoria. O checkbox deveria ser atualizado no fechamento da fase.
+- **VALIDATION.md ausente nas Phases 9/10:** a cobertura de teste existia (45 + 23 testes verdes) mas o artefato Nyquist formal não foi gerado durante a execução — exigiu `validate-phase` retroativo (reconstrução State B → A) no fechamento.
+- **Erro acionável produzido mas não propagado:** o backend caprichou na mensagem de PDF escaneado/tipo inválido (422), mas os 5 hooks a descartavam no `setError` genérico — o valor só chegava até a borda da fase, não ao usuário (SEAM-05).
+- **Lixo de extração de one-liner no MILESTONES.md:** `summary-extract --pick one_liner` retornou `"One-liner:"` para vários SUMMARYs, exigindo reescrita manual dos accomplishments no close.
+
+---
+
+### Patterns Established
+
+- **Dispatcher único com contrato de erro tipado** (`ExtractionResult` discriminated union) como ponto único de roteamento por tipo — reutilizável por qualquer consumidor futuro.
+- **Defesa anti-ZIP-bomb baseada em tamanho comprimido** (`info.size`, não `originalSize` controlado pelo atacante) + caps por entrada e total, sempre antes do parse.
+- **Pro-gate antes de qualquer I/O** como invariante anti-bypass para features pagas que disparam trabalho custoso (OCR/parse).
+- **Persistir só o derivado, nunca o bruto** (texto extraído em vez do arquivo) como padrão de privacidade reusável (D-07).
+
+---
+
+### Key Lessons
+
+1. **Testes de fase verdes não cobrem seams entre fases.** O SEAM-05 viveu exatamente na fronteira route→hook que nenhum teste unitário de fase exercitava — a auditoria de integração de milestone é o gate que pega esse tipo de bug. Vale rodá-la antes de declarar pronto.
+2. **Atualizar checkbox/rastreabilidade deve fazer parte do fechamento da fase, não do milestone.** Defasagem entre VERIFICATION.md e REQUIREMENTS.md gera falso `gaps_found` no audit.
+3. **Gerar VALIDATION.md durante a execução, não retroativamente.** A cobertura existia; faltou o artefato — `validate-phase` no close é remediação, não prevenção.
+4. **Uma mensagem de erro só tem valor se chega ao usuário.** Produzir erro acionável no backend sem branch correspondente na UI desperdiça o esforço — verificar a propagação end-to-end, não só a origem.
+
+---
+
+### Cost Observations
+
+- Model mix: principalmente Opus (balanced profile)
+- Sessions: ~2 dias de execução + 1 sessão de auditoria/fechamento
+- Notable: milestone de 3 fases inteiramente sobre os padrões do v1.0/v1.1; 1 gap closure de auditoria (SEAM-05) + 2 validate-phase retroativos
+
+---
+
 ## Cross-Milestone Trends
 
-| Metric | v1.0 | v1.1 |
-|--------|------|------|
-| Days to ship | 4 | 4 |
-| Phases | 5 | 3 |
-| Plans | 16 | 10 |
-| Requirements | 46/46 | 9/9 |
-| Smoke tests | 9/9 pass | — (reusa suite v1.0) |
-| LOC TypeScript | ~10.500 | ~8.450 ins. |
-| Gap closures | 1 (05-04) | 1 (08-04) |
+| Metric | v1.0 | v1.1 | v1.2 |
+|--------|------|------|------|
+| Days to ship | 4 | 4 | ~2 |
+| Phases | 5 | 3 | 3 |
+| Plans | 16 | 10 | 14 |
+| Requirements | 46/46 | 9/9 | 25/25 |
+| Smoke tests | 9/9 pass | — (reusa suite v1.0) | 207 unit/integration pass |
+| LOC TypeScript | ~10.500 | ~8.450 ins. | — |
+| Gap closures | 1 (05-04) | 1 (08-04) | 1 (SEAM-05, pós-auditoria) |

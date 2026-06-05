@@ -1,5 +1,28 @@
 # Milestones: Tabelin.IA
 
+## v1.2 Anexos Universais (Shipped: 2026-06-05)
+
+**Phases:** 9–11 | **Plans:** 14 | **Tasks:** 10
+**Timeline:** ~2 days (2026-06-03 → 2026-06-04, completion 2026-06-05)
+**Git range:** feat(09-01) → fix(11) (SEAM-05)
+
+**Delivered:** Usuários Pro podem anexar documentos (CSV/XLSX, PNG/JPEG, PDF, TXT) em qualquer um dos 5 tools de texto, com extração automática, injeção no contexto LLM e persistência do conteúdo extraído no thread.
+
+**Key accomplishments:**
+
+- **Pipeline de extração multi-formato** (Phase 9): dispatcher único roteia CSV/XLSX (schema+amostra), PNG/JPEG (OCR Vision), PDF (unpdf, com detecção de PDF escaneado→erro acionável) e TXT, tudo via `ExtractionResult` tipado (EXT-01..06).
+- **Segurança de bytes** (Phase 9): validação de magic bytes (file-type, ignora extensão/MIME), guard anti-ZIP-bomb (ratio em tamanho comprimido + per-entry cap 25 MB) e `MAX_INPUT_BYTES` antes de qualquer alocação (SEC-02, CR-01/CR-02 fechados).
+- **Injeção + persistência no contexto LLM** (Phase 10): conteúdo extraído injetado no system prompt com delimitadores anti-injection, persistido em `ConversationExchange.attachmentContext` (arquivo bruto nunca salvo — D-07), reusado em follow-ups, truncado a `MAX_EXTRACTED_CHARS=8000` (CTX-01..05).
+- **Pro-gate + cota no backend** (Phase 10): 403 antes de qualquer I/O de extração (anti-bypass) e débito reserve/confirm/release com release em falha de extração (PRO-02, PRO-03).
+- **UI de anexo nos 5 tools** (Phase 11): botão paperclip + drag-and-drop, chip de preview, validação client-side, feedback em dois estágios, badge de grounding, painel de transparência do texto extraído, aviso LGPD e CTA de upgrade para free (ATT-01..08, PRO-01, SEC-01, SEC-03). UAT humano 3/3 pass.
+- **Pós-auditoria:** Nyquist retroativamente validado nas Fases 9/10 (100% compliant) e warning de integração SEAM-05 fechado — os 5 hooks passaram a surfacar erros acionáveis de extração (422/413) ao usuário.
+
+**Audit:** v1.2-MILESTONE-AUDIT — status `passed` (25/25 requisitos, 3/3 fases, integração PASS, fluxos E2E 4/4).
+
+**Known deferred items at close:** 1 — 10-UAT.md status `partial` (0 cenários pendentes; cenários `blocked_by: prior-phase` cobertos retroativamente pelo UAT humano da Fase 11 + testes automatizados). Ver STATE.md › Deferred Items. Micro-débito técnico não-blocker da Fase 9 (estado global no zip-guard, N+1 read) rastreado em backlog.
+
+---
+
 ## v1.1 Conversas Persistentes — SHIPPED 2026-06-02
 
 **Phases:** 6–8 | **Plans:** 10
