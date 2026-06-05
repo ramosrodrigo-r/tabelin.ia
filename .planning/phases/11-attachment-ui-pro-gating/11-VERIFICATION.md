@@ -1,7 +1,9 @@
 ---
 phase: 11-attachment-ui-pro-gating
 verified: 2026-06-04T17:45:00Z
-status: human_needed
+status: verified
+human_verified_at: 2026-06-05
+human_verification_result: "3/3 pass (ver 11-UAT.md) — Teste 3 validado com OPENAI_API_KEY real; fixture mode tornava-o inválido"
 score: 5/5 must-haves verified
 overrides_applied: 0
 human_verification:

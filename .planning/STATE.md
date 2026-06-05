@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Anexos Universais
-status: executing
-last_updated: "2026-06-04T19:43:55.048Z"
-last_activity: 2026-06-04 -- Phase 11 execution started
+status: verifying
+last_updated: "2026-06-05T00:00:00.000Z"
+last_activity: 2026-06-05 -- Phase 11 code review fixes + UAT 3/3 pass
 progress:
   total_phases: 3
   completed_phases: 2
   total_plans: 14
-  completed_plans: 9
-  percent: 64
+  completed_plans: 14
+  percent: 95
 ---
 
 # Project State
@@ -24,10 +24,10 @@ See: .planning/PROJECT.md (updated 2026-06-03)
 
 ## Current Position
 
-Phase: 11 (attachment-ui-pro-gating) — EXECUTING
-Plan: 1 of 5
-Status: Executing Phase 11
-Last activity: 2026-06-04 -- Phase 11 execution started
+Phase: 11 (attachment-ui-pro-gating) — VERIFYING
+Plan: 5 of 5 (todos executados)
+Status: Code review resolvido + UAT humana 3/3 pass — aguardando gate de segurança
+Last activity: 2026-06-05 -- Phase 11 code review fixes + UAT 3/3 pass
 
 Progress: [██████████] 100%
 
@@ -98,6 +98,7 @@ Items acknowledged and carried forward:
 
 ## Session Continuity
 
-Last session: 2026-06-04T15:00:30.722Z
-Stopped at: Phase 09-01 Task 2 — checkpoint:human-verify (gate=blocking-human). Aguardando aprovação dos 3 pacotes npm: unpdf@1.6.2, file-type@22.0.1, fflate@0.8.3.
+Last session: 2026-06-05
+Stopped at: Phase 11 — code review (CR-01 + WR-01..04 + IN-03) resolvido e commitado (286a3be); UAT humana conduzida com 3/3 pass (Test 3 validado com OPENAI_API_KEY real). Artefatos 11-UAT/11-HUMAN-UAT/11-VERIFICATION reconciliados.
+Próximo passo: gate de segurança — `security_enforcement=true` e ainda não há `11-SECURITY.md`; rodar `/gsd:secure-phase 11` antes de fechar a milestone v1.2.
 Resume file: None
