@@ -82,6 +82,15 @@ export function FormulaTool({
     setPendingFile(file);
   }
 
+  function handleModeChange(newMode: FormulaMode) {
+    setMode(newMode);
+    if (newMode !== "generate") {
+      // CR-01: anexo só existe em modo "generate" — limpar arquivo pendente ao trocar
+      setPendingFile(null);
+      setFileError(null);
+    }
+  }
+
   const handleNewConversation = useCallback(() => {
     setExchanges([]);
     setSubmittedText("");
@@ -139,7 +148,7 @@ export function FormulaTool({
       onDrop={(e) => {
         e.preventDefault();
         setDragOver(false);
-        if (!isPro) return;
+        if (!isPro || mode !== "generate") return;
         const file = e.dataTransfer.files[0];
         if (file) handleFileSelect(file);
       }}
@@ -209,7 +218,7 @@ export function FormulaTool({
         lastFreeUse={stream.lastFreeUse}
         pendingFile={pendingFile}
         fileError={fileError}
-        onModeChange={setMode}
+        onModeChange={handleModeChange}
         onPlatformChange={setPlatform}
         onLanguageChange={setFormulaLanguage}
         onTextChange={setText}

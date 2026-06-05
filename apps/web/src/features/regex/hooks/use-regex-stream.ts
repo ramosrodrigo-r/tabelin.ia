@@ -47,11 +47,13 @@ export function useRegexStream() {
     let body: BodyInit;
     let headers: HeadersInit = {};
 
-    if (input.file) {
+    // CR-01: anexo só é suportado em modo "generate" (endpoint /explain só aceita JSON)
+    const hasAttachment = input.mode === "generate" && Boolean(input.file);
+
+    if (hasAttachment && input.file) {
       setAttachmentStatus("uploading");
       const fd = new FormData();
       fd.append("prompt", input.text);
-      fd.append("mode", input.mode);
       fd.append("file", input.file);
       body = fd;
       // NÃO setar Content-Type — browser define boundary automaticamente
@@ -97,7 +99,7 @@ export function useRegexStream() {
       return;
     }
 
-    if (input.file) {
+    if (hasAttachment) {
       setAttachmentStatus("extracting");
     }
 
@@ -114,7 +116,16 @@ export function useRegexStream() {
       buffer = lines.pop() ?? "";
       for (const line of lines) {
         if (!line.trim()) continue;
-        const event = regexStreamEventSchema.parse(JSON.parse(line));
+        let event;
+        try {
+          event = regexStreamEventSchema.parse(JSON.parse(line));
+        } catch {
+          // WR-04: linha NDJSON malformada ou fora do contrato — degradar para erro
+          setStatus("error");
+          setAttachmentStatus(null);
+          setError("Resposta corrompida. Tente novamente.");
+          return;
+        }
 
         if (event.type === "attachment_grounded") {
           setAttachmentMeta({

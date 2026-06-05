@@ -121,6 +121,11 @@ export function RegexTool({
     setMode(newMode);
     setText("");
     setValidationError("");
+    if (newMode !== "generate") {
+      // CR-01: anexo só existe em modo "generate" — limpar arquivo pendente ao trocar
+      setPendingFile(null);
+      setFileError(null);
+    }
   }
 
   return (
@@ -132,7 +137,7 @@ export function RegexTool({
       onDrop={(e) => {
         e.preventDefault();
         setDragOver(false);
-        if (!isPro) return;
+        if (!isPro || mode !== "generate") return;
         const file = e.dataTransfer.files[0];
         if (file) handleFileSelect(file);
       }}

@@ -111,7 +111,16 @@ export function useSqlStream() {
       buffer = lines.pop() ?? "";
       for (const line of lines) {
         if (!line.trim()) continue;
-        const event = sqlStreamEventSchema.parse(JSON.parse(line));
+        let event;
+        try {
+          event = sqlStreamEventSchema.parse(JSON.parse(line));
+        } catch {
+          // WR-04: linha NDJSON malformada ou fora do contrato — degradar para erro
+          setStatus("error");
+          setAttachmentStatus(null);
+          setError("Resposta corrompida. Tente novamente.");
+          return;
+        }
 
         if (event.type === "attachment_grounded") {
           setAttachmentMeta({

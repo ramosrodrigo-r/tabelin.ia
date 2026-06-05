@@ -87,16 +87,18 @@ export function RegexInputPanel({
         }
         options={options}
         leftAction={
-          <AttachmentButton
-            isPro={isPro}
-            disabled={pending || quotaBlocked}
-            onFileSelect={onFileSelect}
-          />
+          mode === "generate" ? (
+            <AttachmentButton
+              isPro={isPro}
+              disabled={pending || quotaBlocked}
+              onFileSelect={onFileSelect}
+            />
+          ) : undefined
         }
         bottomNav={<ToolNav />}
       />
 
-      {pendingFile ? (
+      {mode === "generate" && pendingFile ? (
         <>
           <AttachmentChip file={pendingFile} onRemove={onFileRemove} />
           <PrivacyNotice />

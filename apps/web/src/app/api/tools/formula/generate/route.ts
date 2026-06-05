@@ -30,7 +30,10 @@ export async function POST(request: Request) {
       platform: formData.get("platform"),
       formulaLanguage: formData.get("formulaLanguage")
     };
-    file = formData.get("file") as File | null;
+    // WR-01/WR-02: validar tipo em runtime — FormData.get pode retornar string;
+    // descartar também arquivos vazios (size 0) que o browser pode anexar
+    const rawFile = formData.get("file");
+    file = rawFile instanceof File && rawFile.size > 0 ? rawFile : null;
   } else {
     body = await request.json().catch(() => null);
   }
@@ -112,13 +115,16 @@ export async function POST(request: Request) {
       attachmentContext
     });
 
-    const attachmentMeta = attachmentContext
-      ? {
-          charCount: attachmentContext.length,
-          wasTruncated: attachmentContext.length > MAX_EXTRACTED_CHARS,
-          extractedText: attachmentContext.slice(0, MAX_EXTRACTED_CHARS),
-        }
-      : undefined;
+    let attachmentMeta;
+    if (attachmentContext) {
+      // WR-03: charCount reflete o texto realmente entregue/injetado (pós-truncagem)
+      const extractedText = attachmentContext.slice(0, MAX_EXTRACTED_CHARS);
+      attachmentMeta = {
+        charCount: extractedText.length,
+        wasTruncated: attachmentContext.length > MAX_EXTRACTED_CHARS,
+        extractedText,
+      };
+    }
 
     return new Response(createFormulaEventStream(payload, quotaCheck.lastFreeUse, attachmentMeta), {
       headers: {

@@ -45,7 +45,17 @@ findings:
   warning: 4
   info: 3
   total: 8
-status: issues_found
+status: resolved
+resolved_at: 2026-06-05
+resolution:
+  CR-01: "Fixed (Opção A) — AttachmentButton + chip/aviso só em mode==='generate' (formula/regex input panels); handleModeChange limpa pendingFile; DnD guard `mode !== 'generate'`; hooks só montam FormData quando mode==='generate'"
+  WR-01: "Fixed — `rawFile instanceof File && rawFile.size > 0 ? rawFile : null` nos 5 generate routes"
+  WR-02: "Fixed — coberto pelo `size > 0` do WR-01"
+  WR-03: "Fixed — charCount = extractedText.length (pós-truncagem) nos 5 routes"
+  WR-04: "Fixed — try/catch por linha no loop NDJSON dos 5 hooks (degrada para estado de erro)"
+  IN-03: "Fixed — campo `mode` morto removido do FormData (formula/regex hooks)"
+  IN-01: "Aceito como dívida (defesa-em-profundidade; sem elevação real — enforcement é no servidor)"
+  IN-02: "Aceito como dívida (duplicação entre hooks/tools, fora do escopo v1)"
 ---
 
 # Phase 11: Code Review Report
