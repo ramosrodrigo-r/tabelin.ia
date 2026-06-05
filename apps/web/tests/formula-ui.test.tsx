@@ -353,4 +353,69 @@ describe("FormulaTool", () => {
       expect(panelFile).not.toContain("dangerouslySetInnerHTML");
     });
   });
+
+  describe("drag-and-drop guard (ATT-02 / PRO-01)", () => {
+    // GAP 1 — T-11-03-02: a drop zone (aria-label="Formula workspace") só pode
+    // anexar arquivos para usuários Pro. O onDrop tem guard `if (!isPro || mode !== "generate") return`.
+    it("pro user can drop a file onto the workspace to attach it", () => {
+      render(<FormulaTool entitlement={proEntitlement} />);
+
+      const workspace = screen.getByLabelText("Formula workspace");
+      const csvFile = new File(["col1,col2\n1,2"], "dados.csv", { type: "text/csv" });
+
+      fireEvent.drop(workspace, { dataTransfer: { files: [csvFile] } });
+
+      expect(screen.getByRole("status", { name: /Arquivo anexado/ })).toBeInTheDocument();
+      expect(screen.getByText("dados.csv")).toBeInTheDocument();
+    });
+
+    it("free user drop is ignored — no chip appears (elevation-via-DnD mitigation)", () => {
+      render(<FormulaTool entitlement={freeEntitlement} />);
+
+      const workspace = screen.getByLabelText("Formula workspace");
+      const csvFile = new File(["col1,col2\n1,2"], "dados.csv", { type: "text/csv" });
+
+      fireEvent.drop(workspace, { dataTransfer: { files: [csvFile] } });
+
+      expect(screen.queryByRole("status", { name: /Arquivo anexado/ })).not.toBeInTheDocument();
+      expect(screen.queryByText("dados.csv")).not.toBeInTheDocument();
+    });
+  });
+
+  describe("two-stage upload feedback (ATT-05)", () => {
+    // GAP 2: ao submeter com anexo, attachmentStatus passa por "uploading" (antes do fetch resolver)
+    // e "extracting" (após response.ok, antes do reader fechar). Usamos um stream pendente que NÃO
+    // fecha para que o estado transiente "extracting" persista e possa ser asserido.
+    it("renders a stage message while the attachment is being processed", async () => {
+      const user = userEvent.setup();
+
+      // Stream pendente: nunca enfileira nem fecha — mantém o reader bloqueado em read()
+      // logo após `setAttachmentStatus("extracting")`, congelando o estado transiente.
+      let pendingController: ReadableStreamDefaultController | null = null;
+      const pendingResponse = new Response(
+        new ReadableStream({
+          start(controller) {
+            pendingController = controller;
+          }
+        }),
+        { status: 200 }
+      );
+      vi.spyOn(globalThis, "fetch").mockResolvedValue(pendingResponse);
+
+      render(<FormulaTool entitlement={proEntitlement} />);
+
+      const file = new File(["col1,col2\n1,2"], "dados.csv", { type: "text/csv" });
+      const input = document.querySelector('input[type="file"]') as HTMLInputElement;
+      await user.upload(input, file);
+
+      await user.type(screen.getByLabelText("Pedido"), "Some a coluna A");
+      await user.click(screen.getByRole("button", { name: "Gerar formula" }));
+
+      // Após response.ok e antes de qualquer chunk, attachmentStatus === "extracting".
+      expect(await screen.findByText("Extraindo conteúdo...")).toBeInTheDocument();
+
+      // Limpa o stream pendente para não vazar entre testes.
+      pendingController?.close();
+    });
+  });
 });
