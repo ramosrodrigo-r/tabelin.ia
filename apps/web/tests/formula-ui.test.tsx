@@ -354,6 +354,35 @@ describe("FormulaTool", () => {
     });
   });
 
+  describe("extraction error surfacing (SEAM-05 / EXT-06)", () => {
+    // O backend retorna 422 com result.message acionável (ex.: PDF escaneado → use o OCR).
+    // O hook deve surfacar essa mensagem específica, não o erro genérico.
+    it("surfaces the backend's actionable 422 extraction message to the user", async () => {
+      const user = userEvent.setup();
+      const actionable =
+        "Este PDF parece ser escaneado (sem texto selecionável). Use o tool de OCR para extrair o conteúdo.";
+      vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        new Response(JSON.stringify({ code: "extraction_failed", message: actionable }), {
+          status: 422,
+          headers: { "content-type": "application/json" }
+        })
+      );
+
+      render(<FormulaTool entitlement={proEntitlement} />);
+
+      const file = new File(["%PDF-1.4 scanned"], "escaneado.pdf", { type: "application/pdf" });
+      const input = document.querySelector('input[type="file"]') as HTMLInputElement;
+      await user.upload(input, file);
+
+      await user.type(screen.getByLabelText("Pedido"), "Some a coluna A");
+      await user.click(screen.getByRole("button", { name: "Gerar formula" }));
+
+      await waitFor(() => expect(screen.getByText(actionable)).toBeInTheDocument());
+      // Não deve cair na mensagem genérica
+      expect(screen.queryByText(/Nao consegui validar a resposta/)).toBeNull();
+    });
+  });
+
   describe("drag-and-drop guard (ATT-02 / PRO-01)", () => {
     // GAP 1 — T-11-03-02: a drop zone (aria-label="Formula workspace") só pode
     // anexar arquivos para usuários Pro. O onDrop tem guard `if (!isPro || mode !== "generate") return`.

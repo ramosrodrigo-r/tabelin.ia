@@ -83,6 +83,18 @@ export function useSqlStream() {
         }
       }
 
+      if (response.status === 422 || response.status === 413) {
+        const errorData = await response.json().catch(() => ({}));
+        setStatus("error");
+        setAttachmentStatus(null);
+        setError(
+          typeof errorData.message === "string" && errorData.message
+            ? errorData.message
+            : "Nao consegui processar o documento anexado. Verifique o arquivo e tente novamente.",
+        );
+        return;
+      }
+
       setStatus("error");
       setError("Nao consegui validar a resposta. Ajuste o pedido e tente novamente.");
       return;
