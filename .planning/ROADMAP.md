@@ -81,7 +81,7 @@ Audit: `.planning/milestones/v1.2-MILESTONE-AUDIT.md` (status: passed)
 
 **Wave 2 *(blocked on Wave 1 completion)***
 
-- [ ] 12-02: Unified API Route & Dispatch — `/api/chat/unified`, resolver dispatch, `needs_file`, `table_stub`, resolved `toolKind` history
+- [x] 12-02: Unified API Route & Dispatch — `/api/chat/unified`, resolver dispatch, `needs_file`, `table_stub`, resolved `toolKind` history
 
 **Wave 3 *(blocked on Wave 2 completion)***
 

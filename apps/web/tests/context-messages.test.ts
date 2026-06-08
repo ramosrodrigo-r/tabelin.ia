@@ -136,6 +136,49 @@ describe("buildToolContextMessages", () => {
     });
   });
 
+  describe("serialização tabela solicitada", () => {
+    it("serializa table_stub com rótulo específico e sem JSON cru", () => {
+      const exchange = makeExchange({
+        toolKind: "unified_table",
+        assistantPayload: {
+          kind: "table_stub",
+          originalPrompt: "Monte uma tabela de controle de gastos",
+          message: "A tabela sera refinada nas proximas etapas."
+        }
+      });
+
+      const result = buildToolContextMessages("unified_table", [exchange], "System", "Refine a tabela");
+
+      const assistantMsg = result.find((m) => m.role === "assistant");
+      expect(assistantMsg).toBeDefined();
+      const content = assistantMsg!.content as string;
+
+      expect(content).toContain("[Resposta anterior - tabela solicitada]");
+      expect(content).toContain("Monte uma tabela de controle de gastos");
+      expect(content).toContain("A tabela sera refinada nas proximas etapas.");
+      expect(content).not.toContain('"kind"');
+      expect(content).not.toContain("{");
+      expect(content).not.toContain("}");
+    });
+
+    it("pula table_stub sem message sem lançar erro", () => {
+      const exchange = makeExchange({
+        toolKind: "unified_table",
+        assistantPayload: {
+          kind: "table_stub",
+          originalPrompt: "Monte uma tabela"
+        }
+      });
+
+      expect(() => {
+        buildToolContextMessages("unified_table", [exchange], "System", "Prompt");
+      }).not.toThrow();
+
+      const result = buildToolContextMessages("unified_table", [exchange], "System", "Prompt");
+      expect(result).toHaveLength(2);
+    });
+  });
+
   describe("estrutura de mensagens", () => {
     it("cada exchange gera exatamente 2 mensagens: user + assistant", () => {
       const exchanges = [

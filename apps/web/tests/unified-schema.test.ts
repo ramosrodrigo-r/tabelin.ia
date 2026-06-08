@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  fileAnalysisPayloadSchema,
   intentClassificationSchema,
+  ocrPayloadSchema,
   overrideIntentSchema,
   tableStubPayloadSchema,
   unifiedStreamEventSchema,
@@ -51,6 +53,33 @@ describe("unified chat schemas", () => {
         payload,
       })
     ).toEqual({ type: "complete", payload });
+  });
+
+  it("parses file-backed complete payloads", () => {
+    const fileAnalysisPayload = fileAnalysisPayloadSchema.parse({
+      kind: "file_analysis",
+      content: "Resumo do arquivo anexado.",
+      metadata: { mode: "generate", providerModel: "extraction-dispatcher" },
+    });
+    const ocrPayload = ocrPayloadSchema.parse({
+      kind: "ocr",
+      content: "| Produto | Total |\n| --- | --- |\n| A | 10 |",
+      metadata: { mode: "generate", providerModel: "extraction-dispatcher" },
+    });
+
+    expect(
+      unifiedStreamEventSchema.parse({
+        type: "complete",
+        payload: fileAnalysisPayload,
+      })
+    ).toEqual({ type: "complete", payload: fileAnalysisPayload });
+
+    expect(
+      unifiedStreamEventSchema.parse({
+        type: "complete",
+        payload: ocrPayload,
+      })
+    ).toEqual({ type: "complete", payload: ocrPayload });
   });
 
   it("fails closed for corrupted unified events", () => {

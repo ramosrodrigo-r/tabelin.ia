@@ -51,12 +51,31 @@ export const needsFilePayloadSchema = z.object({
   intent: fileDependentIntentSchema,
 });
 
+export const fileBackedPayloadMetadataSchema = z.object({
+  mode: z.literal("generate"),
+  providerModel: z.string().optional(),
+});
+
+export const fileAnalysisPayloadSchema = z.object({
+  kind: z.literal("file_analysis"),
+  content: z.string().trim().min(1),
+  metadata: fileBackedPayloadMetadataSchema,
+});
+
+export const ocrPayloadSchema = z.object({
+  kind: z.literal("ocr"),
+  content: z.string().trim().min(1),
+  metadata: fileBackedPayloadMetadataSchema,
+});
+
 export const unifiedCompletePayloadSchema = z.union([
   formulaCompletePayloadSchema,
   sqlGenerateResponseSchema,
   regexCompletePayloadSchema,
   scriptGenerateResponseSchema,
   templateGenerateResponseSchema,
+  fileAnalysisPayloadSchema,
+  ocrPayloadSchema,
   tableStubPayloadSchema,
   needsFilePayloadSchema,
 ]);
@@ -91,5 +110,8 @@ export type FileDependentIntent = z.infer<typeof fileDependentIntentSchema>;
 export type IntentClassification = z.infer<typeof intentClassificationSchema>;
 export type TableStubPayload = z.infer<typeof tableStubPayloadSchema>;
 export type NeedsFilePayload = z.infer<typeof needsFilePayloadSchema>;
+export type FileBackedPayloadMetadata = z.infer<typeof fileBackedPayloadMetadataSchema>;
+export type FileAnalysisPayload = z.infer<typeof fileAnalysisPayloadSchema>;
+export type OcrPayload = z.infer<typeof ocrPayloadSchema>;
 export type UnifiedCompletePayload = z.infer<typeof unifiedCompletePayloadSchema>;
 export type UnifiedStreamEvent = z.infer<typeof unifiedStreamEventSchema>;

@@ -106,6 +106,13 @@ function serializeAssistant(payload: unknown): string | null {
       return `[Resposta anterior]\n${output}\n\n${explanation}`;
     }
 
+    case "table_stub": {
+      const originalPrompt = typeof p.originalPrompt === "string" ? p.originalPrompt.trim() : "";
+      const message = typeof p.message === "string" ? p.message.trim() : "";
+      if (!message) return null;
+      return `[Resposta anterior - tabela solicitada]\n${originalPrompt}\n\n${message}`;
+    }
+
     case "formula": {
       const formula = typeof p.formula === "string" ? p.formula.trim() : "";
       const explanation = typeof p.explanation === "string" ? p.explanation.trim() : "";
