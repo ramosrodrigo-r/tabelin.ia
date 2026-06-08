@@ -113,6 +113,21 @@ function serializeAssistant(payload: unknown): string | null {
       return `[Resposta anterior - tabela solicitada]\n${originalPrompt}\n\n${message}`;
     }
 
+    case "table_clar_question": {
+      const question = typeof p.question === "string" ? p.question.trim() : "";
+      if (!question) return null;
+      return `[Pergunta de clarificação anterior]\n${question}`;
+    }
+
+    case "table_spec": {
+      const title = typeof p.title === "string" ? p.title.trim() : "";
+      const cols = Array.isArray(p.columns)
+        ? (p.columns as { name: string }[]).map((c) => c.name).join(", ")
+        : "";
+      if (!title) return null;
+      return `[Especificação de tabela confirmada]\nTítulo: ${title}\nColunas: ${cols}`;
+    }
+
     case "formula": {
       const formula = typeof p.formula === "string" ? p.formula.trim() : "";
       const explanation = typeof p.explanation === "string" ? p.explanation.trim() : "";
