@@ -51,6 +51,23 @@ export const needsFilePayloadSchema = z.object({
   intent: fileDependentIntentSchema,
 });
 
+export const tableClarQuestionPayloadSchema = z.object({
+  kind: z.literal("table_clar_question"),
+  question: z.string().trim().min(1),
+  turnIndex: z.number().int().min(0),
+  totalTurns: z.number().int().positive(),
+  spec: z.record(z.unknown()).optional(),
+  canSkip: z.boolean(),
+});
+
+export const tableSpecPayloadSchema = z.object({
+  kind: z.literal("table_spec"),
+  title: z.string(),
+  columns: z.array(z.object({ name: z.string(), type: z.string() })),
+  rowCount: z.number().int().min(1).max(200),
+  format: z.string().optional(),
+});
+
 export const fileBackedPayloadMetadataSchema = z.object({
   mode: z.literal("generate"),
   providerModel: z.string().optional(),
@@ -77,6 +94,8 @@ export const unifiedCompletePayloadSchema = z.union([
   fileAnalysisPayloadSchema,
   ocrPayloadSchema,
   tableStubPayloadSchema,
+  tableClarQuestionPayloadSchema,
+  tableSpecPayloadSchema,
   needsFilePayloadSchema,
 ]);
 
@@ -110,6 +129,8 @@ export type FileDependentIntent = z.infer<typeof fileDependentIntentSchema>;
 export type IntentClassification = z.infer<typeof intentClassificationSchema>;
 export type TableStubPayload = z.infer<typeof tableStubPayloadSchema>;
 export type NeedsFilePayload = z.infer<typeof needsFilePayloadSchema>;
+export type TableClarQuestionPayload = z.infer<typeof tableClarQuestionPayloadSchema>;
+export type TableSpecPayload = z.infer<typeof tableSpecPayloadSchema>;
 export type FileBackedPayloadMetadata = z.infer<typeof fileBackedPayloadMetadataSchema>;
 export type FileAnalysisPayload = z.infer<typeof fileAnalysisPayloadSchema>;
 export type OcrPayload = z.infer<typeof ocrPayloadSchema>;

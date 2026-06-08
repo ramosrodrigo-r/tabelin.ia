@@ -2,14 +2,7 @@
 
 import { useState } from "react";
 
-// Tipo local temporário — substituído por import de @tabelin/shared no Plan 02
-type TableSpecPayload = {
-  kind: "table_spec";
-  title: string;
-  columns: Array<{ name: string; type: string }>;
-  rowCount: number;
-  format?: string;
-};
+import type { TableSpecPayload } from "@tabelin/shared";
 
 export function ConfirmationCard({
   payload,
