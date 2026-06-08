@@ -1,169 +1,285 @@
 # Stack Research
 
-**Domain:** Brazil-localized spreadsheet AI SaaS — v1.2 Anexos Universais
-**Researched:** 2026-06-03
-**Confidence:** HIGH (stack existente), HIGH (PDF/upload additions — verificado em docs oficiais e Context7)
+**Domain:** Brazil-localized spreadsheet AI SaaS — v2.0 Chat Unificado & Tabela Viva
+**Researched:** 2026-06-08
+**Confidence:** HIGH (grid + formula engine — verificado via Context7, npm, docs oficiais); HIGH (intent routing — OpenAI SDK já em produção)
 
 ---
 
 ## Nota sobre escopo
 
-Este arquivo descreve o stack para a milestone v1.2 Anexos Universais. O stack base (Next.js, React, TypeScript, Tailwind, Prisma, Better Auth, OpenAI SDK, Mercado Pago, Zod) foi validado em produção no v1.1 e não é re-pesquisado aqui. Apenas adições e alterações necessárias para suporte a anexos multi-formato são detalhadas.
+Este arquivo cobre APENAS as adições necessárias para v2.0. O stack base (Next.js 16.2.6 App Router, React 19.2.6, TypeScript 6.0.3, Tailwind 4.3.0, Prisma 7.8.0, Better Auth 1.6.11, OpenAI SDK 6.39.0, Zod 4.4.3, xlsx 0.18.5, csv-parse 6.2.1, unpdf, recharts) foi validado em produção e NÃO é re-pesquisado.
 
 ---
 
-## Stack base (já em produção — não alterar)
+## Stack base (já em produção — referência)
 
-| Technology | Version em uso | Status |
-|------------|---------------|--------|
-| Next.js App Router | 16.2.6 | Estável em produção |
-| React | 19.2.6 | Estável em produção |
-| TypeScript | 6.0.3 | Estável em produção |
-| Tailwind CSS | 4.3.0 | Estável em produção |
-| Prisma ORM | 7.8.0 | Estável em produção |
-| Better Auth | 1.6.11 | Estável em produção |
-| OpenAI SDK | 6.39.0 | Estável em produção |
-| Zod | 4.4.3 | Estável em produção |
-| xlsx | 0.18.5 | Em uso no file-analysis upload |
-| csv-parse | 6.2.1 | Em uso no file-parser |
+| Technology | Versão em uso |
+|------------|--------------|
+| Next.js App Router | 16.2.6 |
+| React | 19.2.6 |
+| OpenAI SDK | 6.39.0 |
+| Zod | 4.4.3 |
+| xlsx (SheetJS CE) | 0.18.5 |
 
 ---
 
-## Adições necessárias para v1.2
+## Recommended Stack — Adições para v2.0
 
-### Biblioteca central: Extração de PDF
+### (a) Grid Editável — Mini-Excel
 
-| Library | Version | Purpose | Why Recommended |
-|---------|---------|---------|-----------------|
-| **unpdf** | **1.6.2** | Extrair texto de PDFs digitais (text-based) | Única biblioteca com ESM nativo, TypeScript-first, compatível com Next.js Route Handlers, bundle otimizado para serverless. pdf-parse falha em ambientes sem filesystem real. pdfjs-dist tem bundle de +2 MB. Mantida ativamente (último release: abril 2026). |
+**Recomendado: `react-datasheet-grid` v4.11.6**
 
-**Integração unpdf no fluxo:**
+| Library | Versão | Licença | Tamanho packed | Por que |
+|---------|--------|---------|----------------|---------|
+| **react-datasheet-grid** | **4.11.6** | **MIT** | **~58 KB packed** | Projetado explicitamente para experiência estilo Airtable/Excel; copy-paste nativo com outras planilhas; virtualização de linhas E colunas (migrou de react-window para react-virtual na v4); tipagem TypeScript nativa; MIT irrestrito; manutenção ativa (última publicação: faz horas) |
+
+**Análise dos concorrentes:**
+
+| Biblioteca | Licença | Tamanho | Cell Editing | Virtualização | Veredicto |
+|------------|---------|---------|--------------|---------------|-----------|
+| react-datasheet-grid 4.11.6 | MIT | ~58 KB | Nativa + custom | Linhas + colunas | **Escolhido** |
+| AG Grid Community 35.3.1 | MIT | ~140 KB min+gzip | Nativa | Linhas + colunas | Descartado — bundle 2-3x maior; voltado para BI dashboards, não mini-Excel; API mais complexa |
+| Glide Data Grid 6.0.3 | MIT | ~2 MB WASM | Canvas (sem DOM) | Canvas-based | Descartado — renderização canvas impede integração de fórmulas inline por célula; inacessível para screen readers; UX mini-Excel requer DOM |
+| TanStack Table v8 + custom | MIT | ~14 KB (apenas lógica) | Zero built-in | Requer TanStack Virtual separado | Descartado — headless; construir edição inline, keyboard navigation, copy-paste e seleção de bloco do zero para v2.0 é um sprint inteiro adicional sem diferenciação |
+
+**Integração com Next.js App Router / RSC:**
+
+react-datasheet-grid usa hooks React e acessa APIs de browser (clipboard, keyboard events). É um Client Component. A integração correta é:
+
+```tsx
+// components/tabela-viva/TableGrid.tsx
+"use client";
+import { DataSheetGrid, keyColumn, textColumn } from "react-datasheet-grid";
+import "react-datasheet-grid/dist/style.css";
+```
+
+O CSS precisa de import explícito (desde a v4) — suporte a Next.js/SSR é direto sem workarounds adicionais. O componente inteiro da tabela vive em `"use client"` e é renderizado como leaf node na árvore RSC.
+
+**Pattern de coluna com fórmula:**
+
+```tsx
+import { DataSheetGrid, keyColumn, Column } from "react-datasheet-grid";
+
+type Row = { [key: string]: string | number };
+
+const formulaColumn = (key: string): Column<Row> => ({
+  ...keyColumn<Row, string>(key, {
+    component: FormulaCellEditor, // input com detecção de "=" prefix
+    copyValue: ({ rowData }) => String(rowData[key] ?? ""),
+    pasteValue: ({ rowData, value }) => ({ ...rowData, [key]: value }),
+    deleteValue: ({ rowData }) => ({ ...rowData, [key]: "" }),
+  }),
+  title: key,
+});
+```
+
+---
+
+### (b) Motor de Fórmulas — Recálculo ao Vivo
+
+**Recomendado: `HyperFormula` v3.3.0 — COM compra de licença comercial**
+
+| Library | Versão | Licença | Tamanho packed | Por que |
+|---------|--------|---------|----------------|---------|
+| **HyperFormula** | **3.3.0** | **GPL-3.0-only / Proprietária** | **~1.9 MB packed** | Único motor de fórmulas headless TypeScript production-ready com +400 funções, grafo de dependências completo, suporte a separador `;`, i18n configurável e uso comprovado em SaaS. O pacote tem 1.9 MB packed mas é carregado apenas na rota da Tabela Viva — impacto no bundle principal é zero com dynamic import. |
+
+**Aviso crítico de licença (leia antes de implementar):**
+
+HyperFormula é GPL-3.0-only. Tabelin.IA é um SaaS comercial closed-source. **A GPL-3.0 é copyleft: usar HyperFormula sob GPL-3.0 obriga a tornar todo o código-fonte da aplicação open-source.**
+
+Para uso em SaaS comercial closed-source, é obrigatório adquirir a **licença proprietária** da Handsontable (contato: sales@handsontable.com). Sem a licença proprietária, o código com HyperFormula não pode ser publicado como closed-source.
+
 ```typescript
-import { extractText } from "unpdf";
+// Com licença comercial adquirida:
+const hf = HyperFormula.buildEmpty({
+  licenseKey: "xxxx-xxxx-xxxx-xxxx-xxxx", // chave comprada
+  functionArgSeparator: ";",              // padrão Brasil
+  decimalSeparator: ",",                  // padrão Brasil
+  thousandSeparator: ".",                 // padrão Brasil
+  language: "ptPT",                       // ver nota de localização abaixo
+});
 
-const buffer = await file.arrayBuffer();
-const { text, totalPages } = await extractText(new Uint8Array(buffer), { mergePages: true });
-
-// Verificação de PDF escaneado: texto vazio ou muito curto por página
-const isScanned = !text || (text.length / totalPages) < 50;
+// Com GPL (apenas se o app for open-source):
+const hf = HyperFormula.buildEmpty({ licenseKey: "gpl-v3" });
 ```
 
-**Decisão sobre PDF escaneado:** Se `isScanned === true`, a estratégia é reutilizar o Vision OCR já existente em `processImageOcr`. O PDF é um documento de imagens — não existe rota diferente que justifique uma nova dependência pesada (Tesseract etc.). O Route Handler converte as páginas para imagem via `unpdf` + `@napi-rs/canvas` (opcional; só se renderização de página for necessária) e envia para o OpenAI Vision, exatamente como já funciona para PNG/JPEG.
+**Localização pt-BR — importante:**
 
-> **Alternativa descartada:** Tesseract.js — bundle de ~31 MB, latência alta, desnecessário quando já há Vision OCR em produção.
+HyperFormula tem 17 pacotes de idioma embutidos. **ptBR (português do Brasil) NÃO está na lista.** O idioma `ptPT` (português de Portugal) está disponível e cobre os nomes de funções do Excel/Calc em português (SOMA, SE, PROCV, SOMASE etc.) — que são idênticos entre ptPT e ptBR. A diferença entre ptPT e ptBR em nomes de funções Excel é desprezível na prática para o público-alvo (Mariana, Thiago, Carlos).
+
+Estratégia recomendada: usar `ptPT` como base e criar um pacote customizado `ptBR` mínimo sobrescrevendo apenas os eventuais termos divergentes (principalmente mensagens de erro). O mecanismo de custom language pack é simples:
+
+```typescript
+import ptPT from "hyperformula/es/i18n/languages/ptPT";
+import HyperFormula from "hyperformula";
+
+const ptBR = {
+  ...ptPT,
+  langCode: "ptBR",
+  // sobrescrever apenas o que diferir do ptPT
+  errors: {
+    ...ptPT.errors,
+    NAME: "#NOME?",  // ptBR usa "#NOME?" não "#NOME?"
+  },
+};
+
+HyperFormula.registerLanguage("ptBR", ptBR);
+```
+
+**Configuração para compatibilidade com Excel Brasil:**
+
+```typescript
+const hf = HyperFormula.buildEmpty({
+  licenseKey: "xxxx-xxxx-xxxx-xxxx-xxxx",
+  language: "ptBR",
+  functionArgSeparator: ";",  // Excel Brasil usa ";" como separador de argumentos
+  decimalSeparator: ",",
+  thousandSeparator: ".",
+  // NOTA: HyperFormula não permite que functionArgSeparator === thousandSeparator
+  // A configuração acima é a mais próxima possível do Excel pt-BR
+});
+```
+
+**Alternativas ao HyperFormula:**
+
+| Alternativa | Licença | Funções | Veredicto |
+|------------|---------|---------|-----------|
+| `@formulajs/formulajs` v4.6.0 (MIT) | MIT | ~100 funções | Sem grafo de dependências, sem recálculo em cascata, sem suporte a referências de célula (A1, B2:C5). É uma calculadora de funções isoladas, não um motor de planilha. Insuficiente para Tabela Viva. |
+| Escrever mini-evaluator próprio | Sem custo | Mínimo | Viável para SOMA(A1:B3) básico mas sem grafo de deps, sem tratamento de ciclos, sem funções complexas (PROCV, SE aninhado etc.). Gera dívida técnica alta. |
+| Formualizer (Rust/WASM) | MIT/Apache-2.0 | 320+ | Promissor — MIT, ~2 MB WASM, mais rápido que HyperFormula. Porém: biblioteca nova (2025), ecossistema imaturo, integração com Next.js/React não documentada, risco de suporte. Avaliar para v3.0 se o custo da licença HyperFormula for inviável. |
+| `fast-formula-parser` | MIT | Parcial | Abandonado, sem manutenção ativa. |
+
+**Performance do HyperFormula:**
+
+O pacote packed tem 1.9 MB, mas com `dynamic import` o peso não afeta o bundle principal:
+
+```typescript
+// Carregado apenas quando a Tabela Viva é aberta
+const { HyperFormula } = await import("hyperformula");
+```
+
+Para tabelas de uso típico no produto (10-200 linhas, 5-20 colunas), o HyperFormula é instantâneo. O peso de ~80 MB de memória para 100K células é irrelevante nessa escala.
 
 ---
 
-### Suporte nativo a PDF na OpenAI API
+### (c) CSV/XLSX Export — Reutilização do xlsx já instalado
 
-**Descoberta importante:** A OpenAI suporta PDF nativo via Chat Completions API desde março 2025.
+**Nenhuma nova dependência necessária.** O projeto já usa `xlsx` (SheetJS CE) v0.18.5 para extração/parsing de XLSX (instalado na v1.2). A mesma biblioteca gera exports:
 
-| Capability | Status | Como usar |
-|------------|--------|-----------|
-| Enviar PDF como base64 direto no messages[] | Disponível em gpt-4o, gpt-4o-mini | `type: "file"` com `data: "data:application/pdf;base64,..."` |
-| Extração automática de texto + imagens de página | Suportado | A API extrai ambos e injeta no contexto do modelo |
-| Scanned PDFs | Parcialmente | A API extrai page images e processa via vision, mas pode falhar em PDFs muito complexos |
-| Limite por arquivo | 50 MB | Bem acima do nosso cap de 5 MB |
+```typescript
+// Export CSV
+import * as XLSX from "xlsx";
 
-**Estratégia recomendada: extração local primeiro, OpenAI como fallback para scanned.**
+function exportToCSV(rows: Record<string, unknown>[], filename: string) {
+  const ws = XLSX.utils.json_to_sheet(rows);
+  const csv = XLSX.utils.sheet_to_csv(ws);
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  downloadBlob(blob, filename + ".csv");
+}
 
-Razão: extrair texto localmente com `unpdf` é gratuito, rápido e não gasta tokens. Enviar o PDF diretamente para o OpenAI extrai texto + imagens mas consome tokens de visão por página. Para o nosso caso de uso (texto extraído é injetado no prompt do tool selecionado), a extração local é suficiente para PDFs digitais.
-
-```
-Fluxo de decisão:
-1. unpdf → extractText()
-2. Se texto adequado (>50 chars/pág) → injeta como texto no system prompt do tool
-3. Se texto escasso (PDF escaneado) → converte primeira(s) página(s) em imagem → processImageOcr existente
-4. Se PDF > limite seguro de páginas → retorna erro 422 com mensagem orientativa
-```
-
----
-
-### Upload via Route Handler (sem nova dependência)
-
-O padrão `request.formData()` já está em uso em `file-analysis/upload/route.ts` e funciona nativamente no Next.js App Router para multipart form-data. Nenhuma biblioteca adicional (multer, busboy, formidable) é necessária.
-
-**Configuração next.config necessária:**
-
-O `proxyClientMaxBodySize` aplica-se apenas quando o módulo experimental `proxy` está ativo. Para Route Handlers sem proxy, o Next.js App Router não impõe limite de body por padrão além do que o Node.js HTTP server impõe (~1 GB). O nosso cap de 5 MB é aplicado em código antes de qualquer parse pesado — padrão já adotado no upload existente.
-
-Para Server Actions (se usadas no futuro para upload), configurar:
-```javascript
-// next.config.js — apenas se Server Actions forem usadas para upload
-experimental: {
-  serverActions: { bodySizeLimit: "6mb" }
+// Export XLSX
+function exportToXLSX(rows: Record<string, unknown>[], filename: string) {
+  const ws = XLSX.utils.json_to_sheet(rows);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Tabela");
+  const data = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+  const blob = new Blob([data], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+  downloadBlob(blob, filename + ".xlsx");
 }
 ```
 
-**Conclusão:** Para Route Handlers, a validação de 5 MB já presente no código existente é suficiente. Nenhuma configuração extra em `next.config.js` é necessária para o padrão atual.
+**Nota sobre versão:** xlsx 0.18.5 é a última versão publicada no npm público (Apache-2.0). Versões mais novas (0.20.x) são distribuídas apenas pelo CDN oficial da SheetJS em https://cdn.sheetjs.com e **não estão no registro npm**. Para um projeto pnpm monorepo, manter a 0.18.5 do npm é a escolha correta — evita complexidade de CDN install e a funcionalidade de export não mudou.
 
 ---
 
-### TXT: leitura sem dependência nova
+### (d) Roteamento de Intent LLM — Zero dependência nova
 
-Arquivos `.txt` são lidos diretamente via `file.text()` (Web Streams API) no Route Handler. Sem biblioteca adicional.
-
----
-
-## Stack completo de adições para v1.2
-
-### Dependências de produção a instalar
-
-| Library | Version | Instalar com |
-|---------|---------|-------------|
-| unpdf | ^1.6.2 | `npm install unpdf` |
-
-**Nenhuma outra dependência de produção é necessária.** CSV/XLSX já têm parsers em produção. PNG/JPEG já têm Vision OCR. TXT é nativo.
-
-### Sem dependências de desenvolvimento novas
-
-O setup de testes (Vitest, Playwright) e de tipagem já cobre os padrões necessários.
-
----
-
-## Padrão de integração com parsers existentes
-
-### Rota única de extração: `extractAttachmentContent()`
-
-Criar uma única função server-side que unifique os parsers por tipo MIME. Ela é chamada pelo Route Handler universal de attachment antes de injetar o conteúdo no thread.
+**Nenhuma biblioteca adicional necessária.** O OpenAI SDK 6.39.0 já instalado suporta Structured Outputs com `response_format` + Zod:
 
 ```typescript
-// src/server/attachments/extract-content.ts
-async function extractAttachmentContent(file: File): Promise<string> {
-  const mime = detectMime(file); // verifica extensão + MIME type
+import { zodResponseFormat } from "openai/helpers/zod";
+import { z } from "zod";
 
-  switch (mime) {
-    case "csv":
-      return parseFileToText(buffer, "csv");       // parser existente
-    case "xlsx":
-      return parseFileToText(buffer, "xlsx");      // parser existente
-    case "png":
-    case "jpeg":
-      return await processImageOcr(base64, mime);  // OCR existente → retorna TSV texto
-    case "pdf":
-      return await extractPdfContent(buffer);      // NOVO: unpdf → text ou OCR fallback
-    case "txt":
-      return await file.text();                    // nativo
-  }
-}
+const IntentSchema = z.object({
+  intent: z.enum([
+    "formula",
+    "sql",
+    "regex",
+    "scripts",
+    "file_analysis",
+    "ocr",
+    "tabela",        // novo: gera Tabela Viva
+    "clarificacao",  // novo: IA faz perguntas ao usuário
+    "chat_generico", // fallback
+  ]),
+  confidence: z.number().min(0).max(1),
+  requires_clarification: z.boolean(),
+});
+
+// No Route Handler do chat unificado:
+const completion = await openai.beta.chat.completions.parse({
+  model: "gpt-4o-mini",
+  messages: [
+    { role: "system", content: INTENT_CLASSIFIER_PROMPT },
+    { role: "user", content: userMessage },
+  ],
+  response_format: zodResponseFormat(IntentSchema, "intent"),
+});
+
+const { intent, requires_clarification } = completion.choices[0].message.parsed;
 ```
 
-**Ponto de integração com a conversa:**  
-O conteúdo extraído é persistido como uma troca especial no thread do tool (toolKind + userId), marcada com `role: "system"` ou como primeiro `user` turn com prefixo `[Documento anexado]`. Follow-ups da mesma conversa reutilizam o texto persistido sem re-extrair o arquivo.
+**Por que não usar uma biblioteca de classificação separada:**
+
+- OpenAI Structured Outputs com `strict: true` garantem 100% de aderência ao schema (verificado: gpt-4o-2024-08-06+, gpt-4o-mini)
+- O projeto já paga pelo OpenAI — não há custo incremental de classificação
+- Alternativas como `langchain` ou `ai` SDK da Vercel adicionariam dependências pesadas sem benefício real para um roteador com schema fixo
+- A lógica de routing em si é um switch simples sobre o campo `intent` retornado
+
+**Para o loop de clarificação multi-turn**, o mesmo padrão de threads existente (ConversationExchange) é reutilizado com `toolKind: "tabela"`. A IA retorna `requires_clarification: true` até ter especificação completa, então o frontend inicia a geração da tabela.
 
 ---
 
-## O que NÃO usar
+## Dependências de produção a instalar (apenas novas)
 
-| Evitar | Por quê | Usar em vez disso |
+| Library | Versão | Instalar com |
+|---------|--------|-------------|
+| react-datasheet-grid | ^4.11.6 | `pnpm add react-datasheet-grid --filter web` |
+| hyperformula | ^3.3.0 | `pnpm add hyperformula --filter web` |
+
+**Licença a contratar separadamente (não é npm):**
+- HyperFormula proprietary license — contato: sales@handsontable.com antes do deploy em produção
+
+**Nenhuma dependência de desenvolvimento nova necessária.**
+
+---
+
+## Sem dependências novas (confirmado)
+
+| Capacidade | Por quê não precisa de nova dep |
+|------------|-------------------------------|
+| CSV/XLSX export | `xlsx` 0.18.5 já instalado — `XLSX.write()` cobre os dois formatos |
+| Intent classification | OpenAI SDK + Zod + `zodResponseFormat` já instalados |
+| Multi-turn clarification loop | Modelo ConversationExchange já existe, reusa com `toolKind: "tabela"` |
+| Streaming de resposta do chat | Hooks de streaming existentes reusados |
+| Attach files na Tabela Viva | Pipeline de extração de v1.2 reusado sem modificação |
+
+---
+
+## O que NÃO adicionar
+
+| Evitar | Por que | Alternativa correta |
 |--------|---------|-------------------|
-| **Tesseract.js** | Bundle de ~31 MB, lento, desnecessário — Vision OCR já existe | `processImageOcr` existente para PDFs escaneados |
-| **pdf-parse** (npm original) | Usa `fs.readFileSync` internamente — falha em ambientes serverless/Edge sem filesystem real | `unpdf` |
-| **pdfjs-dist** diretamente | Bundle de +2 MB gzipped; API de baixo nível (transform matrices, operator lists); overhead injustificado para extração simples de texto | `unpdf` (que usa pdfjs internamente com build serverless) |
-| **Multer / Busboy / Formidable** | Não necessários — `request.formData()` nativo do Next.js App Router funciona sem eles | `request.formData()` nativo |
-| **OpenAI Files API (upload persistente)** | Adiciona latência de round-trip para cada PDF, cria estado remoto difícil de auditar, tem custo de armazenamento | Processamento local + base64 inline quando preciso |
-| **Server Actions para upload** | bodySizeLimit padrão de 1 MB causa problemas com arquivos maiores; requer configuração extra | Route Handler `POST /api/tools/attachment/extract` |
-| **Bibliotecas de OCR baseadas em Rust/WASM** | Incompatíveis com o runtime Node.js padrão do Next.js sem configuração complexa | OpenAI Vision via `processImageOcr` |
+| **AG Grid Community** | Bundle 2-3x maior (~140 KB min+gzip vs ~58 KB packed do DSG); API voltada para BI dashboards, não para mini-Excel; `react-datasheet-grid` é mais especializado para este caso de uso | `react-datasheet-grid` |
+| **Glide Data Grid** | Rendering canvas: impossibilita edição inline DOM, fórmulas em célula, acessibilidade nativa e integração com HyperFormula por célula | `react-datasheet-grid` |
+| **TanStack Table + custom cell editing** | Headless — construir keyboard nav, copy-paste, seleção de bloco e edição inline do zero consome 1-2 sprints sem diferenciação de produto | `react-datasheet-grid` |
+| **@formulajs/formulajs** sozinho | Sem grafo de dependências, sem referências de célula, sem recálculo em cascata — não é um motor de planilha | `hyperformula` |
+| **fast-formula-parser** | Abandonado, sem manutenção ativa | `hyperformula` |
+| **LangChain / Vercel AI SDK** | Overhead de 300-600 KB+ para um roteador com schema fixo que o OpenAI SDK já resolve com `zodResponseFormat` | OpenAI SDK existente + Zod |
+| **HyperFormula sob GPL** | Tabelin.IA é closed-source comercial — GPL obriga open-sourcing de todo o código | Comprar licença proprietária HyperFormula |
+| **Tesseract.js** | Já descartado em v1.2; sem mudança | OpenAI Vision já em produção |
+| **xlsx 0.20.x via CDN** | Não disponível no npm; instala de CDN proprietário — incompatível com pnpm lockfile | Manter `xlsx` 0.18.5 do npm |
 
 ---
 
@@ -171,44 +287,92 @@ O conteúdo extraído é persistido como uma troca especial no thread do tool (t
 
 | Package | Compatível com | Notas |
 |---------|----------------|-------|
-| unpdf 1.6.2 | Node.js 20+ | Requer Node 20+; nosso ambiente Next.js 16 já roda em Node 20+ |
-| unpdf 1.6.2 | TypeScript 5+ | Tipos nativos incluídos; sem @types separado necessário |
-| unpdf 1.6.2 | Next.js 16 App Router | ESM nativo; sem import dinâmico especial necessário |
-| unpdf 1.6.2 | OpenAI SDK 6.x | Sem overlap — unpdf extrai texto, OpenAI SDK recebe texto extraído |
+| react-datasheet-grid 4.11.6 | React 19.2.6 | Testado com React 18+; React 19 é suportado |
+| react-datasheet-grid 4.11.6 | Next.js 16 App Router | Requer `"use client"` no componente pai; CSS import explícito necessário |
+| hyperformula 3.3.0 | TypeScript 6.0.3 | Tipos nativos incluídos; sem @types separado |
+| hyperformula 3.3.0 | Next.js 16 App Router | Requer `dynamic import` para separação de bundle; não pode ser usado em RSC |
+| hyperformula 3.3.0 | react-datasheet-grid 4.11.6 | Nenhum overlap; HF processa fórmulas; DSG renderiza células — integração via callbacks `onChange` |
+| xlsx 0.18.5 (existente) | react-datasheet-grid 4.11.6 | Export direto de `value[][]` do grid via `XLSX.utils.aoa_to_sheet` |
 
 ---
 
-## Alternativas consideradas
+## Padrão de integração HyperFormula + react-datasheet-grid
 
-| Recomendado | Alternativa | Quando usar a alternativa |
-|-------------|-------------|--------------------------|
-| unpdf | pdf-parse | Apenas em ambientes Node.js puros com filesystem garantido (não serverless) |
-| unpdf | pdfjs-dist direto | Quando precisar de renderização de páginas como imagens, não apenas texto |
-| Extração local + OpenAI Vision fallback | Enviar PDF diretamente para OpenAI API | Quando simplicidade é prioridade máxima e custo de tokens não é preocupação |
-| Route Handler nativo formData() | Multer/Busboy | Somente se precisar de streaming de upload para object storage externo (S3 etc.) |
+```typescript
+// hooks/useTableFormulas.ts
+"use client";
+import { useEffect, useRef, useState } from "react";
+import type HyperFormulaType from "hyperformula";
+
+export function useTableFormulas(initialData: string[][]) {
+  const hfRef = useRef<HyperFormulaType | null>(null);
+  const [computed, setComputed] = useState<(string | number)[][]>(initialData);
+
+  useEffect(() => {
+    // dynamic import: HyperFormula não carrega no bundle principal
+    import("hyperformula").then(({ HyperFormula, ptBR }) => {
+      HyperFormula.registerLanguage("ptBR", ptBR);
+      hfRef.current = HyperFormula.buildFromArray(initialData, {
+        licenseKey: process.env.NEXT_PUBLIC_HYPERFORMULA_LICENSE!,
+        language: "ptBR",
+        functionArgSeparator: ";",
+        decimalSeparator: ",",
+        thousandSeparator: ".",
+      });
+      recalcAll();
+    });
+    return () => hfRef.current?.destroy();
+  }, []);
+
+  function onCellChange(row: number, col: number, value: string) {
+    hfRef.current?.setCellContents({ row, col, sheet: 0 }, [[value]]);
+    recalcAll();
+  }
+
+  function recalcAll() {
+    if (!hfRef.current) return;
+    const rows = hfRef.current.getSheetDimensions(0);
+    const result = [];
+    for (let r = 0; r < rows.height; r++) {
+      const row = [];
+      for (let c = 0; c < rows.width; c++) {
+        row.push(hfRef.current.getCellValue({ row: r, col: c, sheet: 0 }));
+      }
+      result.push(row);
+    }
+    setComputed(result);
+  }
+
+  return { computed, onCellChange };
+}
+```
 
 ---
 
-## Instalação (apenas o novo)
+## Instalação
 
 ```bash
 # A partir da raiz do monorepo
-npm install unpdf --workspace apps/web
+pnpm add react-datasheet-grid --filter web
+pnpm add hyperformula --filter web
 ```
 
 ---
 
 ## Sources
 
-- https://github.com/unjs/unpdf — unpdf v1.6.2 (release abril 2026), API extractText(), suporte Node.js/serverless/ESM
-- https://www.pkgpulse.com/blog/unpdf-vs-pdf-parse-vs-pdfjs-dist-pdf-parsing-extraction-nodejs-2026 — Comparação das três principais libs PDF para Node.js (fev 2026); benchmark de bundle size e falhas conhecidas
-- https://strapi.io/blog/7-best-javascript-pdf-parsing-libraries-nodejs-2025 — Survey de 7 libs; recomenda unpdf para TypeScript + Next.js
-- https://developers.openai.com/api/docs/guides/file-inputs — OpenAI suporte nativo a PDF em Chat Completions (gpt-4o); formato de mensagem com base64
-- https://community.openai.com/t/direct-pdf-file-input-now-supported-in-the-api/1146647 — Anúncio suporte PDF (março 2025); limitações com PDFs escaneados multi-coluna
-- https://nextjs.org/docs/app/api-reference/file-conventions/route — Next.js Route Handler: `request.formData()` nativo, sem bodySizeLimit em Route Handlers sem proxy
-- https://nextjs.org/docs/app/api-reference/config/next-config-js/proxyClientMaxBodySize — proxyClientMaxBodySize aplica-se apenas quando proxy experimental está ativo; default 10 MB; não afeta Route Handlers simples
-- apps/web/src/app/api/tools/file-analysis/upload/route.ts — Padrão atual de upload com formData nativo; validação 5 MB em código; sem multer/busboy
+- Context7 `/nick-keller/react-datasheet-grid` — copy-paste, virtualização, keyColumn pattern, v4 changelog (migração react-virtual, CSS explícito, Next.js compat) — HIGH confidence
+- Context7 `/websites/ag-grid_react-data-grid` — Community MIT, bundle com AllCommunityModule, Next.js integration — HIGH confidence
+- Context7 `/handsontable/hyperformula` — licença GPL-3.0/proprietária, separadores, dependency graph, language pack API — HIGH confidence
+- Context7 `/websites/hyperformula_handsontable` — ptBR não existe, ptPT disponível, custom language pack API — HIGH confidence
+- https://github.com/handsontable/hyperformula/tree/master/src/i18n/languages — Lista definitiva dos 17 idiomas; `ptBR` ausente, `ptPT` presente — HIGH confidence (verificado diretamente)
+- https://hyperformula.handsontable.com/docs/guide/licensing.html — GPL-3.0 apenas para open-source; proprietary license para closed-source SaaS — HIGH confidence
+- npm show react-datasheet-grid / hyperformula / ag-grid-community — versões atuais e licenças — HIGH confidence (verificado ao vivo)
+- https://bundlephobia.com/package/react-datasheet-grid@4.11.5 — bundle size reference — MEDIUM confidence (não carregou métricas mas npm pack confirmou ~58 KB)
+- https://docs.bswen.com/blog/2026-03-04-formualizer-vs-hyperformula-comparison/ — Formualizer como alternativa MIT; HyperFormula GPL copyleft risk — MEDIUM confidence
+- https://openai.com/index/introducing-structured-outputs-in-the-api/ — `zodResponseFormat`, strict: true, 100% schema adherence — HIGH confidence
+- apps/web/package.json (lido diretamente) — versões em produção: openai 6.39.0, xlsx 0.18.5, zod 4.4.3 — HIGH confidence
 
 ---
-*Stack research para: Tabelin.IA v1.2 Anexos Universais*
-*Pesquisado: 2026-06-03*
+*Stack research para: Tabelin.IA v2.0 Chat Unificado & Tabela Viva*
+*Pesquisado: 2026-06-08*
