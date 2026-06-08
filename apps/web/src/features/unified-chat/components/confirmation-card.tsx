@@ -17,25 +17,71 @@ export function ConfirmationCard({
     onConfirm(editedSpec);
   }
 
+  function handleTitleChange(e: React.ChangeEvent<HTMLInputElement>) {
+    setEditedSpec((current) => ({ ...current, title: e.target.value }));
+  }
+
+  function handleColumnNameChange(index: number, name: string) {
+    setEditedSpec((current) => ({
+      ...current,
+      columns: current.columns.map((col, i) => (i === index ? { ...col, name } : col)),
+    }));
+  }
+
+  function handleRowCountChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const value = parseInt(e.target.value, 10);
+    if (!isNaN(value) && value >= 1 && value <= 200) {
+      setEditedSpec((current) => ({ ...current, rowCount: value }));
+    }
+  }
+
   return (
     <div className="assistant-card" aria-label="Confirmar especificação da tabela">
       <div className="output-header">
         <h2>Confirme os detalhes da tabela</h2>
       </div>
       <div className="output-box" data-status="complete">
-        <p>
-          <strong>Título:</strong> {editedSpec.title}
-        </p>
-        <ul aria-label="Colunas da tabela">
-          {editedSpec.columns.map((col, index) => (
-            <li key={index}>
-              {col.name} ({col.type})
-            </li>
-          ))}
-        </ul>
-        <p>
-          <strong>Linhas:</strong> {editedSpec.rowCount}
-        </p>
+        <div>
+          <label htmlFor="confirmation-title">
+            <strong>Título:</strong>
+          </label>
+          <input
+            id="confirmation-title"
+            type="text"
+            value={editedSpec.title}
+            onChange={handleTitleChange}
+            aria-label="Título da tabela"
+          />
+        </div>
+        <div>
+          <strong>Colunas:</strong>
+          <ul aria-label="Colunas da tabela">
+            {editedSpec.columns.map((col, index) => (
+              <li key={index}>
+                <input
+                  type="text"
+                  value={col.name}
+                  onChange={(e) => handleColumnNameChange(index, e.target.value)}
+                  aria-label={`Nome da coluna ${index + 1}`}
+                />
+              </li>
+            ))}
+          </ul>
+        </div>
+        <div>
+          <label htmlFor="confirmation-rowcount">
+            <strong>Linhas:</strong>
+          </label>
+          <input
+            id="confirmation-rowcount"
+            type="number"
+            min="1"
+            max="200"
+            value={editedSpec.rowCount}
+            onChange={handleRowCountChange}
+            aria-label="Número de linhas da tabela"
+          />
+        </div>
         <button
           className="ghost-button"
           type="button"
