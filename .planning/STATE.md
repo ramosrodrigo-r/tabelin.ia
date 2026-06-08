@@ -2,10 +2,10 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Chat Unificado & Tabela Viva
-status: phase_complete
-stopped_at: Completed Phase 12; ready for Phase 13
-last_updated: "2026-06-08T15:45:10.000Z"
-last_activity: 2026-06-08 -- Completed Phase 12 final gate
+status: phase_planned
+stopped_at: Phase 13 planned (4 plans, checker passed w/ revisions); awaiting execution
+last_updated: "2026-06-08T16:30:00.000Z"
+last_activity: 2026-06-08 -- Planned Phase 13 (Clarification Loop)
 progress:
   total_phases: 4
   completed_phases: 1
@@ -25,12 +25,12 @@ See: .planning/PROJECT.md (updated 2026-06-08)
 
 ## Current Position
 
-Phase: 12 (Intent Classifier & Unified Route) — COMPLETE
-Plan: 4 of 4
-Status: Ready for Phase 13 planning/execution
-Last activity: 2026-06-08 -- Completed Phase 12 final gate
+Phase: 13 (Clarification Loop) — PLANNED
+Plan: 0 of 4 executed (4 plans written, plan-checker passed with revisions)
+Status: Ready to execute Phase 13
+Last activity: 2026-06-08 -- Planned Phase 13 (Clarification Loop)
 
-Progress: [██████████] 100%
+Progress: [██████████] 100% (Phase 12 done; Phase 13 planned, not executed)
 
 ## Performance Metrics
 
@@ -86,10 +86,10 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-06-08T15:45:10.000Z
-Stopped at: Completed Phase 12; ready for Phase 13
-Resume file: .planning/ROADMAP.md
+Last session: 2026-06-08T16:30:00.000Z
+Stopped at: Phase 13 planned (4 plans); did NOT auto-advance to executor per user request this session
+Resume file: .planning/phases/13-clarification-loop/13-01-PLAN.md
 
 ## Operator Next Steps
 
-- Run `/gsd-plan-phase 13` to plan Phase 13 (Clarification Loop), or `/gsd-execute-phase 13` if plans already exist
+- Run `/gsd-execute-phase 13` to execute Phase 13 (Clarification Loop). 4 plans across 4 waves; Wave 3 ends in a human-verify checkpoint.
