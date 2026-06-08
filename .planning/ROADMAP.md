@@ -114,7 +114,7 @@ Audit: `.planning/milestones/v1.2-MILESTONE-AUDIT.md` (status: passed)
 
 **Wave 1** *(blocked on Wave 0)*
 
-- [ ] 13-02-PLAN.md — Schemas compartilhados, table-clarifier.ts e serialização context-messages.ts
+- [x] 13-02-PLAN.md — Schemas compartilhados, table-clarifier.ts e serialização context-messages.ts
 
 **Wave 2** *(blocked on Wave 1)*
 
@@ -172,6 +172,6 @@ Audit: `.planning/milestones/v1.2-MILESTONE-AUDIT.md` (status: passed)
 | 10. Persistence & LLM Context | v1.2 | 4/4 | Complete | 2026-06-04 |
 | 11. Attachment UI & Pro Gating | v1.2 | 5/5 | Complete | 2026-06-04 |
 | 12. Intent Classifier & Unified Route | v2.0 | 1/4 | In Progress|  |
-| 13. Clarification Loop | v2.0 | 1/4 | In Progress|  |
+| 13. Clarification Loop | v2.0 | 2/4 | In Progress|  |
 | 14. Tabela Viva | v2.0 | 0/? | Not started | - |
 | 15. Export, UX Migration & Hardening | v2.0 | 0/? | Not started | - |
