@@ -10,12 +10,12 @@
 
 ### Chat Unificado (UNI)
 
-- [ ] **UNI-01**: Usuário digita qualquer pedido em um único input e a IA detecta o intent (fórmula/SQL/regex/scripts/análise/OCR/tabela) sem precisar escolher um tool antes
+- [x] **UNI-01**: Usuário digita qualquer pedido em um único input e a IA detecta o intent (fórmula/SQL/regex/scripts/análise/OCR/tabela) sem precisar escolher um tool antes
 - [ ] **UNI-02**: Usuário vê um pill com o tipo detectado e pode corrigir o roteamento com um clique (override de intent)
 - [ ] **UNI-03**: Outputs heterogêneos (código, grid de tabela, texto) renderizam inline no mesmo thread de conversa
 - [ ] **UNI-04**: Follow-ups preservam o contexto da capacidade resolvida (ex.: "agora explica" continua em fórmula) sem regressão das 7 capacidades existentes
 - [ ] **UNI-05**: Seleção de plataforma/dialeto (Excel/Sheets; dialeto SQL) persiste entre turns relacionados na sessão unificada
-- [ ] **UNI-06**: Classificação de intent embutida em chamada única (OpenAI Structured Outputs, campo de intent primeiro no schema) — o início do streaming permanece dentro do SLA de 2,5s
+- [x] **UNI-06**: Classificação de intent embutida em chamada única (OpenAI Structured Outputs, campo de intent primeiro no schema) — o início do streaming permanece dentro do SLA de 2,5s
 - [ ] **UNI-07**: Páginas/atalhos por-tool permanecem acessíveis (sem remoção forçada das abas); o chat unificado torna-se o ponto de entrada default
 
 ### Loop de Clarificação (CLAR)
@@ -77,12 +77,12 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| UNI-01 | Phase 12 | Pending |
+| UNI-01 | Phase 12 | Complete |
 | UNI-02 | Phase 12 | Pending |
 | UNI-03 | Phase 12 | Pending |
 | UNI-04 | Phase 12 | Pending |
 | UNI-05 | Phase 12 | Pending |
-| UNI-06 | Phase 12 | Pending |
+| UNI-06 | Phase 12 | Complete |
 | UNI-07 | Phase 12 | Pending |
 | CLAR-01 | Phase 13 | Pending |
 | CLAR-02 | Phase 13 | Pending |
