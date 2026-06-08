@@ -1,10 +1,11 @@
 ---
 phase: 12
 slug: intent-classifier-unified-route
-status: draft
+status: approved
 shadcn_initialized: false
 preset: none
 created: 2026-06-08
+reviewed_at: 2026-06-08
 ---
 
 # Phase 12 — UI Design Contract
