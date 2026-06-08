@@ -15,7 +15,7 @@ type Props = {
   entitlement: UserEntitlement;
 };
 
-export function OcrTool({ entitlement: _entitlement }: Props) {
+export function OcrTool({}: Props) {
   const [uiState, setUiState] = useState<UiState>("idle");
   const [result, setResult] = useState<OcrResponse | null>(null);
 

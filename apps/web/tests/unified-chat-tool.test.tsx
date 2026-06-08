@@ -1,0 +1,462 @@
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+import { useInvokeNewConversation, WorkspaceConversationProvider } from "@/components/app/workspace-conversation-context";
+import { IntentPill } from "@/features/unified-chat/components/intent-pill";
+import { RenderDispatcher } from "@/features/unified-chat/components/render-dispatcher";
+import { SessionContextSelector } from "@/features/unified-chat/components/session-context-selector";
+import { UnifiedChatTool } from "@/features/unified-chat/unified-chat-tool";
+import type { UnifiedCompletePayload, UserEntitlement } from "@tabelin/shared";
+
+vi.mock("react-shiki", () => ({
+  useShikiHighlighter: () => null,
+}));
+
+const freeEntitlement: UserEntitlement = { plan: "free", status: "active" };
+const proEntitlement: UserEntitlement = {
+  plan: "pro",
+  status: "active",
+  cycle: "monthly",
+  currentPeriodEnd: new Date("2027-01-01"),
+};
+
+const formulaPayload = {
+  kind: "formula",
+  formula: "=SOMA(A:A)",
+  explanation: "Soma a coluna A.",
+  assumptions: [],
+  warnings: [],
+  metadata: {
+    mode: "generate",
+    platform: "excel",
+    formulaLanguage: "pt-BR",
+    separator: ";",
+    providerModel: "test",
+  },
+} satisfies UnifiedCompletePayload;
+
+const sqlPayload = {
+  kind: "sql",
+  query: "SELECT * FROM vendas",
+  explanation: "Busca vendas.",
+  assumptions: [],
+  warnings: [],
+  isDestructive: false,
+  metadata: {
+    mode: "generate",
+    dialect: "postgresql",
+    isDestructive: false,
+    providerModel: "test",
+  },
+} satisfies UnifiedCompletePayload;
+
+const regexPayload = {
+  kind: "regex_generate",
+  pattern: "\\d+",
+  explanation: "Encontra números.",
+  examples: ["123"],
+  assumptions: [],
+  warnings: [],
+  metadata: { mode: "generate", providerModel: "test" },
+} satisfies UnifiedCompletePayload;
+
+const scriptPayload = {
+  kind: "script",
+  code: "function main() {}",
+  explanation: "Executa uma automação.",
+  assumptions: [],
+  warnings: [],
+  isDestructive: false,
+  metadata: {
+    mode: "generate",
+    scriptType: "apps_script",
+    isDestructive: false,
+    providerModel: "test",
+  },
+} satisfies UnifiedCompletePayload;
+
+const templatePayload = {
+  kind: "template",
+  output: "| Campo | Tipo |",
+  explanation: "Modelo em Markdown.",
+  assumptions: [],
+  warnings: [],
+  metadata: { mode: "generate", providerModel: "test" },
+} satisfies UnifiedCompletePayload;
+
+function encodeLine(line: unknown) {
+  return new TextEncoder().encode(`${JSON.stringify(line)}\n`);
+}
+
+function streamResponse(lines: unknown[]) {
+  return new Response(
+    new ReadableStream({
+      start(controller) {
+        for (const line of lines) {
+          controller.enqueue(encodeLine(line));
+        }
+        controller.close();
+      },
+    }),
+    { status: 200 }
+  );
+}
+
+function rawStreamResponse(lines: string[]) {
+  const encoder = new TextEncoder();
+  return new Response(
+    new ReadableStream({
+      start(controller) {
+        for (const line of lines) {
+          controller.enqueue(encoder.encode(line));
+        }
+        controller.close();
+      },
+    }),
+    { status: 200 }
+  );
+}
+
+function formulaStream() {
+  return streamResponse([
+    { type: "intent_detected", intent: "formula", confidence: "high" },
+    { type: "metadata", metadata: formulaPayload.metadata },
+    { type: "delta", text: formulaPayload.formula },
+    { type: "complete", payload: formulaPayload },
+  ]);
+}
+
+function sqlStream() {
+  return streamResponse([
+    { type: "intent_detected", intent: "sql", confidence: "high" },
+    { type: "metadata", metadata: sqlPayload.metadata },
+    { type: "delta", text: sqlPayload.query },
+    { type: "complete", payload: sqlPayload },
+  ]);
+}
+
+function parseJsonRequestBody(fetchMock: ReturnType<typeof vi.spyOn>, index = 0) {
+  const init = fetchMock.mock.calls[index][1] as RequestInit;
+  return JSON.parse(init.body as string) as Record<string, unknown>;
+}
+
+describe("IntentPill", () => {
+  it("renders detected state and closes the override dropdown with Escape", async () => {
+    const user = userEvent.setup();
+    render(<IntentPill intent="formula" onOverride={vi.fn()} />);
+
+    expect(screen.getByText("Fórmula · detectado")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: /Tipo detectado: Fórmula/ }));
+    expect(screen.getAllByRole("option")).toHaveLength(7);
+    expect(screen.getByText("Mudar o tipo de resposta")).toBeInTheDocument();
+
+    await user.keyboard("{Escape}");
+    expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Tipo detectado: Fórmula/ })).toHaveFocus();
+  });
+
+  it("selecting SQL calls onOverride", async () => {
+    const user = userEvent.setup();
+    const onOverride = vi.fn();
+    render(<IntentPill intent="formula" onOverride={onOverride} />);
+
+    await user.click(screen.getByRole("button", { name: /Tipo detectado: Fórmula/ }));
+    await user.click(screen.getByRole("option", { name: "SQL" }));
+
+    expect(onOverride).toHaveBeenCalledWith("sql");
+  });
+});
+
+describe("SessionContextSelector", () => {
+  it("shows the unified defaults", () => {
+    render(
+      <SessionContextSelector
+        platform="excel"
+        formulaLanguage="pt-BR"
+        separator=";"
+        sqlDialect="postgresql"
+        onPlatformChange={vi.fn()}
+        onFormulaLanguageChange={vi.fn()}
+        onSeparatorChange={vi.fn()}
+        onSqlDialectChange={vi.fn()}
+      />
+    );
+
+    expect(screen.getByText("Plataforma")).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "Microsoft Excel" })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByRole("button", { name: "pt-BR" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByLabelText("Separador")).toHaveValue(";");
+    expect(screen.getByLabelText("Dialeto SQL")).toHaveValue("postgresql");
+  });
+});
+
+describe("RenderDispatcher", () => {
+  const baseProps = {
+    status: "complete" as const,
+    draft: "",
+    metadata: null,
+    warnings: [],
+    error: "",
+    attachmentMeta: null,
+    onRetry: vi.fn(),
+  };
+
+  it("renders formula, SQL, regex, script, template, table_stub, needs_file, and streaming states", () => {
+    const { rerender } = render(
+      <RenderDispatcher {...baseProps} payload={formulaPayload} metadata={formulaPayload.metadata} />
+    );
+    expect(screen.getByText("=SOMA(A:A)")).toBeInTheDocument();
+
+    rerender(<RenderDispatcher {...baseProps} payload={sqlPayload} metadata={sqlPayload.metadata} />);
+    expect(screen.getByText("SELECT * FROM vendas")).toBeInTheDocument();
+
+    rerender(<RenderDispatcher {...baseProps} payload={regexPayload} metadata={regexPayload.metadata} />);
+    expect(screen.getByText("\\d+")).toBeInTheDocument();
+
+    rerender(<RenderDispatcher {...baseProps} payload={scriptPayload} metadata={scriptPayload.metadata} />);
+    expect(screen.getByText("function main() {}")).toBeInTheDocument();
+
+    rerender(<RenderDispatcher {...baseProps} payload={templatePayload} metadata={templatePayload.metadata} />);
+    expect(screen.getByText("| Campo | Tipo |")).toBeInTheDocument();
+
+    rerender(
+      <RenderDispatcher
+        {...baseProps}
+        payload={{
+          kind: "table_stub",
+          originalPrompt: "Monte uma tabela",
+          message: "Tabela a caminho.",
+        }}
+      />
+    );
+    expect(screen.getByText("Tabela a caminho.")).toBeInTheDocument();
+
+    rerender(
+      <RenderDispatcher
+        {...baseProps}
+        payload={{ kind: "needs_file", intent: "ocr" }}
+        needsFile="ocr"
+      />
+    );
+    expect(screen.getByText("Esse pedido precisa de um arquivo.")).toBeInTheDocument();
+
+    rerender(
+      <RenderDispatcher
+        {...baseProps}
+        status="streaming"
+        draft="rascunho em streaming"
+        payload={null}
+      />
+    );
+    expect(screen.getByText("rascunho em streaming")).toBeInTheDocument();
+  });
+});
+
+describe("UnifiedChatTool", () => {
+  beforeEach(() => {
+    vi.restoreAllMocks();
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: { writeText: vi.fn().mockResolvedValue(undefined) },
+    });
+  });
+
+  it("renders the empty state and selector defaults", () => {
+    render(<UnifiedChatTool entitlement={freeEntitlement} />);
+
+    expect(screen.getByText("O que você quer resolver hoje?")).toBeInTheDocument();
+    expect(screen.getByLabelText("Separador")).toHaveValue(";");
+    expect(screen.getByLabelText("Dialeto SQL")).toHaveValue("postgresql");
+  });
+
+  it("shows intent_detected before the final payload arrives", async () => {
+    const user = userEvent.setup();
+    let controller!: ReadableStreamDefaultController<Uint8Array>;
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(
+        new ReadableStream<Uint8Array>({
+          start(c) {
+            controller = c;
+          },
+        }),
+        { status: 200 }
+      )
+    );
+
+    render(<UnifiedChatTool entitlement={freeEntitlement} />);
+
+    await user.type(screen.getByLabelText("Pedido"), "Some a coluna A");
+    await user.click(screen.getByRole("button", { name: "Enviar" }));
+
+    await act(async () => {
+      controller.enqueue(encodeLine({ type: "intent_detected", intent: "formula", confidence: "high" }));
+    });
+
+    expect(await screen.findByText("Fórmula · detectado")).toBeInTheDocument();
+    expect(screen.queryByText("=SOMA(A:A)")).not.toBeInTheDocument();
+
+    await act(async () => {
+      controller.enqueue(encodeLine({ type: "metadata", metadata: formulaPayload.metadata }));
+      controller.enqueue(encodeLine({ type: "complete", payload: formulaPayload }));
+      controller.close();
+    });
+
+    await waitFor(() => expect(screen.getByText("=SOMA(A:A)")).toBeInTheDocument());
+    expect(fetchMock).toHaveBeenCalledWith("/api/chat/unified", expect.any(Object));
+  });
+
+  it("submits default context fields as JSON", async () => {
+    const user = userEvent.setup();
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(formulaStream());
+
+    render(<UnifiedChatTool entitlement={freeEntitlement} />);
+
+    await user.type(screen.getByLabelText("Pedido"), "Some a coluna A");
+    await user.click(screen.getByRole("button", { name: "Enviar" }));
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    const body = parseJsonRequestBody(fetchMock);
+
+    expect(body).toMatchObject({
+      prompt: "Some a coluna A",
+      platform: "excel",
+      formulaLanguage: "pt-BR",
+      separator: ";",
+      sqlDialect: "postgresql",
+      scriptType: "apps_script",
+    });
+  });
+
+  it("corrupt NDJSON enters the error state", async () => {
+    const user = userEvent.setup();
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(rawStreamResponse(["not-json\n"]));
+
+    render(<UnifiedChatTool entitlement={freeEntitlement} />);
+
+    await user.type(screen.getByLabelText("Pedido"), "Some a coluna A");
+    await user.click(screen.getByRole("button", { name: "Enviar" }));
+
+    expect(await screen.findByText("Resposta corrompida. Tente novamente.")).toBeInTheDocument();
+  });
+
+  it("file submit uses FormData without manual content-type", async () => {
+    const user = userEvent.setup();
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      streamResponse([
+        { type: "intent_detected", intent: "ocr", confidence: "high" },
+        { type: "needs_file", intent: "ocr" },
+        { type: "complete", payload: { kind: "needs_file", intent: "ocr" } },
+      ])
+    );
+
+    render(<UnifiedChatTool entitlement={proEntitlement} />);
+
+    const input = document.querySelector('input[type="file"]') as HTMLInputElement;
+    await user.upload(input, new File(["a,b\n1,2"], "dados.csv", { type: "text/csv" }));
+    await user.type(screen.getByLabelText("Pedido"), "Analise o arquivo");
+    await user.click(screen.getByRole("button", { name: "Enviar" }));
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    const init = fetchMock.mock.calls[0][1] as RequestInit;
+
+    expect(init.body).toBeInstanceOf(FormData);
+    expect(init.headers).toEqual({});
+  });
+
+  it("override re-submits the original prompt with overrideIntent", async () => {
+    const user = userEvent.setup();
+    const fetchMock = vi.spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(formulaStream())
+      .mockResolvedValueOnce(sqlStream());
+
+    render(<UnifiedChatTool entitlement={freeEntitlement} />);
+
+    await user.type(screen.getByLabelText("Pedido"), "Tenho PROCV, mas quero SQL");
+    await user.click(screen.getByRole("button", { name: "Enviar" }));
+    await waitFor(() => expect(screen.getByText("=SOMA(A:A)")).toBeInTheDocument());
+
+    await user.click(screen.getByRole("button", { name: /Tipo detectado: Fórmula/ }));
+    await user.click(screen.getByRole("option", { name: "SQL" }));
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+    const secondBody = parseJsonRequestBody(fetchMock, 1);
+
+    expect(secondBody).toMatchObject({
+      prompt: "Tenho PROCV, mas quero SQL",
+      overrideIntent: "sql",
+    });
+    await waitFor(() => expect(screen.getByText("SELECT * FROM vendas")).toBeInTheDocument());
+    expect(screen.getByText("SQL · corrigido")).toBeInTheDocument();
+  });
+
+  it("new conversation clears archived exchanges", async () => {
+    const user = userEvent.setup();
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(formulaStream());
+
+    function ClearButton() {
+      const invoke = useInvokeNewConversation();
+      return <button type="button" onClick={() => invoke?.()}>Limpar</button>;
+    }
+
+    render(
+      <WorkspaceConversationProvider>
+        <ClearButton />
+        <UnifiedChatTool entitlement={freeEntitlement} />
+      </WorkspaceConversationProvider>
+    );
+
+    await user.type(screen.getByLabelText("Pedido"), "Some a coluna A");
+    await user.click(screen.getByRole("button", { name: "Enviar" }));
+    await waitFor(() => expect(screen.getByText("=SOMA(A:A)")).toBeInTheDocument());
+
+    await user.click(screen.getByRole("button", { name: "Limpar" }));
+
+    expect(screen.queryByText("=SOMA(A:A)")).not.toBeInTheDocument();
+    expect(screen.getByText("O que você quer resolver hoje?")).toBeInTheDocument();
+  });
+
+  it("persists selected context across two submits", async () => {
+    const user = userEvent.setup();
+    const fetchMock = vi.spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(formulaStream())
+      .mockResolvedValueOnce(formulaStream());
+
+    render(<UnifiedChatTool entitlement={freeEntitlement} />);
+
+    await user.selectOptions(screen.getByLabelText("Dialeto SQL"), "mysql");
+    await user.type(screen.getByLabelText("Pedido"), "Primeiro pedido");
+    await user.click(screen.getByRole("button", { name: "Enviar" }));
+    await waitFor(() => expect(screen.getByText("=SOMA(A:A)")).toBeInTheDocument());
+
+    await user.type(screen.getByLabelText("Pedido"), "Segundo pedido");
+    await user.click(screen.getByRole("button", { name: "Enviar" }));
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+    expect(parseJsonRequestBody(fetchMock, 0).sqlDialect).toBe("mysql");
+    expect(parseJsonRequestBody(fetchMock, 1).sqlDialect).toBe("mysql");
+  });
+
+  it("free user drag-and-drop is ignored", () => {
+    render(<UnifiedChatTool entitlement={freeEntitlement} />);
+
+    const workspace = screen.getByLabelText("Chat unificado");
+    fireEvent.drop(workspace, {
+      dataTransfer: { files: [new File(["a,b\n1,2"], "dados.csv", { type: "text/csv" })] },
+    });
+
+    expect(screen.queryByRole("status", { name: /Arquivo anexado/ })).not.toBeInTheDocument();
+  });
+
+  it("does not use dangerouslySetInnerHTML in unified-chat source", () => {
+    const sourceNodes = [
+      IntentPill,
+      RenderDispatcher,
+      SessionContextSelector,
+      UnifiedChatTool,
+    ].map((component) => String(component));
+
+    expect(sourceNodes.join("\n")).not.toContain("dangerouslySetInnerHTML");
+  });
+});

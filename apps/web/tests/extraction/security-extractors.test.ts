@@ -195,7 +195,7 @@ describe("zip-guard — anti-ZIP-bomb (D-11) + discharge A2", () => {
 
     // Criar ZIP com conteúdo total descompactado > 50 MB
     // Usamos um bloco de 51 MB de dados repetidos (comprime bem, mas originalSize reporta o real)
-    const { strToU8, zipSync } = await import("fflate");
+    const { zipSync } = await import("fflate");
     const bigData = new Uint8Array(51 * 1024 * 1024).fill(65); // 51 MB de 'A'
     const files: Record<string, Uint8Array> = { "big.bin": bigData };
     const zipped = zipSync(files);

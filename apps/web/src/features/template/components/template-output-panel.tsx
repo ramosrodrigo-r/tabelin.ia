@@ -41,6 +41,12 @@ export function TemplateOutputPanel({
         <CopyButton disabled={status !== "complete"} value={copyValue} />
       </div>
 
+      {metadata?.providerModel ? (
+        <div className="metadata-row" aria-label="Metadados">
+          <span>{metadata.providerModel}</span>
+        </div>
+      ) : null}
+
       <div className="output-box" data-status={status}>
         {status === "loading" ? <span>Preparando resposta...</span> : null}
         {(status === "streaming" || status === "complete") && codeToHighlight ? (

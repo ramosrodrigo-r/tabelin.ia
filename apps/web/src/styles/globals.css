@@ -410,6 +410,25 @@ a {
   overflow-wrap: anywhere;
 }
 
+.unified-empty-state {
+  display: grid;
+  gap: 8px;
+  max-width: 680px;
+}
+
+.unified-empty-state h1 {
+  margin: 0;
+  font-size: 20px;
+  line-height: 1.25;
+}
+
+.unified-empty-state p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
 /* ── Tool nav pills ─────────────────────────────────────────────────── */
 
 .tool-nav {
@@ -447,6 +466,34 @@ a {
   font-weight: 600;
 }
 
+.intent-pill-container {
+  position: relative;
+  align-self: flex-start;
+}
+
+.intent-pill-trigger {
+  align-self: flex-start;
+}
+
+.intent-pill-menu {
+  left: 0;
+  right: auto;
+  width: 260px;
+}
+
+.intent-pill-hint {
+  margin: 0;
+  padding: 0 10px 6px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.menu-item[data-active="true"] {
+  background: rgb(11 107 87 / 8%);
+  color: var(--primary);
+  font-weight: 650;
+}
+
 /* ── Chat input box (AICHAT style) ──────────────────────────────────── */
 
 .chat-input-box {
@@ -467,6 +514,24 @@ a {
   align-items: center;
   flex-wrap: wrap;
   gap: 8px;
+}
+
+.unified-context-selector {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.unified-context-group {
+  display: grid;
+  gap: 4px;
+}
+
+.unified-context-label {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 650;
 }
 
 /* compact mode tabs inside the chat box */

@@ -16,7 +16,7 @@ type Props = {
   entitlement: UserEntitlement;
 };
 
-export function FileAnalysisTool({ entitlement: _entitlement }: Props) {
+export function FileAnalysisTool({}: Props) {
   const [uiState, setUiState] = useState<UiState>("idle");
   const [uploadedFileId, setUploadedFileId] = useState<string | null>(null);
   const [schema, setSchema] = useState<FileSchema | null>(null);

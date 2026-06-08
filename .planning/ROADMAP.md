@@ -85,7 +85,7 @@ Audit: `.planning/milestones/v1.2-MILESTONE-AUDIT.md` (status: passed)
 
 **Wave 3 *(blocked on Wave 2 completion)***
 
-- [ ] 12-03: Unified Chat Client — `UnifiedChatTool`, NDJSON hook, intent pill override, context selector, render dispatcher
+- [x] 12-03: Unified Chat Client — `UnifiedChatTool`, NDJSON hook, intent pill override, context selector, render dispatcher
 
 **Wave 4 *(blocked on Wave 3 completion)***
 
