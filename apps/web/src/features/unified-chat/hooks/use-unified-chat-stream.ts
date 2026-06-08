@@ -30,6 +30,8 @@ export type SubmitUnifiedChatInput = {
   sqlDialect: SqlDialect;
   scriptType: ScriptType;
   lastIntent?: UnifiedIntent | null;
+  overrideGenerate?: boolean;
+  specOverride?: string;
 };
 
 export function useUnifiedChatStream() {
@@ -95,6 +97,8 @@ export function useUnifiedChatStream() {
       fd.append("scriptType", input.scriptType);
       if (input.overrideIntent) fd.append("overrideIntent", input.overrideIntent);
       if (input.lastIntent) fd.append("lastIntent", input.lastIntent);
+      if (input.overrideGenerate) fd.append("overrideGenerate", "true");
+      if (input.specOverride) fd.append("specOverride", input.specOverride);
       fd.append("file", input.file);
       body = fd;
     } else {
@@ -107,6 +111,8 @@ export function useUnifiedChatStream() {
         scriptType: input.scriptType,
         overrideIntent: input.overrideIntent,
         lastIntent: input.lastIntent,
+        overrideGenerate: input.overrideGenerate ? "true" : undefined,
+        specOverride: input.specOverride,
       });
       headers = { "content-type": "application/json" };
     }

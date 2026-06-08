@@ -12,6 +12,8 @@ import type {
   ScriptMetadata,
   SqlGenerateResponse,
   SqlMetadata,
+  TableClarQuestionPayload,
+  TableSpecPayload,
   TemplateGenerateResponse,
   TemplateMetadata,
   UnifiedCompletePayload,
@@ -25,6 +27,8 @@ import { ScriptsOutputPanel } from "@/features/scripts/components/scripts-output
 import { SqlOutputPanel } from "@/features/sql/components/sql-output-panel";
 import { TemplateOutputPanel } from "@/features/template/components/template-output-panel";
 import type { UnifiedAttachmentMeta, UnifiedChatStreamStatus } from "../hooks/use-unified-chat-stream";
+import { ClarificationCard } from "./clarification-card";
+import { ConfirmationCard } from "./confirmation-card";
 import { TableIntentStub } from "./table-intent-stub";
 
 function FileBackedOutput({
@@ -123,6 +127,9 @@ export function RenderDispatcher({
   attachmentMeta,
   needsFile,
   onRetry,
+  onAnswer,
+  onSkip,
+  onConfirm,
 }: {
   status: UnifiedChatStreamStatus;
   draft: string;
@@ -133,6 +140,9 @@ export function RenderDispatcher({
   attachmentMeta?: UnifiedAttachmentMeta | null;
   needsFile?: FileDependentIntent | null;
   onRetry: () => void;
+  onAnswer?: (answer: string) => void;
+  onSkip?: () => void;
+  onConfirm?: (spec: TableSpecPayload) => void;
 }) {
   if (status === "error") {
     return <ErrorCard error={error} onRetry={onRetry} />;
@@ -217,6 +227,23 @@ export function RenderDispatcher({
           error={error}
           attachmentMeta={attachmentMeta}
           onRetry={onRetry}
+        />
+      );
+
+    case "table_clar_question":
+      return (
+        <ClarificationCard
+          payload={payload as TableClarQuestionPayload}
+          onAnswer={onAnswer ?? (() => {})}
+          onSkip={onSkip ?? (() => {})}
+        />
+      );
+
+    case "table_spec":
+      return (
+        <ConfirmationCard
+          payload={payload as TableSpecPayload}
+          onConfirm={onConfirm ?? (() => {})}
         />
       );
 

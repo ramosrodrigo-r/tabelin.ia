@@ -459,4 +459,144 @@ describe("UnifiedChatTool", () => {
 
     expect(sourceNodes.join("\n")).not.toContain("dangerouslySetInnerHTML");
   });
+
+  describe("clarification loop", () => {
+    const clarPayload = {
+      kind: "table_clar_question",
+      question: "Qual é o objetivo principal desta tabela?",
+      turnIndex: 0,
+      totalTurns: 2,
+      canSkip: true,
+    } satisfies UnifiedCompletePayload;
+
+    const clarPayloadTurn1 = {
+      kind: "table_clar_question",
+      question: "Quantas linhas você precisa?",
+      turnIndex: 1,
+      totalTurns: 2,
+      canSkip: true,
+    } satisfies UnifiedCompletePayload;
+
+    const tableSpecPayload = {
+      kind: "table_spec",
+      title: "Tabela de Vendas",
+      columns: [
+        { name: "Produto", type: "text" as const },
+        { name: "Valor", type: "number" as const },
+      ],
+      rowCount: 10,
+    } satisfies UnifiedCompletePayload;
+
+    function clarStream(payload: UnifiedCompletePayload) {
+      return streamResponse([
+        { type: "intent_detected", intent: "tabela", confidence: "high" },
+        { type: "complete", payload },
+      ]);
+    }
+
+    // CLAR-01: hook processa complete com kind=table_clar_question → ClarificationCard no DOM
+    it("CLAR-01: renderiza ClarificationCard com a pergunta ao receber table_clar_question", async () => {
+      const user = userEvent.setup();
+      vi.spyOn(globalThis, "fetch").mockResolvedValue(clarStream(clarPayload));
+
+      render(<UnifiedChatTool entitlement={freeEntitlement} />);
+
+      await user.type(screen.getByLabelText("Pedido"), "cria uma tabela de vendas");
+      await user.click(screen.getByRole("button", { name: "Enviar" }));
+
+      await waitFor(() =>
+        expect(screen.getByText("Qual é o objetivo principal desta tabela?")).toBeInTheDocument()
+      );
+      expect(screen.getByLabelText("Pergunta de clarificação")).toBeInTheDocument();
+    });
+
+    // CLAR-02: payload com turnIndex=1, totalTurns=2 → DOM contém "Pergunta 2 de 2"
+    it("CLAR-02: exibe contador de turno correto (Pergunta 2 de 2)", async () => {
+      const user = userEvent.setup();
+      vi.spyOn(globalThis, "fetch").mockResolvedValue(clarStream(clarPayloadTurn1));
+
+      render(<UnifiedChatTool entitlement={freeEntitlement} />);
+
+      await user.type(screen.getByLabelText("Pedido"), "cria uma tabela de vendas");
+      await user.click(screen.getByRole("button", { name: "Enviar" }));
+
+      await waitFor(() => expect(screen.getByText("Pergunta 2 de 2")).toBeInTheDocument());
+    });
+
+    // CLAR-03: botão "Gerar mesmo assim" visível; click dispara request com overrideGenerate="true"
+    it("CLAR-03: botão 'Gerar mesmo assim' dispara request com overrideGenerate='true'", async () => {
+      const user = userEvent.setup();
+      const fetchMock = vi.spyOn(globalThis, "fetch")
+        .mockResolvedValueOnce(clarStream(clarPayload))
+        .mockResolvedValueOnce(formulaStream());
+
+      render(<UnifiedChatTool entitlement={freeEntitlement} />);
+
+      await user.type(screen.getByLabelText("Pedido"), "cria uma tabela de vendas");
+      await user.click(screen.getByRole("button", { name: "Enviar" }));
+
+      await waitFor(() =>
+        expect(screen.getByRole("button", { name: "Gerar mesmo assim" })).toBeInTheDocument()
+      );
+
+      await user.click(screen.getByRole("button", { name: "Gerar mesmo assim" }));
+
+      await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+      const secondBody = parseJsonRequestBody(fetchMock, 1);
+      expect(secondBody.overrideGenerate).toBe("true");
+    });
+
+    // CLAR-04: ConfirmationCard no DOM; click "Confirmar e Gerar" dispara request com overrideGenerate + specOverride
+    it("CLAR-04: renderiza ConfirmationCard e 'Confirmar e Gerar' envia specOverride no body", async () => {
+      const user = userEvent.setup();
+      const fetchMock = vi.spyOn(globalThis, "fetch")
+        .mockResolvedValueOnce(clarStream(tableSpecPayload))
+        .mockResolvedValueOnce(formulaStream());
+
+      render(<UnifiedChatTool entitlement={freeEntitlement} />);
+
+      await user.type(screen.getByLabelText("Pedido"), "cria uma tabela de vendas");
+      await user.click(screen.getByRole("button", { name: "Enviar" }));
+
+      await waitFor(() =>
+        expect(screen.getByLabelText("Confirmar especificação da tabela")).toBeInTheDocument()
+      );
+      // Título está em input editável — usar getByDisplayValue
+      expect(screen.getByDisplayValue("Tabela de Vendas")).toBeInTheDocument();
+
+      await user.click(screen.getByRole("button", { name: "Confirmar e Gerar" }));
+
+      await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+      const secondBody = parseJsonRequestBody(fetchMock, 1);
+      expect(secondBody.overrideGenerate).toBe("true");
+      expect(secondBody.specOverride).toBeDefined();
+      const parsedSpec = JSON.parse(secondBody.specOverride as string) as { title: string; columns: { name: string }[] };
+      expect(parsedSpec.title).toBe("Tabela de Vendas");
+      expect(parsedSpec.columns).toHaveLength(2);
+    });
+
+    // Cenário de resposta/onAnswer: o request NÃO inclui overrideGenerate="true"
+    it("resposta à pergunta de clarificação NÃO inclui overrideGenerate no body", async () => {
+      const user = userEvent.setup();
+      const fetchMock = vi.spyOn(globalThis, "fetch")
+        .mockResolvedValueOnce(clarStream(clarPayload))
+        .mockResolvedValueOnce(clarStream(clarPayloadTurn1));
+
+      render(<UnifiedChatTool entitlement={freeEntitlement} />);
+
+      await user.type(screen.getByLabelText("Pedido"), "cria uma tabela de vendas");
+      await user.click(screen.getByRole("button", { name: "Enviar" }));
+
+      await waitFor(() =>
+        expect(screen.getByLabelText("Resposta à pergunta de clarificação")).toBeInTheDocument()
+      );
+
+      await user.type(screen.getByLabelText("Resposta à pergunta de clarificação"), "Tabela de controle de estoque");
+      await user.click(screen.getByRole("button", { name: "Responder" }));
+
+      await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+      const secondBody = parseJsonRequestBody(fetchMock, 1);
+      expect(secondBody.overrideGenerate).toBeUndefined();
+    });
+  });
 });

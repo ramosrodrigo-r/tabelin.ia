@@ -6,11 +6,12 @@ import type {
   OverrideIntent,
   ScriptType,
   SqlDialect,
+  TableSpecPayload,
   UnifiedCompletePayload,
   UnifiedIntent,
   UserEntitlement,
 } from "@tabelin/shared";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { AttachmentButton, validateFile } from "@/components/app/attachment-button";
 import { AttachmentChip } from "@/components/app/attachment-chip";
@@ -97,6 +98,8 @@ function intentFromPayload(payload: unknown): UnifiedIntent | null {
     case "ocr":
       return "ocr";
     case "table_stub":
+    case "table_clar_question":
+    case "table_spec":
       return "tabela";
     case "needs_file":
       return ((payload as { intent?: UnifiedIntent }).intent ?? null) as UnifiedIntent | null;
@@ -149,6 +152,7 @@ export function UnifiedChatTool({
   const stream = useUnifiedChatStream();
   const pending = stream.status === "loading" || stream.status === "streaming";
   const isPro = entitlement.plan === "pro" && entitlement.status === "active";
+  const lastSubmitInputRef = useRef<Parameters<typeof stream.submit>[0] | null>(null);
 
   const handleNewConversation = useCallback(() => {
     setExchanges([]);
@@ -247,7 +251,7 @@ export function UnifiedChatTool({
     const resolvedLastIntent =
       [...exchanges].reverse().find((exchange) => exchange.intent && exchange.intent !== "unknown")?.intent ?? null;
 
-    await stream.submit({
+    const submitInput = {
       prompt: trimmed,
       file: fileSnapshot,
       overrideIntent: options.overrideIntent,
@@ -257,6 +261,39 @@ export function UnifiedChatTool({
       sqlDialect: contextSnapshot.sqlDialect,
       scriptType: contextSnapshot.scriptType,
       lastIntent: resolvedLastIntent,
+    };
+
+    lastSubmitInputRef.current = submitInput;
+    await stream.submit(submitInput);
+  }
+
+  function handleAnswerClarification(answer: string) {
+    const last = lastSubmitInputRef.current;
+    if (!last) return;
+    void submitPrompt(answer, {
+      contextSnapshot: {
+        platform: last.platform,
+        formulaLanguage: last.formulaLanguage,
+        separator: last.separator,
+        sqlDialect: last.sqlDialect,
+        scriptType: last.scriptType,
+      },
+    });
+  }
+
+  function handleSkipClarification() {
+    const last = lastSubmitInputRef.current;
+    if (!last) return;
+    void stream.submit({ ...last, overrideGenerate: true });
+  }
+
+  function handleConfirmSpec(spec: TableSpecPayload) {
+    const last = lastSubmitInputRef.current;
+    if (!last) return;
+    void stream.submit({
+      ...last,
+      overrideGenerate: true,
+      specOverride: JSON.stringify(spec),
     });
   }
 
@@ -336,6 +373,9 @@ export function UnifiedChatTool({
                 attachmentMeta={exchange.attachmentMeta}
                 needsFile={exchange.needsFile}
                 onRetry={() => handleRetry(exchange)}
+                onAnswer={handleAnswerClarification}
+                onSkip={handleSkipClarification}
+                onConfirm={handleConfirmSpec}
               />
             </div>
           ))}
@@ -360,6 +400,9 @@ export function UnifiedChatTool({
                 attachmentMeta={stream.attachmentMeta}
                 needsFile={stream.needsFile}
                 onRetry={() => void submitPrompt(submittedText, { contextSnapshot: submittedContext ?? context })}
+                onAnswer={handleAnswerClarification}
+                onSkip={handleSkipClarification}
+                onConfirm={handleConfirmSpec}
               />
             </div>
           ) : null}
