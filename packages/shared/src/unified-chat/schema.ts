@@ -56,7 +56,7 @@ export const tableClarQuestionPayloadSchema = z.object({
   question: z.string().trim().min(1),
   turnIndex: z.number().int().min(0),
   totalTurns: z.number().int().positive(),
-  spec: z.record(z.unknown()).optional(),
+  spec: z.record(z.string(), z.unknown()).optional(),
   canSkip: z.boolean(),
 });
 
