@@ -54,7 +54,7 @@ Audit: `.planning/milestones/v1.2-MILESTONE-AUDIT.md` (status: passed)
 **Milestone Goal:** Substituir as abas de tools por um único chat com roteamento de intent automático, introduzir geração de tabelas interativas com fórmulas vivas no browser e loop de clarificação multi-turn antes de gerar qualquer tabela.
 
 - [x] **Phase 12: Intent Classifier & Unified Route** — Input único que detecta e roteia qualquer pedido para os resolvers existentes, com pill de intent e override
-- [ ] **Phase 13: Clarification Loop** — Loop multi-turn com teto de 2 turns, ConfirmationCard e escape hatch "Gerar mesmo assim" antes de gerar tabelas
+- [x] **Phase 13: Clarification Loop** — Loop multi-turn com teto de 2 turns, ConfirmationCard e escape hatch "Gerar mesmo assim" antes de gerar tabelas (completed 2026-06-08)
 - [ ] **Phase 14: Tabela Viva** — Grid editável com recálculo de fórmulas vivas, localização pt-BR completa e segurança XSS
 - [ ] **Phase 15: Export, UX Migration & Hardening** — Export CSV/XLSX sanitizado, migração do ToolNav para o chat unificado e fixture fallback
 
@@ -122,7 +122,7 @@ Audit: `.planning/milestones/v1.2-MILESTONE-AUDIT.md` (status: passed)
 
 **Wave 3** *(blocked on Wave 2)*
 
-- [ ] 13-04-PLAN.md — Componentes React completos, RenderDispatcher, hook e orchestração end-to-end
+- [x] 13-04-PLAN.md — Componentes React completos, RenderDispatcher, hook e orchestração end-to-end
 
 **UI hint**: yes
 
@@ -172,6 +172,6 @@ Audit: `.planning/milestones/v1.2-MILESTONE-AUDIT.md` (status: passed)
 | 10. Persistence & LLM Context | v1.2 | 4/4 | Complete | 2026-06-04 |
 | 11. Attachment UI & Pro Gating | v1.2 | 5/5 | Complete | 2026-06-04 |
 | 12. Intent Classifier & Unified Route | v2.0 | 1/4 | In Progress|  |
-| 13. Clarification Loop | v2.0 | 3/4 | In Progress|  |
+| 13. Clarification Loop | v2.0 | 4/4 | Complete   | 2026-06-08 |
 | 14. Tabela Viva | v2.0 | 0/? | Not started | - |
 | 15. Export, UX Migration & Hardening | v2.0 | 0/? | Not started | - |
