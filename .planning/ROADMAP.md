@@ -106,7 +106,24 @@ Audit: `.planning/milestones/v1.2-MILESTONE-AUDIT.md` (status: passed)
   4. Antes de gerar, um ConfirmationCard resume colunas, linhas e formato coletados; usuário pode ajustar antes de confirmar
   5. A cota do usuário não é consumida durante os turns de clarificação — apenas quando a tabela efetivamente é gerada
 
-**Plans**: TBD
+**Plans**: 4 plans
+
+**Wave 0** *(scaffolding — sem dependências)*
+
+- [ ] 13-01-PLAN.md — Wave 0: scaffolds de teste e stubs de componentes (ClarificationCard, ConfirmationCard)
+
+**Wave 1** *(blocked on Wave 0)*
+
+- [ ] 13-02-PLAN.md — Schemas compartilhados, table-clarifier.ts e serialização context-messages.ts
+
+**Wave 2** *(blocked on Wave 1)*
+
+- [ ] 13-03-PLAN.md — Bifurcação do case unified_table no route.ts (clarification path + generation path)
+
+**Wave 3** *(blocked on Wave 2)*
+
+- [ ] 13-04-PLAN.md — Componentes React completos, RenderDispatcher, hook e orchestração end-to-end
+
 **UI hint**: yes
 
 ### Phase 14: Tabela Viva
