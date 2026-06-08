@@ -482,3 +482,193 @@ describe("unified chat route", () => {
     );
   });
 });
+
+describe("unified_table — clarification loop", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+
+    routeMocks.reserveToolUse.mockResolvedValue({ allowed: true, reservationKey: "res_123" });
+    routeMocks.confirmToolUse.mockResolvedValue({ confirmed: true });
+    routeMocks.releaseToolUse.mockResolvedValue({ released: true });
+    routeMocks.getUserEntitlement.mockResolvedValue({ plan: "free", status: "active" });
+    routeMocks.findConversationExchanges.mockResolvedValue([]);
+    routeMocks.saveConversationExchange.mockResolvedValue(null);
+    routeMocks.recordFormulaToolRequest.mockResolvedValue(null);
+    routeMocks.recordToolRequest.mockResolvedValue(null);
+    routeMocks.extractContent.mockResolvedValue({ ok: true, text: "conteudo extraido" });
+    routeMocks.classifyIntent.mockResolvedValue({ intent: "tabela", confidence: "high" });
+    routeMocks.askClarificationQuestion.mockResolvedValue("Quantas linhas a tabela deve ter?");
+    routeMocks.buildTableSpec.mockResolvedValue(routeMocks.tableSpecFixture);
+  });
+
+  // Cenário A: CLAR-01 + CLAR-05 — clarTurnCount=0 → clarification path
+  it("Cenário A (CLAR-01 + CLAR-05): clarTurnCount=0 emite table_clar_question e NÃO debita cota", async () => {
+    // clarTurnCount=0: histórico vazio, prompt parece novo pedido de tabela
+    routeMocks.findConversationExchanges.mockResolvedValue([]);
+
+    const response = await POST(authedJson({ prompt: "Quero uma tabela de vendas" }));
+    const events = await readEvents(response);
+
+    expect(response.status).toBe(200);
+    expect(events[0]).toMatchObject({ type: "intent_detected", intent: "tabela" });
+    expect(events.at(-1)).toMatchObject({
+      type: "complete",
+      payload: { kind: "table_clar_question" },
+    });
+    // CLAR-05: releaseToolUse chamado, confirmToolUse NÃO chamado
+    expect(routeMocks.releaseToolUse).toHaveBeenCalledOnce();
+    expect(routeMocks.confirmToolUse).not.toHaveBeenCalled();
+    // CLAR-01: pergunta de clarificação chamada
+    expect(routeMocks.askClarificationQuestion).toHaveBeenCalledOnce();
+  });
+
+  // Cenário B: CLAR-02 + CLAR-05 — clarTurnCount=2 → generation path
+  it("Cenário B (CLAR-02 + CLAR-05): clarTurnCount=2 emite table_spec e debita cota", async () => {
+    routeMocks.findConversationExchanges.mockResolvedValue([
+      { assistantPayload: { kind: "table_clar_question", question: "Q1", turnIndex: 0, totalTurns: 2, canSkip: true, spec: {} } },
+      { assistantPayload: { kind: "table_clar_question", question: "Q2", turnIndex: 1, totalTurns: 2, canSkip: true, spec: {} } },
+    ]);
+
+    const response = await POST(authedJson({ prompt: "Quero uma tabela de vendas" }));
+    const events = await readEvents(response);
+
+    expect(response.status).toBe(200);
+    expect(events.at(-1)).toMatchObject({
+      type: "complete",
+      payload: { kind: "table_spec" },
+    });
+    // CLAR-05: confirmToolUse chamado (debita cota), releaseToolUse NÃO chamado neste path
+    expect(routeMocks.confirmToolUse).toHaveBeenCalledOnce();
+    expect(routeMocks.releaseToolUse).not.toHaveBeenCalled();
+    // CLAR-02: buildTableSpec chamado
+    expect(routeMocks.buildTableSpec).toHaveBeenCalledOnce();
+  });
+
+  // Cenário C: CLAR-03 + CLAR-05 — clarTurnCount=0 + overrideGenerate="true" → generation path
+  it("Cenário C (CLAR-03 + CLAR-05): clarTurnCount=0 + overrideGenerate=true emite table_spec e debita cota", async () => {
+    routeMocks.findConversationExchanges.mockResolvedValue([]);
+
+    const response = await POST(authedJson({ prompt: "Quero uma tabela de vendas", overrideGenerate: "true" }));
+    const events = await readEvents(response);
+
+    expect(response.status).toBe(200);
+    expect(events.at(-1)).toMatchObject({
+      type: "complete",
+      payload: { kind: "table_spec" },
+    });
+    // CLAR-05 + CLAR-03: confirmToolUse chamado (debita cota)
+    expect(routeMocks.confirmToolUse).toHaveBeenCalledOnce();
+    expect(routeMocks.releaseToolUse).not.toHaveBeenCalled();
+    // askClarificationQuestion NÃO deve ser chamado no generation path
+    expect(routeMocks.askClarificationQuestion).not.toHaveBeenCalled();
+  });
+
+  // Cenário D: CLAR-02 — clarTurnCount=1 → segunda pergunta (turnIndex=1)
+  it("Cenário D (CLAR-02): clarTurnCount=1 emite table_clar_question com turnIndex=1 e totalTurns=2", async () => {
+    routeMocks.findConversationExchanges.mockResolvedValue([
+      { assistantPayload: { kind: "table_clar_question", question: "Q1", turnIndex: 0, totalTurns: 2, canSkip: true, spec: {} } },
+    ]);
+
+    const response = await POST(authedJson({ prompt: "Quero uma tabela de vendas" }));
+    const events = await readEvents(response);
+
+    expect(response.status).toBe(200);
+    expect(events.at(-1)).toMatchObject({
+      type: "complete",
+      payload: {
+        kind: "table_clar_question",
+        turnIndex: 1,
+        totalTurns: 2,
+      },
+    });
+    // CLAR-05: confirmToolUse NÃO chamado em turn de clarificação
+    expect(routeMocks.confirmToolUse).not.toHaveBeenCalled();
+    expect(routeMocks.releaseToolUse).toHaveBeenCalledOnce();
+  });
+
+  // Cenário E: CLAR-05 regressão — todos os cenários de clarificação devem ter confirmToolUse.not.toHaveBeenCalled()
+  // (verificado nos cenários A e D — este cenário verifica clarTurnCount=0 com prompt não-tabela via fallback)
+  it("Cenário E (CLAR-05 regressão): clarTurnCount=0 NÃO chama confirmToolUse em nenhum cenário de clarificação", async () => {
+    routeMocks.findConversationExchanges.mockResolvedValue([]);
+
+    const response = await POST(authedJson({ prompt: "Quero tabela de gastos mensais" }));
+    const events = await readEvents(response);
+
+    expect(response.status).toBe(200);
+    expect(events.at(-1)).toMatchObject({ type: "complete", payload: { kind: "table_clar_question" } });
+    // CLAR-05 assertions negativas
+    expect(routeMocks.confirmToolUse).not.toHaveBeenCalled();
+    expect(routeMocks.releaseToolUse).toHaveBeenCalledOnce();
+  });
+
+  // Cenário F: Armadilha 2 — fallback conservativo — histórico vazio + prompt sem "tabela" → generation path
+  it("Cenário F (Armadilha 2): histórico vazio + prompt sem tabela → geração com defaults (fallback conservativo)", async () => {
+    routeMocks.findConversationExchanges.mockResolvedValue([]);
+
+    // Prompt que parece uma resposta de clarificação, não um novo pedido de tabela
+    const response = await POST(authedJson({ prompt: "Sim, quero 5 colunas e 20 linhas" }));
+    const events = await readEvents(response);
+
+    expect(response.status).toBe(200);
+    // Com fallback conservativo: clarTurnCount = MAX (2) → generation path
+    expect(events.at(-1)).toMatchObject({
+      type: "complete",
+      payload: { kind: "table_spec" },
+    });
+    // confirmToolUse chamado (generation path)
+    expect(routeMocks.confirmToolUse).toHaveBeenCalledOnce();
+    expect(routeMocks.buildTableSpec).toHaveBeenCalledOnce();
+  });
+
+  // Cenário G: CLAR-05 — specOverride no body
+  it("Cenário G (CLAR-05): specOverride válida no body → generation path usa spec do client", async () => {
+    routeMocks.findConversationExchanges.mockResolvedValue([
+      { assistantPayload: { kind: "table_clar_question", question: "Q1", turnIndex: 0, totalTurns: 2, canSkip: true, spec: {} } },
+      { assistantPayload: { kind: "table_clar_question", question: "Q2", turnIndex: 1, totalTurns: 2, canSkip: true, spec: {} } },
+    ]);
+
+    const editedSpec = {
+      kind: "table_spec",
+      title: "Tabela Editada",
+      columns: [{ name: "Produto", type: "text" }, { name: "Valor", type: "number" }],
+      rowCount: 15,
+    };
+
+    const response = await POST(authedJson({
+      prompt: "Quero uma tabela de vendas",
+      specOverride: JSON.stringify(editedSpec),
+    }));
+    const events = await readEvents(response);
+
+    expect(response.status).toBe(200);
+    // specOverride válida: buildTableSpec NÃO deve ser chamado (spec do client é usada)
+    expect(routeMocks.buildTableSpec).not.toHaveBeenCalled();
+    expect(events.at(-1)).toMatchObject({
+      type: "complete",
+      payload: { kind: "table_spec", title: "Tabela Editada" },
+    });
+    expect(routeMocks.confirmToolUse).toHaveBeenCalledOnce();
+  });
+
+  it("Cenário G variante: specOverride inválida → geração usa buildTableSpec (fallback)", async () => {
+    routeMocks.findConversationExchanges.mockResolvedValue([
+      { assistantPayload: { kind: "table_clar_question", question: "Q1", turnIndex: 0, totalTurns: 2, canSkip: true, spec: {} } },
+      { assistantPayload: { kind: "table_clar_question", question: "Q2", turnIndex: 1, totalTurns: 2, canSkip: true, spec: {} } },
+    ]);
+
+    const response = await POST(authedJson({
+      prompt: "Quero uma tabela de vendas",
+      specOverride: "json invalido {{{",
+    }));
+    const events = await readEvents(response);
+
+    expect(response.status).toBe(200);
+    // specOverride inválida → buildTableSpec deve ser chamado como fallback
+    expect(routeMocks.buildTableSpec).toHaveBeenCalledOnce();
+    expect(events.at(-1)).toMatchObject({
+      type: "complete",
+      payload: { kind: "table_spec" },
+    });
+    expect(routeMocks.confirmToolUse).toHaveBeenCalledOnce();
+  });
+});
