@@ -4,6 +4,7 @@ import {
   type FileDependentIntent,
   type IntentClassification,
   type OverrideIntent,
+  type TableSpecPayload,
   type UnifiedIntent,
   fileAnalysisPayloadSchema,
   formulaGenerateRequestSchema,
@@ -13,6 +14,7 @@ import {
   regexGenerateRequestSchema,
   scriptGenerateRequestSchema,
   sqlGenerateRequestSchema,
+  tableSpecPayloadSchema,
   tableStubPayloadSchema,
   templateGenerateRequestSchema,
   unifiedIntentSchema,
@@ -21,6 +23,7 @@ import {
 import { GENERATE_MODE, MAX_EXTRACTED_CHARS } from "@/server/ai/context-messages";
 import { createFormulaEventStream, resolveFormulaPayload } from "@/server/ai/formula-stream";
 import { classifyIntent } from "@/server/ai/intent-classifier";
+import { askClarificationQuestion, buildTableSpec } from "@/server/ai/table-clarifier";
 import { createRegexEventStream, resolveRegexPayload } from "@/server/ai/regex-stream";
 import { createScriptEventStream, resolveScriptPayload } from "@/server/ai/scripts-stream";
 import { createSqlEventStream, resolveSqlPayload } from "@/server/ai/sql-stream";
@@ -55,6 +58,8 @@ type UnifiedFields = {
   scriptType: string;
   overrideIntent?: string;
   lastIntent?: string;
+  overrideGenerate?: string;
+  specOverride?: string;
 };
 
 type AttachmentMeta = {
@@ -100,6 +105,8 @@ function readObjectFields(body: unknown): UnifiedFields {
     scriptType: asString(input.scriptType) ?? DEFAULT_FIELDS.scriptType,
     overrideIntent: asString(input.overrideIntent),
     lastIntent: asString(input.lastIntent),
+    overrideGenerate: asString(input.overrideGenerate),
+    specOverride: asString(input.specOverride),
   };
 }
 
@@ -125,6 +132,8 @@ async function parseUnifiedRequest(request: Request): Promise<{ fields: UnifiedF
         scriptType: readFormString(formData, "scriptType") ?? DEFAULT_FIELDS.scriptType,
         overrideIntent: readFormString(formData, "overrideIntent"),
         lastIntent: readFormString(formData, "lastIntent"),
+        overrideGenerate: readFormString(formData, "overrideGenerate"),
+        specOverride: readFormString(formData, "specOverride"),
       },
       file: rawFile instanceof File && rawFile.size > 0 ? rawFile : null,
     };
@@ -244,6 +253,80 @@ function tableStubMessage() {
 async function ensureProUser(userId: string) {
   const entitlement = await getUserEntitlement(userId);
   return entitlement.plan === "pro" && entitlement.status === "active";
+}
+
+// ---------------------------------------------------------------------------
+// Helpers para o loop de clarificação (case unified_table)
+// ---------------------------------------------------------------------------
+
+type ConversationExchangeLike = {
+  assistantPayload: unknown;
+};
+
+/**
+ * Conta quantos turns de clarificação existem no histórico do usuário.
+ * Derivado exclusivamente do banco — nunca de campo client-side (T-13-08).
+ */
+function countClarTurns(history: ConversationExchangeLike[]): number {
+  return history.filter((ex) => {
+    const p = ex.assistantPayload as Record<string, unknown> | null;
+    return p?.kind === "table_clar_question";
+  }).length;
+}
+
+/**
+ * Extrai a spec parcial mais recente do histórico de clarificação.
+ * Utilizada para alimentar o LLM no próximo turno.
+ */
+function mergeSpecFromHistory(history: ConversationExchangeLike[]): Record<string, unknown> {
+  const lastClarWithSpec = [...history]
+    .reverse()
+    .find((ex) => {
+      const p = ex.assistantPayload as Record<string, unknown> | null;
+      return p?.kind === "table_clar_question" && p?.spec;
+    });
+  const p = lastClarWithSpec?.assistantPayload as Record<string, unknown> | null;
+  return (p?.spec as Record<string, unknown>) ?? {};
+}
+
+/**
+ * Heurística: retorna true se o prompt parece um NOVO pedido de tabela
+ * (contém variações de "tabela" com ou sem acento).
+ */
+function promptLooksLikeNewTableRequest(prompt: string): boolean {
+  return /tabela|tabel[ao]/i.test(prompt);
+}
+
+/**
+ * Contagem conservativa de turns — se o histórico estiver vazio E o prompt
+ * não parece novo pedido, assume que o teto foi atingido (evita loop infinito
+ * em falha silenciosa do banco — Armadilha 2).
+ */
+function conservativeClarTurnCount(
+  history: ConversationExchangeLike[],
+  prompt: string,
+  MAX: number
+): number {
+  if (history.length === 0 && !promptLooksLikeNewTableRequest(prompt)) {
+    return MAX;
+  }
+  return countClarTurns(history);
+}
+
+/**
+ * Tenta parsear e validar a spec editada enviada pelo client no campo `specOverride`.
+ * Re-validação server-side obrigatória — T-13-10.
+ * Retorna null se ausente, JSON inválido ou falhar na validação Zod.
+ */
+function resolveOverrideSpec(specOverride: string | undefined): TableSpecPayload | null {
+  if (!specOverride) return null;
+  try {
+    const raw = JSON.parse(specOverride) as unknown;
+    const result = tableSpecPayloadSchema.safeParse(raw);
+    return result.success ? result.data : null;
+  } catch {
+    return null;
+  }
 }
 
 export async function POST(request: Request) {
@@ -524,35 +607,79 @@ export async function POST(request: Request) {
       }
 
       case "unified_table": {
-        await findConversationExchanges(user.id, "unified_table");
-        const payload = tableStubPayloadSchema.parse({
-          kind: "table_stub",
-          originalPrompt: promptResult.prompt,
-          message: tableStubMessage(),
-        });
+        const MAX_CLAR_TURNS = 2;
+        const tableHistory = await findConversationExchanges(user.id, "unified_table");
+        const clarTurnCount = conservativeClarTurnCount(tableHistory, promptResult.prompt, MAX_CLAR_TURNS);
+        const collectedSpec = mergeSpecFromHistory(tableHistory);
+        const shouldGenerate =
+          clarTurnCount >= MAX_CLAR_TURNS || fields.overrideGenerate === "true";
 
+        if (!shouldGenerate) {
+          // CLARIFICATION PATH — NÃO debita cota (CLAR-05, T-13-09)
+          await releaseToolUse(quotaCheck.reservationKey);
+
+          const question = await askClarificationQuestion({
+            prompt: promptResult.prompt,
+            turnIndex: clarTurnCount,
+            collectedSpec,
+          });
+
+          const clarPayload = {
+            kind: "table_clar_question" as const,
+            question,
+            turnIndex: clarTurnCount,
+            totalTurns: MAX_CLAR_TURNS,
+            canSkip: true,
+            spec: collectedSpec,
+          };
+
+          await saveConversationExchange({
+            userId: user.id,
+            toolKind: "unified_table",
+            mode: GENERATE_MODE,
+            userPrompt: promptResult.prompt,
+            assistantPayload: clarPayload,
+          });
+
+          return responseFromStream(
+            createEventStream([
+              intentEvent(classification),
+              { type: "complete", payload: clarPayload },
+            ])
+          );
+        }
+
+        // GENERATION PATH — debita cota
         await confirmToolUse(quotaCheck.reservationKey);
+
+        const overrideSpec = resolveOverrideSpec(fields.specOverride);
+        // tableSpec.kind === "table_spec" — garantido por tableSpecPayloadSchema
+        const tableSpec = overrideSpec ?? (await buildTableSpec({
+          prompt: promptResult.prompt,
+          collectedSpec,
+        }));
+
         await recordToolRequest({
           userId: user.id,
           toolKind: "unified_table",
           mode: GENERATE_MODE,
           status: "success",
           latencyMs: Math.round(performance.now() - startedAt),
-          providerModel: "table-stub",
+          providerModel: "table-clarifier",
         });
+        // Persiste com kind: "table_spec" no assistantPayload (tabela gerada)
         await saveConversationExchange({
           userId: user.id,
           toolKind: "unified_table",
           mode: GENERATE_MODE,
           userPrompt: promptResult.prompt,
-          assistantPayload: payload,
-          attachmentContext,
+          assistantPayload: { ...tableSpec, kind: "table_spec" as const },
         });
 
         return responseFromStream(
           createEventStream([
             intentEvent(classification),
-            { type: "complete", payload },
+            { type: "complete", payload: tableSpec },
           ])
         );
       }

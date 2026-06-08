@@ -98,7 +98,20 @@ const routeMocks = vi.hoisted(() => {
     ]);
   }
 
+  const tableSpecFixture = {
+    kind: "table_spec" as const,
+    title: "Tabela de controle de gastos",
+    columns: [
+      { name: "Coluna A", type: "text" },
+      { name: "Coluna B", type: "number" },
+    ],
+    rowCount: 10,
+    format: "default",
+  };
+
   return {
+    askClarificationQuestion: vi.fn(),
+    buildTableSpec: vi.fn(),
     classifyIntent: vi.fn(),
     confirmToolUse: vi.fn(),
     createFormulaEventStream: vi.fn((payload) => streamForPayload(payload)),
@@ -124,6 +137,7 @@ const routeMocks = vi.hoisted(() => {
     scriptPayload,
     sqlPayload,
     streamFromEvents,
+    tableSpecFixture,
     templatePayload,
   };
 });
@@ -184,6 +198,11 @@ vi.mock("@/server/tools/conversation-repository", () => ({
   saveConversationExchange: routeMocks.saveConversationExchange,
 }));
 
+vi.mock("@/server/ai/table-clarifier", () => ({
+  askClarificationQuestion: routeMocks.askClarificationQuestion,
+  buildTableSpec: routeMocks.buildTableSpec,
+}));
+
 async function readEvents(response: Response) {
   const text = await response.text();
 
@@ -239,6 +258,8 @@ describe("unified chat route", () => {
     routeMocks.resolveRegexPayload.mockResolvedValue(routeMocks.regexPayload);
     routeMocks.resolveScriptPayload.mockResolvedValue(routeMocks.scriptPayload);
     routeMocks.resolveTemplatePayload.mockResolvedValue(routeMocks.templatePayload);
+    routeMocks.askClarificationQuestion.mockResolvedValue("Quantas linhas a tabela deve ter?");
+    routeMocks.buildTableSpec.mockResolvedValue(routeMocks.tableSpecFixture);
   });
 
   it("rejects unauthenticated requests", async () => {
@@ -430,8 +451,14 @@ describe("unified chat route", () => {
     expect(routeMocks.saveConversationExchange).not.toHaveBeenCalled();
   });
 
-  it("returns a table stub payload and saves it under unified_table", async () => {
+  // updated behavior (Plan 13-03): table_stub substituído por generation path (clarTurnCount >= 2)
+  it("returns a table_spec payload when clarTurnCount >= 2 (generation path)", async () => {
     routeMocks.classifyIntent.mockResolvedValue({ intent: "tabela", confidence: "high" });
+    // Simular 2 turns de clarificação no histórico (teto atingido → generation path)
+    routeMocks.findConversationExchanges.mockResolvedValue([
+      { assistantPayload: { kind: "table_clar_question", question: "Q1", turnIndex: 0, totalTurns: 2, canSkip: true, spec: {} } },
+      { assistantPayload: { kind: "table_clar_question", question: "Q2", turnIndex: 1, totalTurns: 2, canSkip: true, spec: {} } },
+    ]);
 
     const response = await POST(authedJson({ prompt: "Monte uma tabela de controle de gastos" }));
     const events = await readEvents(response);
@@ -441,8 +468,7 @@ describe("unified chat route", () => {
     expect(events.at(-1)).toMatchObject({
       type: "complete",
       payload: {
-        kind: "table_stub",
-        originalPrompt: "Monte uma tabela de controle de gastos",
+        kind: "table_spec",
       },
     });
     expect(routeMocks.findConversationExchanges).toHaveBeenCalledWith(expect.any(String), "unified_table");
@@ -451,7 +477,7 @@ describe("unified chat route", () => {
       expect.objectContaining({
         toolKind: "unified_table",
         mode: "generate",
-        assistantPayload: expect.objectContaining({ kind: "table_stub" }),
+        assistantPayload: expect.objectContaining({ kind: "table_spec" }),
       })
     );
   });
