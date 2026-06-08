@@ -70,7 +70,19 @@ Audit: `.planning/milestones/v1.2-MILESTONE-AUDIT.md` (status: passed)
   3. Outputs heterogêneos (bloco de código, texto explicativo) aparecem inline no mesmo thread, distinguíveis visualmente
   4. Follow-up "agora em inglês" em uma troca de fórmula continua sem perder o contexto — a resposta usa o mesmo resolver de fórmula
   5. O primeiro token da resposta chega ao browser em ≤2,5s (SLA preservado); as páginas de cada tool continuam acessíveis via sidebar
-**Plans**: TBD
+**Plans**:
+
+**Wave 1**
+- [ ] 12-01: Shared Contracts & Intent Classifier — unified schemas, `classifyIntent`, fixture accuracy, Structured Outputs fallback
+
+**Wave 2 *(blocked on Wave 1 completion)***
+- [ ] 12-02: Unified API Route & Dispatch — `/api/chat/unified`, resolver dispatch, `needs_file`, `table_stub`, resolved `toolKind` history
+
+**Wave 3 *(blocked on Wave 2 completion)***
+- [ ] 12-03: Unified Chat Client — `UnifiedChatTool`, NDJSON hook, intent pill override, context selector, render dispatcher
+
+**Wave 4 *(blocked on Wave 3 completion)***
+- [ ] 12-04: Workspace Default & Hardening — `/workspace` default migration, unified history deletion, regressions, final phase gate
 **UI hint**: yes
 
 ### Phase 13: Clarification Loop
@@ -125,7 +137,7 @@ Audit: `.planning/milestones/v1.2-MILESTONE-AUDIT.md` (status: passed)
 | 9. Extraction Infrastructure | v1.2 | 5/5 | Complete | 2026-06-03 |
 | 10. Persistence & LLM Context | v1.2 | 4/4 | Complete | 2026-06-04 |
 | 11. Attachment UI & Pro Gating | v1.2 | 5/5 | Complete | 2026-06-04 |
-| 12. Intent Classifier & Unified Route | v2.0 | 0/? | Not started | - |
+| 12. Intent Classifier & Unified Route | v2.0 | 0/4 | Planned | - |
 | 13. Clarification Loop | v2.0 | 0/? | Not started | - |
 | 14. Tabela Viva | v2.0 | 0/? | Not started | - |
 | 15. Export, UX Migration & Hardening | v2.0 | 0/? | Not started | - |

@@ -2,13 +2,14 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Chat Unificado & Tabela Viva
-status: planning
-last_updated: "2026-06-08T14:41:19.148Z"
-last_activity: 2026-06-08 — Roadmap v2.0 criado (Phases 12–15, 25 requisitos mapeados)
+status: executing
+stopped_at: Phase 12 planned; ready to execute 12-01
+last_updated: "2026-06-08T15:10:00.000Z"
+last_activity: 2026-06-08 — Phase 12 planned (4 plans, 4 waves)
 progress:
   total_phases: 4
   completed_phases: 0
-  total_plans: 0
+  total_plans: 4
   completed_plans: 0
   percent: 0
 ---
@@ -20,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-06-08)
 
 **Core value:** Brazilian spreadsheet users can describe the outcome they need in Portuguese and quickly receive correct, copy-ready formulas, code, queries, or structured table outputs that fit their actual tools.
-**Current focus:** Roadmap created — Phase 12 ready to plan
+**Current focus:** Phase 12 planned — ready to execute
 
 ## Current Position
 
 Phase: 12 of 15 (Intent Classifier & Unified Route)
-Plan: —
-Status: Ready to plan
-Last activity: 2026-06-08 — Roadmap v2.0 criado (Phases 12–15, 25 requisitos mapeados)
+Plan: 1 of 4
+Status: Ready to execute
+Last activity: 2026-06-08 — Phase 12 planned (4 plans, 4 waves)
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -85,10 +86,10 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-06-08T14:41:19.118Z
-Stopped at: Phase 12 context gathered
-Resume file: .planning/phases/12-intent-classifier-unified-route/12-CONTEXT.md
+Last session: 2026-06-08T15:10:00.000Z
+Stopped at: Phase 12 planned; ready to execute 12-01
+Resume file: .planning/phases/12-intent-classifier-unified-route/12-01-PLAN.md
 
 ## Operator Next Steps
 
-- Run `/gsd:plan-phase 12` to plan Phase 12 (Intent Classifier & Unified Route)
+- Run `/gsd-execute-phase 12` to execute Phase 12 (Intent Classifier & Unified Route)
