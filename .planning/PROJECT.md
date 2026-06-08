@@ -16,7 +16,18 @@ Brazilian spreadsheet users can describe the outcome they need in Portuguese and
 
 Usuários Pro agora anexam documentos (CSV/XLSX, PNG/JPEG, PDF, TXT) em qualquer um dos 5 tools de texto via botão paperclip ou drag-and-drop. Um pipeline de extração multi-formato (dispatcher único, validação de magic bytes + anti-ZIP-bomb) gera texto plano que é injetado no system prompt com delimitadores anti-injection, persistido em `attachmentContext` (arquivo bruto nunca salvo — D-07) e reusado em follow-ups. Pro-gate e cota são aplicados no backend antes de qualquer extração; free vê CTA de upgrade. Auditoria de milestone `passed` (25/25 requisitos), Nyquist 100% compliant, UAT humano 3/3.
 
-**Next milestone:** a definir — `/gsd:new-milestone` (research → requirements → roadmap).
+**Next milestone:** v2.0 Chat Unificado & Tabela Viva — em definição (requirements → roadmap).
+
+## Current Milestone: v2.0 Chat Unificado & Tabela Viva
+
+**Goal:** Substituir as abas de tools por um único chat onde a IA roteia o intent automaticamente, e introduzir geração de tabelas interativas estilo planilha (fórmulas vivas no browser), com um loop de clarificação que confirma especificações antes de gerar qualquer tabela.
+
+**Target features:**
+- Chat unificado com classificação de intent (formula, SQL, regex, scripts, análise de arquivo, OCR, **tabela**) — remoção das sections dedicadas, sem regressão das capacidades existentes
+- Geração de **tabela interativa** estilo mini-Excel: grid editável com recálculo de fórmulas vivas no browser
+- **Loop de clarificação** multi-turn: a IA pergunta tudo até ter certeza antes de gerar qualquer tabela
+- Edição inline de células e export da tabela (CSV/XLSX)
+- Migração da navegação/UX do modelo multi-aba para o chat único
 
 ## Requirements
 
@@ -57,7 +68,7 @@ Usuários Pro agora anexam documentos (CSV/XLSX, PNG/JPEG, PDF, TXT) em qualquer
 
 ### Active
 
-(Nenhum — milestone v1.2 concluído. Próximo milestone a definir via `/gsd:new-milestone`.)
+Milestone **v2.0 Chat Unificado & Tabela Viva** — requisitos em definição via `/gsd:new-milestone`. Ver `## Current Milestone` acima.
 
 All v1.0 + v1.1 + v1.2 requirements validated — see Validated section above.
 
@@ -138,4 +149,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-06-05 after v1.2 Anexos Universais milestone — anexo universal Pro nos 5 tools com extração multi-formato, injeção no contexto LLM, persistência do conteúdo (D-07) e Pro-gate backend. Auditoria passed, Nyquist compliant, SEAM-05 fechado.*
+*Last updated: 2026-06-08 — início do milestone v2.0 Chat Unificado & Tabela Viva: chat único com roteamento de intent (abas removidas), tabela interativa estilo mini-Excel (fórmulas vivas) e loop de clarificação antes de gerar tabelas. Requisitos em definição.*

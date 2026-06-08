@@ -1,16 +1,16 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.2
-milestone_name: Anexos Universais
-status: Awaiting next milestone
-last_updated: "2026-06-05T20:43:39.225Z"
-last_activity: 2026-06-05 — Milestone v1.2 completed and archived
+milestone: v2.0
+milestone_name: Chat Unificado & Tabela Viva
+status: planning
+last_updated: "2026-06-08T14:06:52.743Z"
+last_activity: 2026-06-08
 progress:
-  total_phases: 3
-  completed_phases: 3
-  total_plans: 14
-  completed_plans: 14
-  percent: 100
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
@@ -24,10 +24,10 @@ See: .planning/PROJECT.md (updated 2026-06-05)
 
 ## Current Position
 
-Phase: Milestone v1.2 complete
+Phase: Not started (defining requirements)
 Plan: —
-Status: Awaiting next milestone
-Last activity: 2026-06-05 — Milestone v1.2 completed and archived
+Status: Defining requirements
+Last activity: 2026-06-08 — Milestone v2.0 started
 
 ## Performance Metrics
 
