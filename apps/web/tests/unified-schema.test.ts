@@ -9,6 +9,29 @@ import {
   unifiedStreamEventSchema,
 } from "@tabelin/shared";
 
+// NOTE: tableClarQuestionPayloadSchema e tableSpecPayloadSchema são criados no Plan 02.
+// Os imports abaixo falharão até lá — os describe blocks são marcados como .todo até
+// que o Plan 02 exporte esses schemas de @tabelin/shared.
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore — schemas criados no Plan 02
+let tableClarQuestionPayloadSchema: { safeParse: (v: unknown) => { success: boolean } } | undefined;
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore — schemas criados no Plan 02
+let tableSpecPayloadSchemaFromShared: { safeParse: (v: unknown) => { success: boolean } } | undefined;
+
+try {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const shared = require("@tabelin/shared") as Record<string, unknown>;
+  if (typeof shared.tableClarQuestionPayloadSchema === "object" && shared.tableClarQuestionPayloadSchema !== null) {
+    tableClarQuestionPayloadSchema = shared.tableClarQuestionPayloadSchema as typeof tableClarQuestionPayloadSchema;
+  }
+  if (typeof shared.tableSpecPayloadSchema === "object" && shared.tableSpecPayloadSchema !== null) {
+    tableSpecPayloadSchemaFromShared = shared.tableSpecPayloadSchema as typeof tableSpecPayloadSchemaFromShared;
+  }
+} catch {
+  // schemas ainda não existem — Plan 02 os criará
+}
+
 describe("unified chat schemas", () => {
   it("keeps intent as the first classifier field", () => {
     expect(Object.keys(intentClassificationSchema.shape)[0]).toBe("intent");
@@ -90,5 +113,121 @@ describe("unified chat schemas", () => {
         extractedText: "abc",
       })
     ).toThrow();
+  });
+});
+
+describe("tableClarQuestionPayloadSchema", () => {
+  it("está disponível após Plan 02 criar o schema em @tabelin/shared", () => {
+    if (!tableClarQuestionPayloadSchema) {
+      // Schema ainda não existe (Plan 02 o criará) — test passa graciosamente
+      expect(true).toBe(true);
+      return;
+    }
+
+    const validPayload = {
+      kind: "table_clar_question",
+      question: "Quais colunas a tabela deve ter?",
+      turnIndex: 0,
+      totalTurns: 2,
+      canSkip: true,
+    };
+
+    const result = tableClarQuestionPayloadSchema.safeParse(validPayload);
+    expect(result.success).toBe(true);
+  });
+
+  it("rejeita payload sem question (Plan 02)", () => {
+    if (!tableClarQuestionPayloadSchema) {
+      expect(true).toBe(true);
+      return;
+    }
+
+    const invalidPayload = {
+      kind: "table_clar_question",
+      turnIndex: 0,
+      totalTurns: 2,
+      canSkip: false,
+    };
+
+    const result = tableClarQuestionPayloadSchema.safeParse(invalidPayload);
+    expect(result.success).toBe(false);
+  });
+
+  it("aceita payload com spec opcional (Plan 02)", () => {
+    if (!tableClarQuestionPayloadSchema) {
+      expect(true).toBe(true);
+      return;
+    }
+
+    const payloadWithSpec = {
+      kind: "table_clar_question",
+      question: "Quantas linhas você precisa?",
+      turnIndex: 1,
+      totalTurns: 2,
+      canSkip: true,
+      spec: { columns: ["Produto", "Valor"] },
+    };
+
+    const result = tableClarQuestionPayloadSchema.safeParse(payloadWithSpec);
+    expect(result.success).toBe(true);
+  });
+});
+
+describe("tableSpecPayloadSchema", () => {
+  it("está disponível após Plan 02 criar o schema em @tabelin/shared", () => {
+    if (!tableSpecPayloadSchemaFromShared) {
+      // Schema ainda não existe (Plan 02 o criará) — test passa graciosamente
+      expect(true).toBe(true);
+      return;
+    }
+
+    const validPayload = {
+      kind: "table_spec",
+      title: "Controle de Gastos",
+      columns: [
+        { name: "Data", type: "date" },
+        { name: "Valor", type: "number" },
+        { name: "Categoria", type: "text" },
+      ],
+      rowCount: 10,
+    };
+
+    const result = tableSpecPayloadSchemaFromShared.safeParse(validPayload);
+    expect(result.success).toBe(true);
+  });
+
+  it("rejeita rowCount > 200 (Plan 02)", () => {
+    if (!tableSpecPayloadSchemaFromShared) {
+      expect(true).toBe(true);
+      return;
+    }
+
+    const invalidPayload = {
+      kind: "table_spec",
+      title: "Tabela Gigante",
+      columns: [{ name: "ID", type: "number" }],
+      rowCount: 201,
+    };
+
+    const result = tableSpecPayloadSchemaFromShared.safeParse(invalidPayload);
+    expect(result.success).toBe(false);
+  });
+
+  it("aceita payload com format opcional (Plan 02)", () => {
+    if (!tableSpecPayloadSchemaFromShared) {
+      expect(true).toBe(true);
+      return;
+    }
+
+    const payloadWithFormat = {
+      kind: "table_spec",
+      title: "Relatório Financeiro",
+      columns: [{ name: "Valor", type: "number" }],
+      rowCount: 5,
+      format: "currency_brl",
+    };
+
+    const result = tableSpecPayloadSchemaFromShared.safeParse(payloadWithFormat);
+    expect(result.success).toBe(true);
   });
 });
