@@ -17,3 +17,5 @@ export * from "./file-analysis/fixtures";
 // Fase 5: OCR e Charts
 export * from "./ocr/schema";
 export * from "./ocr/fixtures";
+// Fase 12: chat unificado
+export * from "./unified-chat/schema";

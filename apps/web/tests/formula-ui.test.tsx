@@ -420,11 +420,11 @@ describe("FormulaTool", () => {
 
       // Stream pendente: nunca enfileira nem fecha — mantém o reader bloqueado em read()
       // logo após `setAttachmentStatus("extracting")`, congelando o estado transiente.
-      let pendingController: ReadableStreamDefaultController | null = null;
+      const pendingController: { current?: ReadableStreamDefaultController } = {};
       const pendingResponse = new Response(
         new ReadableStream({
           start(controller) {
-            pendingController = controller;
+            pendingController.current = controller;
           }
         }),
         { status: 200 }
@@ -444,7 +444,7 @@ describe("FormulaTool", () => {
       expect(await screen.findByText("Extraindo conteúdo...")).toBeInTheDocument();
 
       // Limpa o stream pendente para não vazar entre testes.
-      pendingController?.close();
+      pendingController.current?.close();
     });
   });
 });
