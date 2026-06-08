@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Chat Unificado & Tabela Viva
 status: planning
-last_updated: "2026-06-08"
-last_activity: 2026-06-08
+last_updated: "2026-06-08T14:41:19.148Z"
+last_activity: 2026-06-08 — Roadmap v2.0 criado (Phases 12–15, 25 requisitos mapeados)
 progress:
   total_phases: 4
   completed_phases: 0
@@ -85,9 +85,9 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-06-08
-Stopped at: Roadmap v2.0 criado — Phases 12–15 definidas, 25 requisitos mapeados, REQUIREMENTS.md traceability preenchida
-Resume file: None
+Last session: 2026-06-08T14:41:19.118Z
+Stopped at: Phase 12 context gathered
+Resume file: .planning/phases/12-intent-classifier-unified-route/12-CONTEXT.md
 
 ## Operator Next Steps
 
