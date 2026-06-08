@@ -77,8 +77,33 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| _(preenchido pelo roadmap)_ | | |
+| UNI-01 | Phase 12 | Pending |
+| UNI-02 | Phase 12 | Pending |
+| UNI-03 | Phase 12 | Pending |
+| UNI-04 | Phase 12 | Pending |
+| UNI-05 | Phase 12 | Pending |
+| UNI-06 | Phase 12 | Pending |
+| UNI-07 | Phase 12 | Pending |
+| CLAR-01 | Phase 13 | Pending |
+| CLAR-02 | Phase 13 | Pending |
+| CLAR-03 | Phase 13 | Pending |
+| CLAR-04 | Phase 13 | Pending |
+| CLAR-05 | Phase 13 | Pending |
+| TAB-01 | Phase 14 | Pending |
+| TAB-02 | Phase 14 | Pending |
+| TAB-03 | Phase 14 | Pending |
+| TAB-04 | Phase 14 | Pending |
+| TAB-05 | Phase 14 | Pending |
+| TAB-06 | Phase 14 | Pending |
+| LOC-01 | Phase 14 | Pending |
+| LOC-02 | Phase 14 | Pending |
+| LOC-03 | Phase 14 | Pending |
+| SEC-05 | Phase 14 | Pending |
+| EXP-01 | Phase 15 | Pending |
+| EXP-02 | Phase 15 | Pending |
+| SEC-04 | Phase 15 | Pending |
 
 ---
 
-*Created: 2026-06-08 — milestone v2.0 requirements (23 requisitos, 6 categorias). Research-backed (SUMMARY.md, HIGH confidence).*
+*Created: 2026-06-08 — milestone v2.0 requirements (25 requisitos, 6 categorias). Research-backed (SUMMARY.md, HIGH confidence).*
+*Traceability filled: 2026-06-08 — roadmap Phase 12–15 mapped, 25/25 requirements covered.*

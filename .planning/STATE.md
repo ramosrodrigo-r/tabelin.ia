@@ -3,10 +3,10 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Chat Unificado & Tabela Viva
 status: planning
-last_updated: "2026-06-08T14:06:52.743Z"
+last_updated: "2026-06-08"
 last_activity: 2026-06-08
 progress:
-  total_phases: 0
+  total_phases: 4
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -17,23 +17,25 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-06-05)
+See: .planning/PROJECT.md (updated 2026-06-08)
 
 **Core value:** Brazilian spreadsheet users can describe the outcome they need in Portuguese and quickly receive correct, copy-ready formulas, code, queries, or structured table outputs that fit their actual tools.
-**Current focus:** Planning next milestone (v1.2 shipped 2026-06-05)
+**Current focus:** Roadmap created — Phase 12 ready to plan
 
 ## Current Position
 
-Phase: Not started (defining requirements)
+Phase: 12 of 15 (Intent Classifier & Unified Route)
 Plan: —
-Status: Defining requirements
-Last activity: 2026-06-08 — Milestone v2.0 started
+Status: Ready to plan
+Last activity: 2026-06-08 — Roadmap v2.0 criado (Phases 12–15, 25 requisitos mapeados)
+
+Progress: [░░░░░░░░░░] 0%
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 41 (v1.0) + 10 (v1.1) = 47
+- Total plans completed: 47 (v1.0–v1.2 acumulado)
 - Average duration: ~10 min/plan
 - Total execution time: ~7.8 hours (histórico acumulado)
 
@@ -51,16 +53,11 @@ Last activity: 2026-06-08 — Milestone v2.0 started
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
-- v1.2 planning: Extração isolada no backend (Phase 9) antes de qualquer UI — único unknown técnico `unpdf` front-loaded
-- v1.2 planning: Conteúdo extraído persistido em `ConversationExchange.attachmentContext`; arquivo bruto nunca persistido (D-07)
-- v1.2 planning: Pro-gate no backend (403 para free) antes de qualquer I/O de extração — anti-bypass
-- v1.2 planning: PDF escaneado retorna erro acionável para OCR tool — sem fallback automático (custo/latência a validar com uso real)
-- v1.1 (Phase 8): Truncagem híbrida (últimas N=10 + limite de tokens) — base reutilizada pela truncagem de `MAX_EXTRACTED_CHARS`
-- [Phase ?]: Assumption A1 descarregada empiricamente: comportamento real de unpdf para PDF escaneado
-- [Phase ?]: Assumption A2 descarregada empiricamente: fflate central directory leitura confiável
-- [Phase ?]: Fix conversão ArrayBuffer
-- [Phase ?]: Fix ZIP_BOMB para testes
-- [Phase ?]: jsdom nao consegue parsear boundary multipart; override de formData() resolve sem timeout
+- v2.0 planning: Engine de fórmulas `@formulajs/formulajs` (MIT) — HyperFormula GPL bloqueado sem licença comercial assinada
+- v2.0 planning: Classificação de intent embutida na chamada de geração (Structured Outputs, campo intent primeiro) — preserva SLA 2,5s
+- v2.0 planning: Partição `userId+toolKind` mantida + kind `"unified_table"` adicionado — sem migração Prisma
+- v2.0 planning: Grid state efêmero; `TableSpecPayload` persistido em `ConversationExchange.assistantPayload` (padrão File Analysis)
+- v2.0 planning: Abas por tool preservadas como deep links — chat unificado é default, não substituição forçada
 
 ### Pending Todos
 
@@ -68,33 +65,30 @@ None yet.
 
 ### Blockers/Concerns
 
-None — v1.2 shipped. (Resolvidos no ciclo: `unpdf` validado na Phase 9; `MAX_EXTRACTED_CHARS=8000` definido na Phase 10; gate de segurança Phase 11 satisfeito — 11-SECURITY.md presente.)
+- Phase 14: PT_BR_TO_EN mapping (~20 funções) deve ser validado empiricamente com `=PROCV()`, `=SOMASE()`, `=SE()` antes de conectar o grid ao gerador
+- Phase 12: Validar acurácia do classificador com 20 prompts reais em português antes de avançar
 
 ## Deferred Items
 
-Items acknowledged and carried forward:
-
 | Category | Item | Status | Deferred At |
 |----------|------|--------|-------------|
-| Teams | Team workspaces and seat management | v2 | v1.0 init |
+| Teams | Team workspaces and seat management | v2+ | v1.0 init |
 | History | Busca e filtro no histórico | Future | v1.1 requirements |
 | History | Export de conversas (PDF, texto) | Future | v1.1 requirements |
-| History | Conversas compartilháveis entre usuários | v2 | v1.1 requirements |
 | Attachments | Fallback OCR automático para PDFs escaneados | Post-v1.2 | v1.2 requirements |
 | Attachments | Suporte a .docx / .odt | Post-v1.2 | v1.2 requirements |
-| Attachments | Múltiplos arquivos por mensagem | Post-v1.2 | v1.2 requirements |
-| Attachments | Redação automática de CPF/CNPJ no conteúdo extraído | Post-v1.2 | v1.2 requirements |
-| UAT | 10-UAT.md status `partial` (0 cenários pendentes; cenários `blocked_by: prior-phase` cobertos retroativamente pelo UAT humano da Phase 11 + testes automatizados) | Acknowledged | v1.2 close |
-| Tech debt | Phase 9 zip-guard `_lastOriginalSizes` estado global entre requisições (WR-07) | Backlog | v1.2 close |
+| Tech debt | Phase 9 zip-guard `_lastOriginalSizes` estado global entre requisições | Backlog | v1.2 close |
 | Tech debt | Phase 9 csv-xlsx N+1 read multi-aba + `catch {}` mascara INVALID_BYTES | Backlog | v1.2 close |
+| Table v2.x | Edição retroativa da tabela via chat | v2.1 | v2.0 requirements |
+| Table v2.x | AutoFiltro (filtro dropdown por coluna) | v2.x | v2.0 requirements |
+| Table v2.x | Language pack pt-BR completo (100+ funções) | v2.x | v2.0 requirements |
 
 ## Session Continuity
 
-Last session: 2026-06-05
-Stopped at: Milestone v1.2 auditado (passed), Nyquist validado nas Phases 9/10, SEAM-05 fechado, e milestone completado/arquivado. Tag v1.2 criada.
-Próximo passo: iniciar o próximo milestone com `/gsd:new-milestone`.
+Last session: 2026-06-08
+Stopped at: Roadmap v2.0 criado — Phases 12–15 definidas, 25 requisitos mapeados, REQUIREMENTS.md traceability preenchida
 Resume file: None
 
 ## Operator Next Steps
 
-- Start the next milestone with /gsd-new-milestone
+- Run `/gsd:plan-phase 12` to plan Phase 12 (Intent Classifier & Unified Route)
