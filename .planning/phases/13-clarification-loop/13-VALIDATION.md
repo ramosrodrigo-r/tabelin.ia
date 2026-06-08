@@ -2,10 +2,15 @@
 phase: 13
 slug: clarification-loop
 status: draft
-nyquist_compliant: false
+nyquist_compliant: true
 wave_0_complete: false
 created: 2026-06-08
 ---
+
+> **Nota:** `nyquist_compliant: true` — todos os requisitos CLAR-01..05 têm verificação automatizada
+> (route tests + component tests) ou cobertura via Wave 0. `wave_0_complete` permanece `false` até o
+> executor completar o Plan 13-01; os Task IDs marcados "TBD" no Per-Task Verification Map são
+> preenchidos pelo executor ao concluir cada task.
 
 # Phase 13 — Validation Strategy
 

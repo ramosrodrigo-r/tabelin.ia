@@ -557,22 +557,25 @@ function injectCollectedSpecIntoPrompt(
 
 ---
 
-## Questões Abertas
+## Questões Abertas (RESOLVED)
 
 1. **Cota no turn de ConfirmationCard confirm**
    - O que sabemos: CLAR-05 diz "cota debitada apenas na geração". O ConfirmationCard é exibido ANTES de gerar.
    - O que não está claro: O click em "Confirmar" no ConfirmationCard faz um novo POST ao `/api/chat/unified`? Se sim, esse POST deve reservar e confirmar cota normalmente.
    - Recomendação: Tratar o click em "Confirmar" como um novo turn com `overrideGenerate: true` + spec editada no body. O servidor detecta `overrideGenerate`, `clarTurnCount >= 0`, e segue o generation path que reserva + confirma cota. Assim o fluxo de cota é uniforme e testável.
+   - **RESOLVED:** Adotado. O click em "Confirmar" dispara novo POST com `overrideGenerate=true` + spec editada num campo dedicado `specOverride`; o servidor segue o generation path (`confirmToolUse`). Ver Plan 13-03 (route bifurcation) e Plan 13-04 (handleConfirmSpec).
 
 2. **Spec parcial e "Gerar mesmo assim" no turn 1**
    - O que sabemos: No turn 1, a spec está vazia. O botão "Gerar mesmo assim" deve gerar com defaults razoáveis.
    - O que não está claro: Quais defaults? Colunas genéricas ("Coluna A, Coluna B"), 10 linhas, formato padrão?
    - Recomendação: O system prompt do `buildTableSpec` inclui defaults explícitos quando a spec está vazia — documentar os defaults razoáveis no prompt do `table-clarifier.ts`.
+   - **RESOLVED:** Adotado. Defaults razoáveis documentados no system prompt do `table-clarifier.ts`. Fallback de histórico vazio também gera com defaults (não trava o usuário). Ver Plan 13-02.
 
 3. **Streaming da pergunta de clarificação**
    - O que sabemos: O SLA de 2,5s foi definido para geração de fórmula. Perguntas de clarificação são muito mais curtas.
    - O que não está claro: O planner deve implementar streaming de delta para a pergunta (experiência mais fluida) ou aceitar a pergunta como payload complete (mais simples)?
    - Recomendação para o planner: Começar com `complete` sem streaming para simplificar — a pergunta é curta e o usuário verá o `intent_detected` pill imediatamente. Streaming pode ser adicionado depois se o feedback indicar que a pergunta demora.
+   - **RESOLVED:** Adotado `complete` direto no MVP. O `intent_detected` pill dá feedback visual imediato. Streaming de delta fica para v2.x. Ver Plan 13-03.
 
 ---
 
