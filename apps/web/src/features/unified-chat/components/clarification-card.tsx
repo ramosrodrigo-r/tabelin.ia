@@ -2,15 +2,7 @@
 
 import { useState } from "react";
 
-// Tipo local temporário — substituído por import de @tabelin/shared no Plan 02
-type TableClarQuestionPayload = {
-  kind: "table_clar_question";
-  question: string;
-  turnIndex: number;
-  totalTurns: number;
-  spec?: Record<string, unknown>;
-  canSkip: boolean;
-};
+import type { TableClarQuestionPayload } from "@tabelin/shared";
 
 export function ClarificationCard({
   payload,
