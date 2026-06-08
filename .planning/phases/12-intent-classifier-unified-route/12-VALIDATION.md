@@ -44,8 +44,8 @@ created: 2026-06-08
 | 12-02-02 | 02 | 2 | UNI-04 | T-12-02-04 | `table_stub` persists as text context without raw JSON or HTML | unit | `pnpm --filter web test -- tests/context-messages.test.ts tests/unified-route.test.ts` | existing + W0 | complete |
 | 12-03-01 | 03 | 3 | UNI-02, UNI-03, UNI-05 | T-12-03-01, T-12-03-02 | Hook parses NDJSON with Zod, shows `intent_detected` first, never sets multipart content-type manually | UI/unit | `pnpm --filter web test -- tests/unified-chat-tool.test.tsx` | W0 | complete |
 | 12-03-02 | 03 | 3 | UNI-02, UNI-03, UNI-05 | T-12-03-03 | Intent dropdown is keyboard-closable and override re-submits original prompt with `overrideIntent` | UI | `pnpm --filter web test -- tests/unified-chat-tool.test.tsx` | W0 | complete |
-| 12-04-01 | 04 | 4 | UNI-07 | T-12-04-01 | `/workspace` is unified default; deep links for existing tools remain reachable | UI/regression | `pnpm --filter web test -- tests/topbar.test.tsx tests/conversations-route.test.ts` | existing + W0 | pending |
-| 12-04-02 | 04 | 4 | UNI-01..UNI-07 | T-12-04-02 | Full phase does not regress typecheck, lint, or existing test suite | phase gate | `pnpm --filter web typecheck && pnpm --filter web lint && pnpm --filter web test` | existing | pending |
+| 12-04-01 | 04 | 4 | UNI-07 | T-12-04-01 | `/workspace` is unified default; deep links for existing tools remain reachable | UI/regression | `pnpm --filter web test -- tests/topbar.test.tsx tests/conversations-route.test.ts` | existing + W0 | complete |
+| 12-04-02 | 04 | 4 | UNI-01..UNI-07 | T-12-04-02 | Full phase does not regress typecheck, lint, or existing test suite | phase gate | `pnpm --filter web typecheck && pnpm --filter web lint && pnpm --filter web test` | existing | complete |
 
 *Status: pending until execution writes tests and implementation.*
 

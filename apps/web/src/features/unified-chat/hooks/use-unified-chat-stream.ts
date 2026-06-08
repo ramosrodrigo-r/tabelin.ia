@@ -117,9 +117,9 @@ export function useUnifiedChatStream() {
       if (response.status === 403) {
         const errorData = await response.json().catch(() => ({}));
         if (errorData.code === "pro_required" && errorData.feature === "attachment") {
-          setStatus("error");
-          setAttachmentStatus(null);
           setError("Recurso exclusivo Pro. Assine o plano Pro para enviar documentos.");
+          setAttachmentStatus(null);
+          setStatus("error");
           return;
         }
         if (errorData.code === "pro_required") {
@@ -143,25 +143,25 @@ export function useUnifiedChatStream() {
 
       if (response.status === 413 || response.status === 422) {
         const errorData = await response.json().catch(() => ({}));
-        setStatus("error");
-        setAttachmentStatus(null);
         setError(
           typeof errorData.message === "string" && errorData.message
             ? errorData.message
             : "Nao consegui processar o documento anexado. Verifique o arquivo e tente novamente.",
         );
+        setAttachmentStatus(null);
+        setStatus("error");
         return;
       }
 
-      setStatus("error");
-      setAttachmentStatus(null);
       setError("Não consegui processar o pedido. Tente reescrever ou enviar de novo.");
+      setAttachmentStatus(null);
+      setStatus("error");
       return;
     }
 
     if (!response.body) {
-      setStatus("error");
       setError("Não consegui processar o pedido. Tente reescrever ou enviar de novo.");
+      setStatus("error");
       return;
     }
 
@@ -182,9 +182,9 @@ export function useUnifiedChatStream() {
       try {
         event = unifiedStreamEventSchema.parse(JSON.parse(line));
       } catch {
-        setStatus("error");
-        setAttachmentStatus(null);
         setError("Resposta corrompida. Tente novamente.");
+        setAttachmentStatus(null);
+        setStatus("error");
         return;
       }
 

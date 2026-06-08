@@ -13,14 +13,14 @@ import type { UserEntitlement } from "@tabelin/shared";
 function useWorkspaceToolKind(): string | undefined {
   const pathname = usePathname();
   if (!pathname) return undefined;
-  // Rotas: /workspace (formula), /workspace/sql, /workspace/regex, /workspace/scripts, /workspace/templates
+  // Rotas: /workspace (unified), /workspace/sql, /workspace/regex, /workspace/scripts, /workspace/templates
   if (/\/workspace\/sql(\/|$)/.test(pathname)) return "sql";
   if (/\/workspace\/regex(\/|$)/.test(pathname)) return "regex";
   if (/\/workspace\/scripts(\/|$)/.test(pathname)) return "script";
   if (/\/workspace\/templates(\/|$)/.test(pathname)) return "template";
-  // Formula é a raiz exata /workspace — NÃO usar prefixo, senão captura
+  // Chat unificado é a raiz exata /workspace — NÃO usar prefixo, senão captura
   // /workspace/file-analysis e /workspace/ocr (efêmeros, sem histórico — D-07).
-  if (/\/workspace\/?$/.test(pathname)) return "formula";
+  if (/\/workspace\/?$/.test(pathname)) return "unified";
   return undefined;
 }
 
@@ -47,6 +47,10 @@ export function Topbar({
   // Deriva toolKind da rota atual — usa prop legada se fornecida (compatibilidade futura)
   const toolKindFromPath = useWorkspaceToolKind();
   const toolKind = toolKindProp ?? toolKindFromPath;
+  const deleteCopy =
+    toolKind === "unified"
+      ? "Apagar todo o histórico do chat unificado? Esta ação não pode ser desfeita."
+      : "Apagar o histórico deste tool? Esta ação não pode ser desfeita.";
 
   // Invoca o callback registrado pelo tool component ativo via contexto
   const invokeNewConversation = useInvokeNewConversation();
@@ -121,9 +125,7 @@ export function Topbar({
                 role="dialog"
                 aria-label="Confirmar exclusão do histórico"
               >
-                <p style={{ margin: 0, padding: "4px 8px 8px", fontSize: 14 }}>
-                  Apagar o histórico deste tool? Esta ação não pode ser desfeita.
-                </p>
+                <p style={{ margin: 0, padding: "4px 8px 8px", fontSize: 14 }}>{deleteCopy}</p>
                 <div style={{ display: "flex", gap: 8, padding: "0 4px 4px" }}>
                   <button
                     className="ghost-button"

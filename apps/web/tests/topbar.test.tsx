@@ -1,17 +1,20 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { Topbar } from "@/components/app/topbar";
 import { getSupportLinks } from "@/server/support/support-config";
 import type { SessionUser } from "@/server/auth/session";
 import type { UserEntitlement } from "@tabelin/shared";
 
+const navigationMock = vi.hoisted(() => ({
+  pathname: "/workspace",
+  push: vi.fn(),
+}));
+
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({
-    push: vi.fn(),
-  }),
-  usePathname: () => "/workspace",
+  useRouter: () => ({ push: navigationMock.push }),
+  usePathname: () => navigationMock.pathname,
 }));
 
 const user: SessionUser = {
@@ -24,6 +27,11 @@ const freeEntitlement: UserEntitlement = { plan: "free", status: "active" };
 const proEntitlement: UserEntitlement = { plan: "pro", status: "active", cycle: "monthly" };
 
 describe("Topbar", () => {
+  beforeEach(() => {
+    vi.restoreAllMocks();
+    navigationMock.pathname = "/workspace";
+  });
+
   it("renders validated Pro support links for Pro users", async () => {
     const browserUser = userEvent.setup();
     const supportLinks = getSupportLinks({
@@ -69,5 +77,35 @@ describe("Topbar", () => {
 
     expect(screen.getByRole("menuitem", { name: "Email prioritario" })).toHaveAttribute("href", "mailto:pro@tabelin.ia");
     expect(screen.queryByRole("menuitem", { name: "WhatsApp" })).not.toBeInTheDocument();
+  });
+
+  it("deletes unified conversation history from the root workspace", async () => {
+    const browserUser = userEvent.setup();
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(null, { status: 200 }));
+
+    render(<Topbar user={user} entitlement={freeEntitlement} supportLinks={getSupportLinks({})} />);
+
+    await browserUser.click(screen.getByRole("button", { name: "Nova conversa" }));
+
+    expect(
+      screen.getByText("Apagar todo o histórico do chat unificado? Esta ação não pode ser desfeita.")
+    ).toBeInTheDocument();
+
+    await browserUser.click(screen.getByRole("button", { name: "Apagar histórico" }));
+
+    expect(fetchMock).toHaveBeenCalledWith("/api/conversations/unified", { method: "DELETE" });
+  });
+
+  it("keeps SQL conversation deletion on the SQL deep link", async () => {
+    navigationMock.pathname = "/workspace/sql";
+    const browserUser = userEvent.setup();
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(null, { status: 200 }));
+
+    render(<Topbar user={user} entitlement={freeEntitlement} supportLinks={getSupportLinks({})} />);
+
+    await browserUser.click(screen.getByRole("button", { name: "Nova conversa" }));
+    await browserUser.click(screen.getByRole("button", { name: "Apagar histórico" }));
+
+    expect(fetchMock).toHaveBeenCalledWith("/api/conversations/sql", { method: "DELETE" });
   });
 });

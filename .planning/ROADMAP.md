@@ -53,7 +53,7 @@ Audit: `.planning/milestones/v1.2-MILESTONE-AUDIT.md` (status: passed)
 
 **Milestone Goal:** Substituir as abas de tools por um único chat com roteamento de intent automático, introduzir geração de tabelas interativas com fórmulas vivas no browser e loop de clarificação multi-turn antes de gerar qualquer tabela.
 
-- [ ] **Phase 12: Intent Classifier & Unified Route** — Input único que detecta e roteia qualquer pedido para os resolvers existentes, com pill de intent e override
+- [x] **Phase 12: Intent Classifier & Unified Route** — Input único que detecta e roteia qualquer pedido para os resolvers existentes, com pill de intent e override
 - [ ] **Phase 13: Clarification Loop** — Loop multi-turn com teto de 2 turns, ConfirmationCard e escape hatch "Gerar mesmo assim" antes de gerar tabelas
 - [ ] **Phase 14: Tabela Viva** — Grid editável com recálculo de fórmulas vivas, localização pt-BR completa e segurança XSS
 - [ ] **Phase 15: Export, UX Migration & Hardening** — Export CSV/XLSX sanitizado, migração do ToolNav para o chat unificado e fixture fallback
@@ -89,7 +89,7 @@ Audit: `.planning/milestones/v1.2-MILESTONE-AUDIT.md` (status: passed)
 
 **Wave 4 *(blocked on Wave 3 completion)***
 
-- [ ] 12-04: Workspace Default & Hardening — `/workspace` default migration, unified history deletion, regressions, final phase gate
+- [x] 12-04: Workspace Default & Hardening — `/workspace` default migration, unified history deletion, regressions, final phase gate
 
 **UI hint**: yes
 
