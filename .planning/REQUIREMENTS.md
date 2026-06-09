@@ -20,11 +20,11 @@
 
 ### Loop de Clarificação (CLAR)
 
-- [ ] **CLAR-01**: Ao detectar pedido de tabela, a IA faz perguntas de clarificação (uma pergunta por turno) antes de gerar
-- [ ] **CLAR-02**: A clarificação tem teto rígido de 2 turns; depois disso a geração prossegue (sem loop infinito), com indicador de progresso ("Pergunta 1 de 2")
-- [ ] **CLAR-03**: Botão "Gerar mesmo assim" disponível desde o primeiro turno de clarificação (escape hatch com defaults razoáveis)
-- [ ] **CLAR-04**: Antes de gerar, um ConfirmationCard resume a especificação coletada (colunas, linhas, formato) para o usuário confirmar ou ajustar
-- [ ] **CLAR-05**: Cota é debitada apenas na geração da tabela, nunca nos turns de clarificação
+- [x] **CLAR-01**: Ao detectar pedido de tabela, a IA faz perguntas de clarificação (uma pergunta por turno) antes de gerar
+- [x] **CLAR-02**: A clarificação tem teto rígido de 2 turns; depois disso a geração prossegue (sem loop infinito), com indicador de progresso ("Pergunta 1 de 2")
+- [x] **CLAR-03**: Botão "Gerar mesmo assim" disponível desde o primeiro turno de clarificação (escape hatch com defaults razoáveis)
+- [x] **CLAR-04**: Antes de gerar, um ConfirmationCard resume a especificação coletada (colunas, linhas, formato) para o usuário confirmar ou ajustar
+- [x] **CLAR-05**: Cota é debitada apenas na geração da tabela, nunca nos turns de clarificação
 
 ### Tabela Interativa (TAB)
 
@@ -84,11 +84,11 @@
 | UNI-05 | Phase 12 | Complete |
 | UNI-06 | Phase 12 | Complete |
 | UNI-07 | Phase 12 | Complete |
-| CLAR-01 | Phase 13 | Pending |
-| CLAR-02 | Phase 13 | Pending |
-| CLAR-03 | Phase 13 | Pending |
-| CLAR-04 | Phase 13 | Pending |
-| CLAR-05 | Phase 13 | Pending |
+| CLAR-01 | Phase 13 | Complete |
+| CLAR-02 | Phase 13 | Complete |
+| CLAR-03 | Phase 13 | Complete |
+| CLAR-04 | Phase 13 | Complete |
+| CLAR-05 | Phase 13 | Complete |
 | TAB-01 | Phase 14 | Pending |
 | TAB-02 | Phase 14 | Pending |
 | TAB-03 | Phase 14 | Pending |
