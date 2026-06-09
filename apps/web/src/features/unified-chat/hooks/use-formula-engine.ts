@@ -309,21 +309,23 @@ function mapFormulaError(err: unknown): string {
   return "#ERRO!";
 }
 
-// Set de fórmulas em avaliação (detecção de ciclo)
-const evaluating = new Set<string>();
-
 /**
  * Avalia uma fórmula pt-BR com dados de contexto.
  *
- * @param formula  String de fórmula começando com "=" (ex: "=PROCV(\"x\";dados;2;0)")
- * @param data     Contexto de dados: array 2D, objeto com arrays nomeados, ou {}
- * @param opts     Opções extras: { circularRef?: boolean, separator?: ";" | "," }
- * @returns        Valor calculado (string|number) ou código de erro estilo Excel
+ * @param formula    String de fórmula começando com "=" (ex: "=PROCV(\"x\";dados;2;0)")
+ * @param data       Contexto de dados: array 2D, objeto com arrays nomeados, ou {}
+ * @param opts       Opções extras: { circularRef?: boolean, separator?: ";" | "," }
+ * @param evaluating Set de chaves em avaliação (detecção de ciclo — WR-04: por invocação)
+ * @returns          Valor calculado (string|number) ou código de erro estilo Excel
+ *
+ * WR-04: evaluating é criado por invocação de recalcAll (não mais module-scope).
+ * evaluateFormula cria seu próprio Set local se chamado sem o parâmetro.
  */
 export function evaluateFormula(
   formula: string,
   data: unknown,
-  opts?: Record<string, unknown>
+  opts?: Record<string, unknown>,
+  evaluating: Set<string> = new Set<string>()
 ): string | number {
   // Opção de ciclo forçado (usada em testes de detecção de ciclo)
   if (opts?.circularRef === true) return "#CIRC!";
@@ -398,6 +400,10 @@ export function evaluateFormula(
 /**
  * Recalcula todas as colunas de fórmula para cada linha.
  * Retorna novo array — nunca muta rawRows (Pitfall 2 prevenido).
+ *
+ * WR-04: cria evaluating Set localmente (por invocação) em vez de usar
+ * o Set module-scope. Isso previne falsos positivos de ciclo em React 18
+ * concorrente e quando múltiplos TableGridPanel estão montados.
  */
 export function recalcAll(
   rows: RowData[],
@@ -406,6 +412,9 @@ export function recalcAll(
 ): RowData[] {
   const formulaCols = columns.filter((c) => c.type === "formula");
   if (formulaCols.length === 0) return rows;
+
+  // WR-04: Set de ciclo local por invocação — nunca compartilhado entre instâncias
+  const evaluating = new Set<string>();
 
   return rows.map((row, rowIdx) => {
     const updated: RowData = { ...row };
@@ -417,7 +426,7 @@ export function recalcAll(
         continue;
       }
       try {
-        const result = evaluateFormulaCells(formula, rows, columns, separator);
+        const result = evaluateFormulaCells(formula, rows, columns, separator, evaluating);
         const key = col.key ?? col.name;
         updated[key] = result;
       } catch {
@@ -432,12 +441,16 @@ export function recalcAll(
 /**
  * Versão interna de evaluateFormula que resolve referências de célula
  * contra rows/columns reais (usada por recalcAll).
+ *
+ * WR-04: recebe evaluating Set por parâmetro (criado por invocação em recalcAll)
+ * em vez de usar o Set module-scope anterior.
  */
 function evaluateFormulaCells(
   formula: string,
   rows: RowData[],
   columns: TableColumn[],
-  separator: ";" | ","
+  separator: ";" | ",",
+  evaluating: Set<string>
 ): string | number {
   const fnName = extractFunctionName(formula);
   if (!fnName) return "#NOME?";
