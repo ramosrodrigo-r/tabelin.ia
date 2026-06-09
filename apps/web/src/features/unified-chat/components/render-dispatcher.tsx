@@ -29,6 +29,7 @@ import { TemplateOutputPanel } from "@/features/template/components/template-out
 import type { UnifiedAttachmentMeta, UnifiedChatStreamStatus } from "../hooks/use-unified-chat-stream";
 import { ClarificationCard } from "./clarification-card";
 import { ConfirmationCard } from "./confirmation-card";
+import { TableGridPanel } from "./table-grid-panel";
 import { TableIntentStub } from "./table-intent-stub";
 
 function FileBackedOutput({
@@ -239,13 +240,20 @@ export function RenderDispatcher({
         />
       );
 
-    case "table_spec":
+    case "table_spec": {
+      const hasRows =
+        Array.isArray((payload as TableSpecPayload).rows) &&
+        ((payload as TableSpecPayload).rows?.length ?? 0) > 0;
+      if (hasRows) {
+        return <TableGridPanel spec={payload as TableSpecPayload} />;
+      }
       return (
         <ConfirmationCard
           payload={payload as TableSpecPayload}
           onConfirm={onConfirm ?? (() => {})}
         />
       );
+    }
 
     case "table_stub":
       return (
