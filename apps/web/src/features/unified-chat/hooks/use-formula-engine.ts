@@ -128,17 +128,27 @@ export function parseFormulaArgs(formula: string, separator: ";" | ","): string[
 
 /**
  * Avalia uma expressão de comparação simples como "1=1", "A>0", "1<>2".
- * Suporta: =, <>, >, <, >=, <=
+ * Suporta critérios unários (">0", "=1", ">=100") onde o operador está na
+ * posição 0 e o lado esquerdo é a string vazia.
  * Retorna o valor booleano (como true/false) ou o valor original se não for comparação.
+ *
+ * WR-01: corrigido `idx <= 0` → `idx < 0` para não bloquear operadores em posição 0
+ * (critérios como ">0", "=1" têm idx === 0 e eram silenciosamente ignorados).
  */
 function evaluateComparison(expr: string): unknown {
   // Tenta identificar operadores de comparação (ordem: >= <= <> antes de > < =)
   const ops = [">=", "<=", "<>", ">", "<", "="];
   for (const op of ops) {
     const idx = expr.indexOf(op);
-    if (idx <= 0) continue;
+    if (idx < 0) continue; // WR-01: idx==0 é válido (operador unário no início)
     const left = expr.slice(0, idx).trim();
     const right = expr.slice(idx + op.length).trim();
+
+    // Critério unário: lado esquerdo vazio (ex: ">0", "=1")
+    // Retorna o valor direito como referência de comparação para o chamador usar
+    if (left === "") {
+      return coerceSimpleValue(right);
+    }
 
     const lv = coerceSimpleValue(left);
     const rv = coerceSimpleValue(right);
