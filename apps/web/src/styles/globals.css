@@ -976,3 +976,90 @@ a {
   color: var(--muted);
   line-height: 1.5;
 }
+
+/* ── Tabela Viva grid ───────────────────────────────────────────────── */
+
+.table-grid-panel {
+  /* DSG theming override — alinha com tokens do projeto */
+  --dsg-cell-background-color: #ffffff;
+  --dsg-cell-text-color: var(--text);
+  --dsg-border-color: var(--border);
+  --dsg-selection-border-color: var(--primary);
+  --dsg-selection-background-color: rgb(11 107 87 / 8%);
+  --dsg-header-active-color: var(--primary);
+  --dsg-header-text-color: var(--text);
+  --dsg-cell-disabled-background-color: #f8fafc;
+  --dsg-scroll-shadow-color: rgb(15 23 42 / 8%);
+  font-size: 14px;
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
+.table-grid-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0 12px;
+}
+
+.table-grid-toolbar-spacer {
+  flex: 1;
+}
+
+/* Célula de fórmula — read-only, levemente diferenciada */
+.cell-formula {
+  background: #f8fafc;
+  color: var(--text);
+  font-style: italic;
+}
+
+/* Célula com erro de fórmula */
+.cell-error {
+  color: var(--destructive);
+  font-size: 12px;
+  cursor: help;
+}
+
+/* Cabeçalho de coluna sortável */
+.col-header {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  user-select: none;
+  font-weight: 650;
+  font-size: 12px;
+}
+
+.col-header:hover {
+  color: var(--primary);
+}
+
+.col-header[data-sort="asc"],
+.col-header[data-sort="desc"] {
+  color: var(--primary);
+}
+
+/* Botão de remoção de coluna — visível só no hover do header */
+.col-header-remove {
+  display: none;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  font-size: 11px;
+  margin-left: auto;
+}
+
+.col-header:hover .col-header-remove {
+  display: flex;
+}
+
+.col-header-remove:hover {
+  color: var(--destructive);
+  background: rgb(180 35 24 / 8%);
+}
