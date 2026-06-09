@@ -81,6 +81,10 @@ const ERROR_TOOLTIPS: Record<string, string> = {
   "#DIV/0!": "Divisão por zero. O divisor dessa fórmula resultou em zero.",
   "#CIRC!": "Referência circular detectada. A fórmula referencia a própria célula.",
   "#ERRO!": "Erro ao calcular esta fórmula. Verifique os argumentos.",
+  // IN-03: adicionar códigos que mapFormulaError pode retornar mas não tinham tooltip
+  "#N/A": "Valor não encontrado. PROCV/PROCH não encontrou correspondência.",
+  "#VALUE!": "Tipo de valor inválido para esta fórmula.",
+  "#NOME?": "Função não reconhecida (alias pt-BR de #NAME?).",
 };
 
 const ERROR_CODES = new Set(Object.keys(ERROR_TOOLTIPS));
