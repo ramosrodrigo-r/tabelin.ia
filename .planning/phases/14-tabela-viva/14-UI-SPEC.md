@@ -1,10 +1,11 @@
 ---
 phase: 14
 slug: tabela-viva
-status: draft
+status: approved
 shadcn_initialized: false
 preset: none
 created: 2026-06-09
+reviewed_at: 2026-06-09
 ---
 
 # Phase 14 — UI Design Contract: Tabela Viva
