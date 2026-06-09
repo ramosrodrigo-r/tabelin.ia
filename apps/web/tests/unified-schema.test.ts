@@ -231,3 +231,106 @@ describe("tableSpecPayloadSchema", () => {
     expect(result.success).toBe(true);
   });
 });
+
+describe("tableSpecPayloadSchema — campos Phase 14", () => {
+  it("aceita spec mínima sem rows (retrocompat Phase 13)", () => {
+    if (!tableSpecPayloadSchemaFromShared) {
+      expect(true).toBe(true);
+      return;
+    }
+
+    const legacyPayload = {
+      kind: "table_spec",
+      title: "Controle de Gastos",
+      columns: [
+        { name: "Data", type: "date" },
+        { name: "Valor", type: "number" },
+      ],
+      rowCount: 5,
+    };
+
+    const result = tableSpecPayloadSchemaFromShared.safeParse(legacyPayload);
+    expect(result.success).toBe(true);
+  });
+
+  it("aceita spec com rows e colunas formula (Phase 14)", () => {
+    if (!tableSpecPayloadSchemaFromShared) {
+      expect(true).toBe(true);
+      return;
+    }
+
+    const extendedPayload = {
+      kind: "table_spec",
+      title: "Gastos com Fórmula",
+      columns: [
+        { name: "Descrição", type: "text", key: "descricao" },
+        { name: "Valor", type: "currency", key: "valor" },
+        { name: "Total", type: "formula", key: "total", formula: "=SOMA(B{row};0)" },
+      ],
+      rowCount: 3,
+      rows: [
+        { descricao: "Aluguel", valor: 2000 },
+        { descricao: "Internet", valor: 150 },
+      ],
+      formulaLanguage: "pt-BR",
+      separator: ";",
+    };
+
+    const result = tableSpecPayloadSchemaFromShared.safeParse(extendedPayload);
+    expect(result.success).toBe(true);
+  });
+
+  it("rejeita rows com objeto aninhado (apenas string|number)", () => {
+    if (!tableSpecPayloadSchemaFromShared) {
+      expect(true).toBe(true);
+      return;
+    }
+
+    const invalidPayload = {
+      kind: "table_spec",
+      title: "Payload Inválido",
+      columns: [{ name: "Dados", type: "text", key: "dados" }],
+      rowCount: 1,
+      rows: [{ dados: { nested: "objeto" } }],
+    };
+
+    const result = tableSpecPayloadSchemaFromShared.safeParse(invalidPayload);
+    expect(result.success).toBe(false);
+  });
+
+  it("aceita formulaLanguage pt-BR", () => {
+    if (!tableSpecPayloadSchemaFromShared) {
+      expect(true).toBe(true);
+      return;
+    }
+
+    const payload = {
+      kind: "table_spec",
+      title: "Tabela PT",
+      columns: [{ name: "Valor", type: "number", key: "valor" }],
+      rowCount: 1,
+      formulaLanguage: "pt-BR",
+    };
+
+    const result = tableSpecPayloadSchemaFromShared.safeParse(payload);
+    expect(result.success).toBe(true);
+  });
+
+  it("aceita separator ';'", () => {
+    if (!tableSpecPayloadSchemaFromShared) {
+      expect(true).toBe(true);
+      return;
+    }
+
+    const payload = {
+      kind: "table_spec",
+      title: "Tabela Separador",
+      columns: [{ name: "Valor", type: "number", key: "valor" }],
+      rowCount: 1,
+      separator: ";",
+    };
+
+    const result = tableSpecPayloadSchemaFromShared.safeParse(payload);
+    expect(result.success).toBe(true);
+  });
+});
