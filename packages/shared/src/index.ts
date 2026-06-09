@@ -19,3 +19,5 @@ export * from "./ocr/schema";
 export * from "./ocr/fixtures";
 // Fase 12: chat unificado
 export * from "./unified-chat/schema";
+// Phase 14: tabela viva
+export * from "./table/formula-locale";
