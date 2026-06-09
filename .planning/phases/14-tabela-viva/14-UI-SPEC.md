@@ -53,7 +53,7 @@ Declarado (múltiplos de 4 — padrão já em uso no projeto):
 - Célula do grid: padding interno 4px 8px (xs/sm) — ditado pela densidade de planilha, não pelo card.
 - Toolbar do grid: padding 8px 12px (sm / entre sm e md) — compacto para não competir com o conteúdo.
 - Altura mínima de linha de célula: 28px — mantém a grid densa como planilha, abaixo do min-height 36px dos ghost-buttons.
-- Tooltip de erro de fórmula: padding 6px 8px.
+- Tooltip de erro de fórmula: padding 4px 8px.
 
 **Fonte:** `globals.css` análise direta — padding 16px no `.assistant-card`, gap 8px no `.chat-exchange`, gap 20px no `.chat-thread`.
 
@@ -343,7 +343,7 @@ Adicionar em `globals.css` (seção "Grid editável"):
   background: none;
   color: var(--muted);
   cursor: pointer;
-  padding: 2px 4px;
+  padding: 4px;
   border-radius: 4px;
   font-size: 11px;
   margin-left: auto;
@@ -417,6 +417,8 @@ case "table_spec":
 | npm — `@formulajs/formulajs@4.6.0` | MIT, funções de fórmula | Verificado: histórico 6,2 anos, fork comunitário do Handsontable formulajs, sem postinstall script — RESEARCH.md §Package Legitimacy Audit |
 
 **Registro de segurança de terceiros:** Ambas as bibliotecas verificadas via inspeção direta de pacote npm em 2026-06-09 (RESEARCH.md). Nenhum `postinstall` detectado. Nenhum padrão suspeito (fetch externo, eval, process.env). Classificação: **view passed — no flags — 2026-06-09**.
+
+**Nota para o planner (recomendação não-bloqueante):** O RESEARCH.md §Package Legitimacy Audit marcou `react-datasheet-grid` e `@formulajs/formulajs` como `[ASSUMED]` porque a ferramenta de slopcheck estava indisponível no momento da pesquisa. O planner DEVE inserir um `checkpoint:human-verify` imediatamente antes de cada tarefa `pnpm add react-datasheet-grid` e `pnpm add @formulajs/formulajs` para que um humano confirme a identidade do pacote antes da instalação.
 
 ---
 
