@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useReducer, useState } from "react";
+import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
 
 import { DynamicDataSheetGrid, keyColumn, textColumn } from "react-datasheet-grid";
 import "react-datasheet-grid/dist/style.css";
@@ -123,19 +123,33 @@ export function TableGridPanel({ spec }: { spec: TableSpecPayload }) {
   // ── Sort state ──
   const [sortState, setSortState] = useState<{ key: string; dir: "asc" | "desc" } | null>(null);
 
-  // ── sortedRows — Pitfall 3: [...rows].sort() nunca muta original ──
-  const sortedRows = useMemo(() => {
-    if (!sortState) return displayRows;
-    return [...displayRows].sort((a, b) => {
-      const va = a[sortState.key] ?? "";
-      const vb = b[sortState.key] ?? "";
+  // ── sortedRows + sortIndexMap — Pitfall 3: [...rows].sort() nunca muta original ──
+  // sortIndexMap[sortedIdx] = originalIdx — permite reverter edição e delete para ordem original
+  const { sortedRows, sortIndexMap } = useMemo(() => {
+    if (!sortState) {
+      return {
+        sortedRows: displayRows,
+        sortIndexMap: displayRows.map((_, i) => i),
+      };
+    }
+    const indexed = displayRows.map((row, i) => ({ row, originalIdx: i }));
+    indexed.sort((a, b) => {
+      const va = a.row[sortState.key] ?? "";
+      const vb = b.row[sortState.key] ?? "";
       const cmp =
         typeof va === "number" && typeof vb === "number"
           ? va - vb
           : String(va).localeCompare(String(vb), "pt-BR");
       return sortState.dir === "asc" ? cmp : -cmp;
     });
+    return {
+      sortedRows: indexed.map((e) => e.row),
+      sortIndexMap: indexed.map((e) => e.originalIdx),
+    };
   }, [displayRows, sortState]);
+
+  // ── Ref do container do grid (WR-05: scopar undo/redo ao grid focado) ──
+  const gridContainerRef = useRef<HTMLDivElement>(null);
 
   // ── Handlers ──
 
@@ -149,15 +163,27 @@ export function TableGridPanel({ spec }: { spec: TableSpecPayload }) {
 
   const handleChange = useCallback(
     (newRows: RowData[]) => {
-      // Limpa sort ativo antes do dispatch para não persistir rows em ordem ordenada
-      // (must_haves: setSortState(null) antes do dispatch — newRows chega em ordem do sort)
-      setSortState(null);
+      // CR-01: quando sort está ativo, newRows chega em ordem do sort.
+      // Usar sortIndexMap para restaurar a ordem original antes do dispatch —
+      // assim o estado canônico nunca é corrompido pelo sort.
+      let rowsInOriginalOrder: RowData[];
+      if (sortState) {
+        // Reconstrói o array na ordem original usando o mapa sort→original
+        const restored = new Array<RowData>(newRows.length);
+        sortIndexMap.forEach((origIdx, sortedIdx) => {
+          restored[origIdx] = newRows[sortedIdx];
+        });
+        rowsInOriginalOrder = restored;
+        setSortState(null);
+      } else {
+        rowsInOriginalOrder = newRows;
+      }
       dispatch({
         type: "SET",
-        newState: { rows: newRows, columns: historyState.present.columns },
+        newState: { rows: rowsInOriginalOrder, columns: historyState.present.columns },
       });
     },
-    [historyState.present.columns]
+    [historyState.present.columns, sortState, sortIndexMap]
   );
 
   const addRow = useCallback(() => {
@@ -221,8 +247,12 @@ export function TableGridPanel({ spec }: { spec: TableSpecPayload }) {
   );
 
   // ── Undo/redo via Ctrl+Z / Ctrl+Y (TAB-04) ──
+  // WR-05: listener no window guardado por foco-dentro do container — evita
+  // disparar undo em todos os grids montados e em inputs de texto da página.
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
+      // Só processa se o foco estiver dentro do container deste grid
+      if (!gridContainerRef.current?.contains(document.activeElement)) return;
       if ((e.ctrlKey || e.metaKey) && e.key === "z" && !e.shiftKey) {
         e.preventDefault();
         dispatch({ type: "UNDO" });
@@ -315,9 +345,11 @@ export function TableGridPanel({ spec }: { spec: TableSpecPayload }) {
     });
 
     // stickyRightColumn para remoção de linha (TAB-03)
+    // CR-02: usar apenas removeRow com o índice original (sortIndexMap[rowIndex]).
+    // Não chamar dsgDeleteRow() — isso causaria double-dispatch e usaria rowIndex
+    // como índice no array original (errado quando sort está ativo).
     const deleteColComponent = ({
       rowIndex,
-      deleteRow: dsgDeleteRow,
     }: {
       rowData: RowData;
       rowIndex: number;
@@ -337,8 +369,9 @@ export function TableGridPanel({ spec }: { spec: TableSpecPayload }) {
         type="button"
         aria-label={`Remover linha ${rowIndex + 1}`}
         onClick={() => {
-          dsgDeleteRow();
-          removeRow(rowIndex);
+          // Mapeia índice sorted → índice original para garantir remoção correta
+          const originalIdx = sortIndexMap[rowIndex] ?? rowIndex;
+          removeRow(originalIdx);
         }}
         style={{
           background: "none",
@@ -366,7 +399,7 @@ export function TableGridPanel({ spec }: { spec: TableSpecPayload }) {
         maxWidth: 36,
       },
     };
-  }, [historyState.present.columns, sortState, sortedRows, handleSortClick, removeColumn, removeRow]);
+  }, [historyState.present.columns, sortState, sortedRows, sortIndexMap, handleSortClick, removeColumn, removeRow]);
 
   const createRow = useCallback((): RowData => {
     const newRow: RowData = {};
@@ -410,7 +443,7 @@ export function TableGridPanel({ spec }: { spec: TableSpecPayload }) {
         <div className="table-grid-toolbar-spacer" />
       </div>
 
-      <div className="table-grid-panel">
+      <div className="table-grid-panel" ref={gridContainerRef}>
         <DynamicDataSheetGrid
           value={sortedRows}
           onChange={handleChange}
