@@ -71,11 +71,13 @@ export const tableColumnSchema = z.object({
 export const tableSpecPayloadSchema = z.object({
   kind: z.literal("table_spec"),
   title: z.string(),
-  columns: z.array(tableColumnSchema),
+  // WR-03: .min(1).max(26) — alinha com o limite de UI e bloqueia payloads LLM adversariais
+  columns: z.array(tableColumnSchema).min(1).max(26),
   rowCount: z.number().int().min(1).max(200),
   format: z.string().optional(),
   // Campos novos — opcionais para retrocompatibilidade com Phase 13 (D-01):
-  rows: z.array(z.record(z.string(), z.union([z.string(), z.number()]))).optional(),
+  // WR-02: .max(200) — alinha com o guard de addRow e bloqueia payloads LLM adversariais
+  rows: z.array(z.record(z.string(), z.union([z.string(), z.number()]))).max(200).optional(),
   formulaLanguage: z.enum(["pt-BR", "en"]).optional(),
   separator: z.enum([";", ","]).optional(),
 });
