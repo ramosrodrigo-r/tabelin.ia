@@ -152,7 +152,7 @@ Audit: `.planning/milestones/v1.2-MILESTONE-AUDIT.md` (status: passed)
 **Wave 2** *(blocked on Wave 1 — motor de fórmulas + backend)*
 
 - [x] 14-03-PLAN.md — Motor de fórmulas isolado: useFormulaEngine, parseA1, extractRange, evaluateFormula (validação empírica PROCV/SOMASE/SE)
-- [ ] 14-04-PLAN.md — buildTableSpec estendido: seed data, fórmulas, fixture mode Phase 14
+- [x] 14-04-PLAN.md — buildTableSpec estendido: seed data, fórmulas, fixture mode Phase 14
 
 **Wave 3** *(blocked on Wave 2)*
 
@@ -192,5 +192,5 @@ Audit: `.planning/milestones/v1.2-MILESTONE-AUDIT.md` (status: passed)
 | 11. Attachment UI & Pro Gating | v1.2 | 5/5 | Complete | 2026-06-04 |
 | 12. Intent Classifier & Unified Route | v2.0 | 1/4 | In Progress|  |
 | 13. Clarification Loop | v2.0 | 4/4 | Complete    | 2026-06-09 |
-| 14. Tabela Viva | v2.0 | 3/6 | In Progress|  |
+| 14. Tabela Viva | v2.0 | 4/6 | In Progress|  |
 | 15. Export, UX Migration & Hardening | v2.0 | 0/? | Not started | - |
