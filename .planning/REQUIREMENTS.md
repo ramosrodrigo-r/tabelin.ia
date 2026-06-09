@@ -28,18 +28,18 @@
 
 ### Tabela Interativa (TAB)
 
-- [ ] **TAB-01**: Usuário recebe um grid editável (click-to-edit, navegação Tab/Enter/setas) renderizado no thread de conversa
-- [ ] **TAB-02**: Colunas de fórmula recalculam ao vivo no browser após cada edição de célula
-- [ ] **TAB-03**: Usuário pode adicionar e remover linhas e colunas
-- [ ] **TAB-04**: Usuário pode copiar/colar (Ctrl+C/V) e desfazer/refazer (Ctrl+Z/Y) dentro do grid
-- [ ] **TAB-05**: Usuário pode ordenar por coluna
-- [ ] **TAB-06**: O grid é limitado (≤200 linhas × 26 colunas) e virtualizado; sem merge de células, freeze panes ou multi-sheet (fronteira explícita "mini-Excel")
+- [x] **TAB-01**: Usuário recebe um grid editável (click-to-edit, navegação Tab/Enter/setas) renderizado no thread de conversa
+- [x] **TAB-02**: Colunas de fórmula recalculam ao vivo no browser após cada edição de célula
+- [x] **TAB-03**: Usuário pode adicionar e remover linhas e colunas
+- [x] **TAB-04**: Usuário pode copiar/colar (Ctrl+C/V) e desfazer/refazer (Ctrl+Z/Y) dentro do grid
+- [x] **TAB-05**: Usuário pode ordenar por coluna
+- [x] **TAB-06**: O grid é limitado (≤200 linhas × 26 colunas) e virtualizado; sem merge de células, freeze panes ou multi-sheet (fronteira explícita "mini-Excel")
 
 ### Localização Brasileira (LOC)
 
-- [ ] **LOC-01**: Fórmulas usam nomes de função em pt-BR (PROCV, SE, SOMASE, MÉDIA, CONT.SE… ~20 funções core) via tabela de mapeamento PT-BR→EN
-- [ ] **LOC-02**: Fórmulas usam `;` como separador de argumento e `,` como separador decimal
-- [ ] **LOC-03**: Colunas numéricas de valor/preço/total formatam como R$ (BRL); datas formatam como DD/MM/AAAA
+- [x] **LOC-01**: Fórmulas usam nomes de função em pt-BR (PROCV, SE, SOMASE, MÉDIA, CONT.SE… ~20 funções core) via tabela de mapeamento PT-BR→EN
+- [x] **LOC-02**: Fórmulas usam `;` como separador de argumento e `,` como separador decimal
+- [x] **LOC-03**: Colunas numéricas de valor/preço/total formatam como R$ (BRL); datas formatam como DD/MM/AAAA
 
 ### Export (EXP)
 
@@ -49,7 +49,7 @@
 ### Segurança (SEC — continua de v1.2)
 
 - [ ] **SEC-04**: Export CSV/XLSX sanitiza injeção de fórmula — prefixo `'` em qualquer célula iniciada por `=`, `+`, `-`, `@`, `\t`, `\r`; células editadas pelo usuário gravadas como texto (`t:"s"`) no XLSX
-- [ ] **SEC-05**: Conteúdo de célula renderiza sem XSS (apenas textContent; sem `dangerouslySetInnerHTML`)
+- [x] **SEC-05**: Conteúdo de célula renderiza sem XSS (apenas textContent; sem `dangerouslySetInnerHTML`)
 
 ---
 
@@ -89,16 +89,16 @@
 | CLAR-03 | Phase 13 | Complete |
 | CLAR-04 | Phase 13 | Complete |
 | CLAR-05 | Phase 13 | Complete |
-| TAB-01 | Phase 14 | Pending |
-| TAB-02 | Phase 14 | Pending |
-| TAB-03 | Phase 14 | Pending |
-| TAB-04 | Phase 14 | Pending |
-| TAB-05 | Phase 14 | Pending |
-| TAB-06 | Phase 14 | Pending |
-| LOC-01 | Phase 14 | Pending |
-| LOC-02 | Phase 14 | Pending |
-| LOC-03 | Phase 14 | Pending |
-| SEC-05 | Phase 14 | Pending |
+| TAB-01 | Phase 14 | Complete |
+| TAB-02 | Phase 14 | Complete |
+| TAB-03 | Phase 14 | Complete |
+| TAB-04 | Phase 14 | Complete |
+| TAB-05 | Phase 14 | Complete |
+| TAB-06 | Phase 14 | Complete |
+| LOC-01 | Phase 14 | Complete |
+| LOC-02 | Phase 14 | Complete |
+| LOC-03 | Phase 14 | Complete |
+| SEC-05 | Phase 14 | Complete |
 | EXP-01 | Phase 15 | Pending |
 | EXP-02 | Phase 15 | Pending |
 | SEC-04 | Phase 15 | Pending |
