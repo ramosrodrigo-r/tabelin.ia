@@ -60,12 +60,24 @@ export const tableClarQuestionPayloadSchema = z.object({
   canSkip: z.boolean(),
 });
 
+export const tableColumnSchema = z.object({
+  name: z.string(),
+  type: z.enum(["text", "number", "date", "currency", "formula"]),
+  key: z.string().optional(),
+  formula: z.string().optional(),
+  width: z.number().optional(),
+});
+
 export const tableSpecPayloadSchema = z.object({
   kind: z.literal("table_spec"),
   title: z.string(),
-  columns: z.array(z.object({ name: z.string(), type: z.string() })),
+  columns: z.array(tableColumnSchema),
   rowCount: z.number().int().min(1).max(200),
   format: z.string().optional(),
+  // Campos novos — opcionais para retrocompatibilidade com Phase 13 (D-01):
+  rows: z.array(z.record(z.string(), z.union([z.string(), z.number()]))).optional(),
+  formulaLanguage: z.enum(["pt-BR", "en"]).optional(),
+  separator: z.enum([";", ","]).optional(),
 });
 
 export const fileBackedPayloadMetadataSchema = z.object({
@@ -130,6 +142,7 @@ export type IntentClassification = z.infer<typeof intentClassificationSchema>;
 export type TableStubPayload = z.infer<typeof tableStubPayloadSchema>;
 export type NeedsFilePayload = z.infer<typeof needsFilePayloadSchema>;
 export type TableClarQuestionPayload = z.infer<typeof tableClarQuestionPayloadSchema>;
+export type TableColumn = z.infer<typeof tableColumnSchema>;
 export type TableSpecPayload = z.infer<typeof tableSpecPayloadSchema>;
 export type FileBackedPayloadMetadata = z.infer<typeof fileBackedPayloadMetadataSchema>;
 export type FileAnalysisPayload = z.infer<typeof fileAnalysisPayloadSchema>;
