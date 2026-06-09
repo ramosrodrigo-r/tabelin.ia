@@ -114,17 +114,29 @@ NÃO responda com lista de perguntas — apenas UMA pergunta clara e objetiva.`;
 
 /**
  * Constrói o system prompt para geração da spec final de tabela.
- * Defaults razoáveis: 10 linhas, colunas genéricas A e B.
+ * Instrui o LLM a gerar seed data (rows), colunas de fórmula e metadados pt-BR.
  */
 function buildSpecSystemPrompt(originalPrompt: string): string {
   return `Você é um assistente especialista em planilhas brasileiro.
-O usuário pediu para criar uma tabela. Gere uma especificação completa com:
+O usuário pediu para criar uma tabela. Gere uma especificação COMPLETA com:
 - title: título descritivo em português
-- columns: array de colunas com name e type (text, number, date, currency, boolean)
+- columns: array de colunas com:
+    • name: nome legível em português
+    • type: "text" | "number" | "date" | "currency" | "formula"
+    • key: chave de objeto (camelCase, sem espaços)
+    • formula: SE type="formula", template usando {row} como placeholder de linha.
+      Exemplos: "=SOMA(B{row};C{row})", "=SE(B{row}>0;\\"positivo\\";\\"negativo\\")"
+      Use SEMPRE ponto-e-vírgula (;) como separador de argumentos e vírgula (,) como decimal.
+      Nomes de função em PORTUGUÊS (SOMA, SE, PROCV, SOMASE, MÉDIA, etc.).
+      Referências de range (ex.: B1:C10) devem ser absolutas — NÃO use {row} dentro de ranges.
+      NÃO gere referências multi-planilha (ex.: Plan1!A1).
 - rowCount: número de linhas (mínimo 1, máximo 200; padrão 10 se não especificado)
-- format: formato opcional (opcional)
+- rows: array de rowCount objetos com dados de exemplo realistas para cada coluna não-fórmula.
+  Valores numéricos como number, datas como string "YYYY-MM-DD". NÃO inclua colunas de fórmula em rows.
+- formulaLanguage: "pt-BR"
+- separator: ";"
 
-Pedido original: "${originalPrompt}"
+Pedido: "${originalPrompt}"
 
 Retorne defaults razoáveis se o usuário não especificou: title derivado do pedido, columns com pelo menos 2 colunas genéricas (Coluna A / Coluna B), rowCount = 10.`;
 }
@@ -225,17 +237,33 @@ export async function buildTableSpec(
 ): Promise<TableSpecPayload> {
   const { prompt, collectedSpec } = input;
 
-  // Fixture mode — retorna spec determinística sem chamar a API
+  // Fixture mode — retorna spec determinística sem chamar a API (Phase 14 estendida)
   if (!process.env.OPENAI_API_KEY) {
     return {
-      kind: "table_spec",
-      title: "Tabela de " + prompt.slice(0, 30),
+      kind: "table_spec" as const,
+      title: "Controle de Gastos",
       columns: [
-        { name: "Coluna A", type: "text" },
-        { name: "Coluna B", type: "number" },
+        { name: "Descrição", type: "text" as const, key: "descricao" },
+        { name: "Categoria", type: "text" as const, key: "categoria" },
+        { name: "Valor (R$)", type: "currency" as const, key: "valor" },
+        { name: "Desconto", type: "currency" as const, key: "desconto" },
+        {
+          name: "Total",
+          type: "formula" as const,
+          key: "total",
+          formula: "=SOMA(C{row};-D{row})",
+        },
       ],
-      rowCount: 10,
-      format: "default",
+      rowCount: 5,
+      rows: [
+        { descricao: "Aluguel", categoria: "Moradia", valor: 2000, desconto: 100 },
+        { descricao: "Supermercado", categoria: "Alimentação", valor: 800, desconto: 50 },
+        { descricao: "Internet", categoria: "Serviços", valor: 150, desconto: 0 },
+        { descricao: "Academia", categoria: "Saúde", valor: 120, desconto: 20 },
+        { descricao: "Netflix", categoria: "Lazer", valor: 55, desconto: 5 },
+      ],
+      formulaLanguage: "pt-BR" as const,
+      separator: ";" as const,
     };
   }
 
