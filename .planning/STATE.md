@@ -2,16 +2,15 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Chat Unificado & Tabela Viva
-status: ready_to_plan
-last_updated: 2026-06-09T00:08:43.956Z
-last_activity: 2026-06-08 -- Phase 13 execution started
+status: planning
+last_updated: "2026-06-09T13:52:07.340Z"
+last_activity: 2026-06-09
 progress:
   total_phases: 4
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 8
   completed_plans: 8
-  percent: 25
-stopped_at: Phase 13 complete (4/4) — ready to discuss Phase 14
+  percent: 50
 ---
 
 # Project State
@@ -86,10 +85,11 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-06-08T16:30:00.000Z
-Stopped at: Phase 13 planned (4 plans); did NOT auto-advance to executor per user request this session
-Resume file: .planning/phases/13-clarification-loop/13-01-PLAN.md
+Last session: 2026-06-09T13:52:07.315Z
+Stopped at: Phase 14 context gathered
+Resume file: .planning/phases/14-tabela-viva/14-CONTEXT.md
 
 ## Operator Next Steps
 
-- Run `/gsd-execute-phase 13` to execute Phase 13 (Clarification Loop). 4 plans across 4 waves; Wave 3 ends in a human-verify checkpoint.
+- Run `/gsd-plan-phase 14` to plan Phase 14 (Tabela Viva — grid editável com fórmulas vivas, localização pt-BR, segurança XSS). No CONTEXT.md yet.
+- ⚠️ Antes de executar qualquer fase: há ~50 deleções pendentes de docs das Phases 09/10/11 na árvore git (não staged). Limpar/commitar antes de rodar execute-phase para não contaminar o worktree do executor.
