@@ -139,7 +139,26 @@ Audit: `.planning/milestones/v1.2-MILESTONE-AUDIT.md` (status: passed)
   4. Usuário pode adicionar/remover linhas e colunas, copiar/colar via Ctrl+C/V e desfazer/refazer via Ctrl+Z/Y dentro do grid
   5. Grid com 200 linhas rola suavemente sem travar o browser; conteúdo de célula nunca executa script (apenas textContent)
 
-**Plans**: TBD
+**Plans**: 6 plans
+
+**Wave 0** *(scaffolding + package install gate)*
+
+- [ ] 14-01-PLAN.md — Wave 0: checkpoint de vettagem de pacotes npm + scaffolds de teste (formula-engine.test.ts, table-grid-panel.test.tsx, extensões unified-schema e table-clarifier)
+
+**Wave 1** *(blocked on Wave 0 — contratos compartilhados e motor de fórmulas)*
+
+- [ ] 14-02-PLAN.md — Schema estendido retrocompat (tableSpecPayloadSchema + tableColumnSchema) e mapa de localização PT_BR_TO_EN
+- [ ] 14-03-PLAN.md — Motor de fórmulas isolado: useFormulaEngine, parseA1, extractRange, evaluateFormula (validação empírica PROCV/SOMASE/SE)
+
+**Wave 2** *(blocked on Wave 1 — backend)*
+
+- [ ] 14-04-PLAN.md — buildTableSpec estendido: seed data, fórmulas, fixture mode Phase 14
+
+**Wave 3** *(blocked on Wave 2 + Wave 1)*
+
+- [ ] 14-05-PLAN.md — TableGridPanel: DynamicDataSheetGrid + undo/redo + sort + add/remove cols/rows + CSS
+- [ ] 14-06-PLAN.md — Wiring: render-dispatcher roteia TableGridPanel/ConfirmationCard + verificação E2E humana
+
 **UI hint**: yes
 
 ### Phase 15: Export, UX Migration & Hardening
@@ -173,5 +192,5 @@ Audit: `.planning/milestones/v1.2-MILESTONE-AUDIT.md` (status: passed)
 | 11. Attachment UI & Pro Gating | v1.2 | 5/5 | Complete | 2026-06-04 |
 | 12. Intent Classifier & Unified Route | v2.0 | 1/4 | In Progress|  |
 | 13. Clarification Loop | v2.0 | 4/4 | Complete    | 2026-06-09 |
-| 14. Tabela Viva | v2.0 | 0/? | Not started | - |
+| 14. Tabela Viva | v2.0 | 0/6 | Planning    | - |
 | 15. Export, UX Migration & Hardening | v2.0 | 0/? | Not started | - |
