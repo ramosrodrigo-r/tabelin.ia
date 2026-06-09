@@ -1,8 +1,8 @@
 ---
 phase: 15
 slug: export-ux-migration-hardening
-status: draft
-nyquist_compliant: false
+status: approved
+nyquist_compliant: true
 wave_0_complete: false
 created: 2026-06-09
 ---
@@ -76,4 +76,4 @@ created: 2026-06-09
 - [ ] Feedback latency < 30s
 - [ ] `nyquist_compliant: true` set in frontmatter
 
-**Approval:** pending
+**Approval:** approved 2026-06-09 (plan-checker PASS — every auto/tdd task has an automated verify; Wave 0 tests created in-plan via TDD before implementation; latency <30s)

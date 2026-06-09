@@ -292,22 +292,21 @@ export function downloadCsv(content: string, filename: string): void {
 | A3 | Exportar `displayRows` (calculado) é o comportamento desejado, não os templates brutos | Pattern/Pitfall 3 | Médio — decisão de produto; confirmar em discuss (Q1) |
 | A4 | Existe um mecanismo de navegação alternativo (sidebar/deep-link) para os tools quando o ToolNav sair da raiz | Pitfall 5 / UX | Médio — se não houver, remover ToolNav regride navegação (Q3) |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Exportar valores calculados ou templates de fórmula?**
+Todas resolvidas no plan-phase decision pass (2026-06-09) — ver `15-CONTEXT.md` "Implementation Decisions".
+
+1. **Exportar valores calculados ou templates de fórmula?** **(RESOLVED → `displayRows`)**
    - What we know: `historyState.present.rows` tem templates (`=SOMA(C{row};-D{row})`); `displayRows` tem valores calculados.
-   - What's unclear: O usuário espera ver "1900" (calculado) ou a fórmula no arquivo?
-   - Recommendation: Exportar `displayRows` (valores calculados, como string sanitizada). É o que o usuário vê na tela e o XLSX `t:"s"` garante que vira texto, não fórmula. Confirmar em discuss-phase.
+   - Decision: Exportar `displayRows` (valores calculados, como string sanitizada). É o que o usuário vê na tela e o XLSX `t:"s"` garante que vira texto, não fórmula. [CONTEXT: Export — conteúdo]
 
-2. **Separador do CSV: `,` ou `;`?**
+2. **Separador do CSV: `,` ou `;`?** **(RESOLVED → `;` + BOM UTF-8)**
    - What we know: Excel em locale pt-BR usa `;` como separador de lista (decimal é `,`). O critério LOC-02 já fixou `;` para fórmulas.
-   - What's unclear: Se o CSV usar `,`, o Excel pt-BR pode jogar tudo numa coluna.
-   - Recommendation: Usar `;` como delimitador do CSV para abrir corretamente no Excel pt-BR; quotar campos que contenham `;`. Confirmar em discuss.
+   - Decision: Usar `;` como delimitador do CSV (com BOM UTF-8) para abrir corretamente no Excel pt-BR; quotar campos que contenham `;`. [CONTEXT: Export — formato CSV]
 
-3. **Mecanismo de acesso aos tools após remover ToolNav da raiz.**
+3. **Mecanismo de acesso aos tools após remover ToolNav da raiz.** **(RESOLVED → montar a Sidebar existente)**
    - What we know: UNI-07 exige tools acessíveis; rotas por-tool já existem; ToolNav hoje é renderizado dentro do `UnifiedChatTool` (bottomNav).
-   - What's unclear: Onde a navegação por-tool deve viver na raiz — sidebar persistente, dropdown, ou só deep links?
-   - Recommendation: Manter o ToolNav acessível mas **fora** da rota raiz (continua nas páginas por-tool) e adicionar/confirmar um ponto de entrada na sidebar/Topbar para descoberta. Decidir o mecanismo exato em discuss-phase antes de planejar.
+   - Decision: Reusar a `Sidebar` já existente (`components/app/sidebar.tsx`, hoje não montada) montando-a no `workspace/layout.tsx` como pré-requisito de remover o ToolNav da raiz — evita regressão de navegação. Deep links continuam válidos. [CONTEXT: UX migration; Plan 15-03]
 
 ## Environment Availability
 
