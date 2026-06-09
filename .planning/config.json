@@ -45,7 +45,7 @@
     "security_enforcement": true,
     "security_asvs_level": 1,
     "security_block_on": "high",
-    "use_worktrees": false
+    "use_worktrees": true
   },
   "ship": {
     "pr_body_sections": [
