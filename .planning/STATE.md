@@ -2,9 +2,9 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Chat Unificado & Tabela Viva
-status: planning
-last_updated: "2026-06-09T16:47:38.621Z"
-last_activity: 2026-06-09
+status: executing
+last_updated: "2026-06-09T20:50:16.132Z"
+last_activity: 2026-06-09 -- Phase 14 execution started
 progress:
   total_phases: 4
   completed_phases: 2
@@ -20,14 +20,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-06-08)
 
 **Core value:** Brazilian spreadsheet users can describe the outcome they need in Portuguese and quickly receive correct, copy-ready formulas, code, queries, or structured table outputs that fit their actual tools.
-**Current focus:** Phase 14 — tabela viva
+**Current focus:** Phase 14 — tabela-viva
 
 ## Current Position
 
-Phase: 14
-Plan: Not started
-Status: Ready to plan
-Last activity: 2026-06-09
+Phase: 14 (tabela-viva) — EXECUTING
+Plan: 1 of 6
+Status: Executing Phase 14
+Last activity: 2026-06-09 -- Phase 14 execution started
 
 Progress: [██████████] 100% (Phase 12 done; Phase 13 planned, not executed)
 
