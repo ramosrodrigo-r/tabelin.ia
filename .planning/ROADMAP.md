@@ -143,7 +143,7 @@ Audit: `.planning/milestones/v1.2-MILESTONE-AUDIT.md` (status: passed)
 
 **Wave 0** *(scaffolding + package install gate)*
 
-- [ ] 14-01-PLAN.md — Wave 0: checkpoint de vettagem de pacotes npm + scaffolds de teste (formula-engine.test.ts, table-grid-panel.test.tsx, extensões unified-schema e table-clarifier)
+- [x] 14-01-PLAN.md — Wave 0: checkpoint de vettagem de pacotes npm + scaffolds de teste (formula-engine.test.ts, table-grid-panel.test.tsx, extensões unified-schema e table-clarifier)
 
 **Wave 1** *(blocked on Wave 0 — contratos compartilhados)*
 
@@ -192,5 +192,5 @@ Audit: `.planning/milestones/v1.2-MILESTONE-AUDIT.md` (status: passed)
 | 11. Attachment UI & Pro Gating | v1.2 | 5/5 | Complete | 2026-06-04 |
 | 12. Intent Classifier & Unified Route | v2.0 | 1/4 | In Progress|  |
 | 13. Clarification Loop | v2.0 | 4/4 | Complete    | 2026-06-09 |
-| 14. Tabela Viva | v2.0 | 0/6 | Planning    | - |
+| 14. Tabela Viva | v2.0 | 1/6 | In Progress|  |
 | 15. Export, UX Migration & Hardening | v2.0 | 0/? | Not started | - |
