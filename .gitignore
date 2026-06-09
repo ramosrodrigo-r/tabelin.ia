@@ -10,3 +10,12 @@ test-results/
 .env.*.local
 !.env.example
 *.tsbuildinfo
+
+# Fixtures de teste manual (upload/extração) — não versionar
+/grande.csv
+/teste.csv
+/invalido.txt
+/multi-abas.xlsx
+/tabela-teste-ocr.png
+/Imagem colada.png
+/Imagem colada (2).png
