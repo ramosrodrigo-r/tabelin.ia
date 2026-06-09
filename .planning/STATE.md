@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Chat Unificado & Tabela Viva
 status: planning
-last_updated: "2026-06-09T13:52:07.340Z"
+last_updated: "2026-06-09T16:47:38.621Z"
 last_activity: 2026-06-09
 progress:
   total_phases: 4
   completed_phases: 2
-  total_plans: 8
+  total_plans: 14
   completed_plans: 8
   percent: 50
 ---
@@ -85,9 +85,9 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-06-09T13:52:07.315Z
-Stopped at: Phase 14 context gathered
-Resume file: .planning/phases/14-tabela-viva/14-CONTEXT.md
+Last session: 2026-06-09T16:47:38.606Z
+Stopped at: Phase 14 planned (6 plans, 4 waves) — plan-checker APPROVED
+Resume file: .planning/phases/14-tabela-viva/14-01-PLAN.md
 
 ## Operator Next Steps
 
