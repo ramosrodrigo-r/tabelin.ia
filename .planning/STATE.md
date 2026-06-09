@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Chat Unificado & Tabela Viva
-status: executing
-last_updated: "2026-06-09T21:34:12.604Z"
+status: verifying
+last_updated: "2026-06-09T21:43:23.363Z"
 last_activity: 2026-06-09
 progress:
   total_phases: 4
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 14
-  completed_plans: 13
-  percent: 50
+  completed_plans: 14
+  percent: 75
 ---
 
 # Project State
@@ -26,10 +26,10 @@ See: .planning/PROJECT.md (updated 2026-06-08)
 
 Phase: 14 (tabela-viva) — EXECUTING
 Plan: 6 of 6
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-06-09
 
-Progress: [█████████░] 93%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
@@ -58,6 +58,7 @@ Recent decisions affecting current work:
 - v2.0 planning: Partição `userId+toolKind` mantida + kind `"unified_table"` adicionado — sem migração Prisma
 - v2.0 planning: Grid state efêmero; `TableSpecPayload` persistido em `ConversationExchange.assistantPayload` (padrão File Analysis)
 - v2.0 planning: Abas por tool preservadas como deep links — chat unificado é default, não substituição forçada
+- [Phase ?]: Wiring final Phase 14-06
 
 ### Pending Todos
 
@@ -85,10 +86,11 @@ None yet.
 | Phase 14-tabela-viva P01 | 12 | 2 tasks | 6 files |
 | Phase 14 P02 | 8 | 2 tasks | 3 files |
 | Phase 14-tabela-viva P04 | 8 | 1 tasks | 1 files |
+| Phase 14-tabela-viva P06 | 12 | 2 tasks | 1 files |
 
 ## Session Continuity
 
-Last session: 2026-06-09T21:34:12.584Z
+Last session: 2026-06-09T21:43:23.342Z
 Stopped at: Phase 14 planned (6 plans, 4 waves) — plan-checker APPROVED
 Resume file: None
 

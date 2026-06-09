@@ -55,7 +55,7 @@ Audit: `.planning/milestones/v1.2-MILESTONE-AUDIT.md` (status: passed)
 
 - [x] **Phase 12: Intent Classifier & Unified Route** — Input único que detecta e roteia qualquer pedido para os resolvers existentes, com pill de intent e override
 - [x] **Phase 13: Clarification Loop** — Loop multi-turn com teto de 2 turns, ConfirmationCard e escape hatch "Gerar mesmo assim" antes de gerar tabelas (completed 2026-06-08)
-- [ ] **Phase 14: Tabela Viva** — Grid editável com recálculo de fórmulas vivas, localização pt-BR completa e segurança XSS
+- [x] **Phase 14: Tabela Viva** — Grid editável com recálculo de fórmulas vivas, localização pt-BR completa e segurança XSS (completed 2026-06-09)
 - [ ] **Phase 15: Export, UX Migration & Hardening** — Export CSV/XLSX sanitizado, migração do ToolNav para o chat unificado e fixture fallback
 
 ## Phase Details
@@ -157,7 +157,7 @@ Audit: `.planning/milestones/v1.2-MILESTONE-AUDIT.md` (status: passed)
 **Wave 3** *(blocked on Wave 2)*
 
 - [x] 14-05-PLAN.md — TableGridPanel: DynamicDataSheetGrid + undo/redo + sort + add/remove cols/rows + CSS
-- [ ] 14-06-PLAN.md — Wiring: render-dispatcher roteia TableGridPanel/ConfirmationCard + verificação E2E humana
+- [x] 14-06-PLAN.md — Wiring: render-dispatcher roteia TableGridPanel/ConfirmationCard + verificação E2E humana
 
 **UI hint**: yes
 
@@ -192,5 +192,5 @@ Audit: `.planning/milestones/v1.2-MILESTONE-AUDIT.md` (status: passed)
 | 11. Attachment UI & Pro Gating | v1.2 | 5/5 | Complete | 2026-06-04 |
 | 12. Intent Classifier & Unified Route | v2.0 | 1/4 | In Progress|  |
 | 13. Clarification Loop | v2.0 | 4/4 | Complete    | 2026-06-09 |
-| 14. Tabela Viva | v2.0 | 5/6 | In Progress|  |
+| 14. Tabela Viva | v2.0 | 6/6 | Complete   | 2026-06-09 |
 | 15. Export, UX Migration & Hardening | v2.0 | 0/? | Not started | - |
