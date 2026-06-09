@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import React from "react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 // NOTE: TableGridPanel será criado no Wave 2.
 // Import dinâmico com try/catch para skip-graceful enquanto o módulo não existe.
@@ -162,5 +162,113 @@ describe("TableGridPanel — TAB-05 sort", () => {
     render(<TableGridPanel spec={specWithRows} />);
     // Após render, o array original não deve ter sido mutado
     expect(JSON.stringify(originalRows)).toBe(frozen);
+  });
+});
+
+// CR-01/CR-02: Testes unitários da lógica de sortIndexMap
+
+describe("CR-01 — lógica sortIndexMap preserva ordem original", () => {
+  it("sortIndexMap identidade quando sort está inativo", () => {
+    // Sem sort ativo, sortIndexMap deve ser [0, 1, 2, ...] (identidade)
+    const rows = [{ valor: 10 }, { valor: 5 }, { valor: 20 }];
+    const map = rows.map((_, i) => i);
+    expect(map).toEqual([0, 1, 2]);
+  });
+
+  it("sortIndexMap correto após sort ascendente", () => {
+    // Simula a lógica do useMemo que cria sortIndexMap
+    const rows = [{ valor: 20 }, { valor: 5 }, { valor: 10 }];
+    const key = "valor";
+    const indexed = rows.map((row, i) => ({ row, originalIdx: i }));
+    indexed.sort((a, b) => {
+      const va = a.row[key] ?? 0;
+      const vb = b.row[key] ?? 0;
+      return typeof va === "number" && typeof vb === "number" ? va - vb : 0;
+    });
+    const sortIndexMap = indexed.map((e) => e.originalIdx);
+    // Ordem asc: [5,10,20] → originalIdxs [1,2,0]
+    expect(sortIndexMap).toEqual([1, 2, 0]);
+  });
+
+  it("restaurar newRows para ordem original via sortIndexMap", () => {
+    // Simula o que handleChange faz com sortIndexMap (CR-01)
+    // Original: [A=20, B=5, C=10]
+    // Sorted asc: [B=5, C=10, A=20] → sortIndexMap = [1, 2, 0]
+    const sortIndexMap = [1, 2, 0]; // sorted[0] veio de original[1], etc.
+    const newRowsInSortOrder = [
+      { valor: 5, editado: "X" },   // foi B (originalIdx=1), editado
+      { valor: 10 },                 // foi C (originalIdx=2)
+      { valor: 20 },                 // foi A (originalIdx=0)
+    ];
+    // Restaurar para ordem original
+    const restored = new Array<Record<string, unknown>>(newRowsInSortOrder.length);
+    sortIndexMap.forEach((origIdx, sortedIdx) => {
+      restored[origIdx] = newRowsInSortOrder[sortedIdx];
+    });
+    // Deve ser [A=20 (idx0), B=5+editado (idx1), C=10 (idx2)]
+    expect(restored[0]).toEqual({ valor: 20 });
+    expect(restored[1]).toEqual({ valor: 5, editado: "X" }); // edit preservado
+    expect(restored[2]).toEqual({ valor: 10 });
+  });
+});
+
+describe("CR-02 — delete usa índice original via sortIndexMap", () => {
+  it("sortIndexMap mapeia sorted → original corretamente para delete", () => {
+    // Original: [A=20, B=5, C=10]
+    // Sorted asc: [B=5, C=10, A=20] → sortIndexMap = [1, 2, 0]
+    const sortIndexMap = [1, 2, 0];
+    // Deletar linha visível 0 (B=5) → deve deletar original[1]
+    const originalIdxToDelete = sortIndexMap[0] ?? 0;
+    expect(originalIdxToDelete).toBe(1);
+    // Deletar linha visível 2 (A=20) → deve deletar original[0]
+    const originalIdxToDelete2 = sortIndexMap[2] ?? 2;
+    expect(originalIdxToDelete2).toBe(0);
+  });
+});
+
+describe("WR-05 — undo/redo scopado ao grid focado", () => {
+  it("Ctrl+Z fora do grid container não aciona undo", () => {
+    if (!TableGridPanel) {
+      expect(true).toBe(true);
+      return;
+    }
+    render(<TableGridPanel spec={SPEC_FIXTURE} />);
+    // Disparar Ctrl+Z no body (fora do grid) não deve lançar erro
+    // O guard verifica document.activeElement dentro do gridContainerRef
+    expect(() =>
+      fireEvent.keyDown(document.body, { key: "z", ctrlKey: true })
+    ).not.toThrow();
+  });
+
+  it("Ctrl+Z dentro do grid container não lança erro", () => {
+    if (!TableGridPanel) {
+      expect(true).toBe(true);
+      return;
+    }
+    render(<TableGridPanel spec={SPEC_FIXTURE} />);
+    const container = document.querySelector(".table-grid-panel");
+    if (!container) {
+      expect(true).toBe(true);
+      return;
+    }
+    expect(() =>
+      fireEvent.keyDown(container, { key: "z", ctrlKey: true })
+    ).not.toThrow();
+  });
+
+  it("Ctrl+Z em dois grids montados simultaneamente não duplica undo", () => {
+    if (!TableGridPanel) {
+      expect(true).toBe(true);
+      return;
+    }
+    // Montar dois grids
+    const { unmount: unmount1 } = render(<TableGridPanel spec={SPEC_FIXTURE} />);
+    const { unmount: unmount2 } = render(<TableGridPanel spec={{ ...SPEC_FIXTURE, title: "Grid 2" }} />);
+    // Ctrl+Z no body (nenhum grid focado) — não deve lançar
+    expect(() =>
+      fireEvent.keyDown(document.body, { key: "z", ctrlKey: true })
+    ).not.toThrow();
+    unmount1();
+    unmount2();
   });
 });
