@@ -172,7 +172,17 @@ Audit: `.planning/milestones/v1.2-MILESTONE-AUDIT.md` (status: passed)
   2. Usuário clica "Exportar XLSX" e o arquivo abre no Excel/Sheets com células editadas pelo usuário gravadas como texto (não como fórmula); o arquivo é gerado sem dependências novas além da lib `xlsx` já instalada
   3. Ao abrir `/workspace`, o chat unificado (Phase 12) é o ponto de entrada default; o ToolNav por aba não aparece na rota raiz mas cada tool continua acessível via deep link ou sidebar
 
-**Plans**: TBD
+**Plans**: 3 plans
+
+**Wave 1** *(sem dependencias — paralelizaveis)*
+
+- [ ] 15-01-PLAN.md — Utilidade pura de export (sanitizacao SEC-04 + buildCsv + buildXlsx + download) e testes unitarios
+- [ ] 15-03-PLAN.md — Migracao UX: montar Sidebar no layout, remover ToolNav do mount raiz + teste do fixture fallback
+
+**Wave 2** *(bloqueada pelo 15-01)*
+
+- [ ] 15-02-PLAN.md — Wiring dos botoes Exportar CSV/XLSX no toolbar do TableGridPanel + teste de componente
+
 **UI hint**: yes
 
 ## Progress
@@ -193,4 +203,4 @@ Audit: `.planning/milestones/v1.2-MILESTONE-AUDIT.md` (status: passed)
 | 12. Intent Classifier & Unified Route | v2.0 | 1/4 | In Progress|  |
 | 13. Clarification Loop | v2.0 | 4/4 | Complete    | 2026-06-09 |
 | 14. Tabela Viva | v2.0 | 6/6 | Complete   | 2026-06-09 |
-| 15. Export, UX Migration & Hardening | v2.0 | 0/? | Not started | - |
+| 15. Export, UX Migration & Hardening | v2.0 | 0/3 | Planned | - |
