@@ -145,16 +145,16 @@ Audit: `.planning/milestones/v1.2-MILESTONE-AUDIT.md` (status: passed)
 
 - [ ] 14-01-PLAN.md — Wave 0: checkpoint de vettagem de pacotes npm + scaffolds de teste (formula-engine.test.ts, table-grid-panel.test.tsx, extensões unified-schema e table-clarifier)
 
-**Wave 1** *(blocked on Wave 0 — contratos compartilhados e motor de fórmulas)*
+**Wave 1** *(blocked on Wave 0 — contratos compartilhados)*
 
 - [ ] 14-02-PLAN.md — Schema estendido retrocompat (tableSpecPayloadSchema + tableColumnSchema) e mapa de localização PT_BR_TO_EN
+
+**Wave 2** *(blocked on Wave 1 — motor de fórmulas + backend)*
+
 - [ ] 14-03-PLAN.md — Motor de fórmulas isolado: useFormulaEngine, parseA1, extractRange, evaluateFormula (validação empírica PROCV/SOMASE/SE)
-
-**Wave 2** *(blocked on Wave 1 — backend)*
-
 - [ ] 14-04-PLAN.md — buildTableSpec estendido: seed data, fórmulas, fixture mode Phase 14
 
-**Wave 3** *(blocked on Wave 2 + Wave 1)*
+**Wave 3** *(blocked on Wave 2)*
 
 - [ ] 14-05-PLAN.md — TableGridPanel: DynamicDataSheetGrid + undo/redo + sort + add/remove cols/rows + CSS
 - [ ] 14-06-PLAN.md — Wiring: render-dispatcher roteia TableGridPanel/ConfirmationCard + verificação E2E humana

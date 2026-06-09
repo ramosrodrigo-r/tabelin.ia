@@ -844,21 +844,21 @@ const createRow = useCallback(() => ({}), []);
 
 ---
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Distinção pré/pós-confirmação no schema**
    - O que sabemos: tanto a spec pré-confirmação (`ConfirmationCard`) quanto a pós-geração (`TableGridPanel`) têm `kind: "table_spec"`.
    - O que está definido: campo `rows` ausente/vazio → `ConfirmationCard`; presente com dados → `TableGridPanel`.
-   - Recomendação: planner deve especificar explicitamente essa condição no task do render-dispatcher.
+   - **RESOLVED:** condição `rows && rows.length > 0` especificada no task do render-dispatcher (Plan 14-06 Task 1).
 
 2. **Fórmulas cross-row complexas (PROCV com range)**
    - O que sabemos: `=PROCV(A1;B1:C10;2;0)` é o critério de sucesso #3. A resolução de `B1:C10` extrai um range 2D de rows.
    - O que está indefinido: e se a coluna `A` da linha atual referencia uma célula de outra coluna (não a mesma linha)? Ex: `=PROCV(A{row};TabelaRef!B1:C10;2;0)` — sem suporte a multi-sheet em Phase 14.
-   - Recomendação: suportar apenas referências absolutas (sem `{row}`) em parâmetros de range PROCV; o LLM deve ser instruído a não gerar referências a outras "sheets".
+   - **RESOLVED:** apenas referências absolutas (sem `{row}`) suportadas em parâmetros de range PROCV; `extractRange()` retorna 2D (Plan 14-03 evaluateFormula). O prompt do gerador instrui o LLM a não gerar referências multi-sheet (Plan 14-04).
 
 3. **`ConfirmationCard.tsx` com spec estendida**
    - O que sabemos: `ConfirmationCard` permite editar title, column names e rowCount. Com a spec estendida, `rows` e `formulaLanguage` não precisam ser editáveis no card.
-   - Recomendação: `ConfirmationCard` ignora os campos novos (apenas exibe), passa-os de volta intactos no `onConfirm(editedSpec)`.
+   - **RESOLVED:** `ConfirmationCard` ignora os campos novos (apenas exibe), passa-os de volta intactos no `onConfirm(editedSpec)` (Plan 14-06).
 
 ---
 
