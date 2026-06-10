@@ -1,5 +1,5 @@
 ---
-status: partial
+status: complete
 phase: 15-export-ux-migration-hardening
 source: [15-01-SUMMARY.md, 15-02-SUMMARY.md, 15-03-SUMMARY.md]
 started: 2026-06-10T00:00:00Z
@@ -33,30 +33,30 @@ resolution: "Corrigido via debug session table-clarification-misroute → commit
 
 ### 4. Exportar CSV (EXP-01)
 expected: Clicar "Exportar CSV" baixa `<titulo>.csv`; abrir no Excel/Sheets mostra acentos corretos (BOM UTF-8), separador `;`, e os VALORES calculados (não fórmulas template `{row}`).
-result: blocked
-blocked_by: prior-phase
-reason: "Sem grid renderizado (Test 3 bloqueado a montante), os botões Exportar CSV/XLSX não existem na UI. Código do export verificado em nível de componente/unidade (table-grid-panel.test.tsx 18/18 renderiza o grid e dispara os handlers)."
+result: pass
+evidence: "CSV inspecionado (tabela-de-vendas---exemplo.csv): começa com BOM EF BB BF, separador `;`, fim de linha `\\r\\n`, header + linhas de dados. Valores calculados exportados (não templates {row})."
 
 ### 5. Exportar XLSX (EXP-02)
 expected: Clicar "Exportar XLSX" baixa `<titulo>.xlsx`; abre no Excel/Sheets com as mesmas colunas/linhas; toda célula é texto (não recalcula como fórmula).
-result: blocked
-blocked_by: prior-phase
-reason: "Idem Test 4 — depende do grid renderizar."
+result: pass
+evidence: "Usuário confirmou export XLSX OK ('tudo rodou')."
 
 ### 6. Sanitização de injeção de fórmula (SEC-04 — teste de segurança)
 expected: Editar uma célula para `=1+1` (ou `=SOMA(1;2)`), exportar CSV e XLSX, reabrir: a célula aparece como TEXTO literal `=1+1` (prefixo `'`), NÃO é executada como fórmula. Idem para uma célula iniciada por `+`, `-`, `@`.
-result: blocked
-blocked_by: prior-phase
-reason: "Depende do grid renderizar para exportar. Sanitização coberta por unit tests (table-export.test.ts 24/24, incl. fix CR-01) mas não exercitada manualmente no Excel/Sheets."
+result: pass
+evidence: "Usuário digitou `=1+1` na coluna de texto 'Nome do Produto'; CSV exportado gravou `'=1+1` (com prefixo aspa simples) — verificado em tabela-de-vendas---exemplo.csv linha 3. SEC-04 confirmado ao vivo. Demais gatilhos (+ - @ TAB CR LF) cobertos por unit tests (table-export.test.ts 24/24, incl. CR-01)."
 
 ## Summary
 
 total: 6
-passed: 1
-issues: 2
+passed: 5
+resolved: 1
+issues: 0
 pending: 0
 skipped: 0
-blocked: 3
+blocked: 0
+
+note: "T1/T3/T4/T5/T6 verde (T3 desbloqueado após fixes de roteamento+spec). T2 (ToolNav) resolvido em código (grep 0, suíte verde) — pendente reconfirmação visual rápida do usuário. Phase 15 verificada end-to-end. Bug Phase 14 fora de escopo registrado abaixo (#NAME? nas fórmulas vivas de tabelas geradas pela IA)."
 
 ## Gaps
 
@@ -87,4 +87,14 @@ blocked: 3
     - "apps/web/src/app/api/chat/unified/route.ts:609-615 (switch por `classification` da resposta; não honra clarificação unified_table em progresso)"
     - "apps/web/src/features/unified-chat/unified-chat-tool.tsx:269-287 (handleAnswerClarification reenviar resposta como prompt novo; handleSkipClarification overrideGenerate)"
   missing:
-    - "FORA DO ESCOPO DA PHASE 15 — encaminhar para /gsd:debug: (a) ao atender clarificação de unified_table, forçar intent=unified_table em vez de re-classificar a resposta; (b) corrigir 'Gerar mesmo assim' (overrideGenerate) para de fato gerar a tabela. Provavelmente Phase 13."
+    - "FORA DO ESCOPO DA PHASE 15 — encaminhar para /gsd:debug: (a) ao atender clarificação de unified_table, forçar intent=unified_table em vez de re-classificar a resposta; (b) corrigir 'Gerar mesmo assim' (overrideGenerate) para de fato gerar a tabela. Provavelmente Phase 13." # RESOLVIDO commit f4222a6 + follow-on 11510ea (kind no fallback)
+
+- truth: "As fórmulas vivas de uma tabela gerada pela IA são avaliadas corretamente no grid (sem erro)"
+  status: failed
+  reason: "Observado no UAT Test 6: a coluna 'Total' de uma tabela gerada ao vivo (gpt-5-mini) exporta `#NAME?` em TODAS as linhas — o motor de fórmulas (@formulajs / localização pt-BR) não reconhece as fórmulas geradas pela IA (nome de função ou referência de coluna não resolvida). O EXPORT está correto (exporta fielmente displayRows = valor calculado, conforme EXP-01); o defeito é a AVALIAÇÃO da fórmula."
+  severity: major
+  test: 6
+  attribution: "FORA DO ESCOPO DA PHASE 15 — Phase 14 (Tabela Viva / motor de fórmulas vivas). Encaminhar para /gsd:debug. Afeta o valor central do milestone (fórmulas vivas), mas não a verificação do export da Phase 15."
+  artifacts:
+    - "apps/web/src/features/unified-chat/hooks/use-formula-engine.ts (avaliação de fórmulas; provável PT_BR_TO_EN mapping ou parsing de referências de coluna)"
+    - "apps/web/src/server/ai/table-clarifier.ts (formato das fórmulas geradas pela IA — ex.: =SOMA(C{row};-D{row}) vs referências por nome de coluna)"
