@@ -10,6 +10,7 @@ import { ArrowDown, ArrowUp, X } from "lucide-react";
 import type { TableColumn, TableSpecPayload } from "@tabelin/shared";
 
 import { type RowData, useFormulaEngine } from "../hooks/use-formula-engine";
+import { buildCsv, buildXlsx, downloadCsv, downloadXlsx } from "../lib/table-export";
 
 // ─── Tipos locais ──────────────────────────────────────────────────────────────
 
@@ -91,6 +92,24 @@ const ERROR_CODES = new Set(Object.keys(ERROR_TOOLTIPS));
 
 function isErrorCode(value: string | number): boolean {
   return typeof value === "string" && ERROR_CODES.has(value);
+}
+
+// ─── slugifyTitle ──────────────────────────────────────────────────────────────
+
+/**
+ * Normaliza `spec.title` para um nome de arquivo seguro: minúsculas, sem
+ * acentos, espaços viram `-`, e caracteres inválidos são removidos.
+ * Usado como base do nome do arquivo exportado (CSV/XLSX).
+ */
+export function slugifyTitle(title: string): string {
+  const normalized = title
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "") // remove diacríticos
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, "-")
+    .replace(/[^a-z0-9-]/g, "");
+  return normalized || "tabela";
 }
 
 // ─── Componente principal ──────────────────────────────────────────────────────
@@ -405,6 +424,19 @@ export function TableGridPanel({ spec }: { spec: TableSpecPayload }) {
     };
   }, [historyState.present.columns, sortState, sortedRows, sortIndexMap, handleSortClick, removeColumn, removeRow]);
 
+  // ── Export CSV/XLSX (EXP-01/EXP-02) — sempre displayRows (calculado), nunca rows (templates) ──
+  const handleExportCsv = useCallback(() => {
+    const slug = slugifyTitle(spec.title);
+    const csv = buildCsv(historyState.present.columns, displayRows);
+    downloadCsv(csv, `${slug}.csv`);
+  }, [historyState.present.columns, displayRows, spec.title]);
+
+  const handleExportXlsx = useCallback(() => {
+    const slug = slugifyTitle(spec.title);
+    const wb = buildXlsx(historyState.present.columns, displayRows);
+    downloadXlsx(wb, `${slug}.xlsx`);
+  }, [historyState.present.columns, displayRows, spec.title]);
+
   const createRow = useCallback((): RowData => {
     const newRow: RowData = {};
     historyState.present.columns.forEach((c) => {
@@ -443,8 +475,23 @@ export function TableGridPanel({ spec }: { spec: TableSpecPayload }) {
         >
           + Coluna
         </button>
-        {/* Slot reservado para export Phase 15 */}
         <div className="table-grid-toolbar-spacer" />
+        <button
+          className="ghost-button"
+          type="button"
+          aria-label="Exportar CSV"
+          onClick={handleExportCsv}
+        >
+          Exportar CSV
+        </button>
+        <button
+          className="ghost-button"
+          type="button"
+          aria-label="Exportar XLSX"
+          onClick={handleExportXlsx}
+        >
+          Exportar XLSX
+        </button>
       </div>
 
       <div className="table-grid-panel" ref={gridContainerRef}>
