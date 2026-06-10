@@ -17,7 +17,6 @@ import { AttachmentButton, validateFile } from "@/components/app/attachment-butt
 import { AttachmentChip } from "@/components/app/attachment-chip";
 import { ChatInput } from "@/components/app/chat-input";
 import { PrivacyNotice } from "@/components/app/privacy-notice";
-import { ToolNav } from "@/components/app/tool-nav";
 import { useRegisterNewConversation } from "@/components/app/workspace-conversation-context";
 import { IntentPill } from "./components/intent-pill";
 import { RenderDispatcher } from "./components/render-dispatcher";
@@ -452,7 +451,6 @@ export function UnifiedChatTool({
               onFileSelect={handleFileSelect}
             />
           }
-          bottomNav={<ToolNav />}
         />
 
         {pendingFile ? (

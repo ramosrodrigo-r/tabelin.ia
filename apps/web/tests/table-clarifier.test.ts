@@ -140,6 +140,24 @@ describe("buildTableSpec — fixture mode", () => {
 
     expect(result.rowCount).toBeGreaterThanOrEqual(1);
   });
+
+  it("retorna spec determinística válida com title 'Controle de Gastos' e coluna com fórmula '=SOMA' (UNI-07)", async () => {
+    const result = await buildTableSpec({
+      prompt: "cria uma tabela de controle de gastos",
+      collectedSpec: {},
+    });
+
+    const parsed = tableSpecPayloadSchema.safeParse(result);
+    expect(parsed.success).toBe(true);
+
+    expect(result.title).toBe("Controle de Gastos");
+
+    const formulaCol = result.columns.find(
+      (col: { type: string; formula?: string }) => col.type === "formula"
+    );
+    expect(formulaCol).toBeDefined();
+    expect(formulaCol?.formula).toContain("=SOMA");
+  });
 });
 
 describe("buildTableSpec — schema válido", () => {
