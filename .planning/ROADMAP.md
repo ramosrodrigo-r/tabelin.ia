@@ -176,8 +176,8 @@ Audit: `.planning/milestones/v1.2-MILESTONE-AUDIT.md` (status: passed)
 
 **Wave 1** *(sem dependencias — paralelizaveis)*
 
-- [ ] 15-01-PLAN.md — Utilidade pura de export (sanitizacao SEC-04 + buildCsv + buildXlsx + download) e testes unitarios
-- [ ] 15-03-PLAN.md — Migracao UX: montar Sidebar no layout, remover ToolNav do mount raiz + teste do fixture fallback
+- [x] 15-01-PLAN.md — Utilidade pura de export (sanitizacao SEC-04 + buildCsv + buildXlsx + download) e testes unitarios
+- [x] 15-03-PLAN.md — Migracao UX: montar Sidebar no layout, remover ToolNav do mount raiz + teste do fixture fallback
 
 **Wave 2** *(bloqueada pelo 15-01)*
 
@@ -203,4 +203,4 @@ Audit: `.planning/milestones/v1.2-MILESTONE-AUDIT.md` (status: passed)
 | 12. Intent Classifier & Unified Route | v2.0 | 1/4 | In Progress|  |
 | 13. Clarification Loop | v2.0 | 4/4 | Complete    | 2026-06-09 |
 | 14. Tabela Viva | v2.0 | 6/6 | Complete   | 2026-06-09 |
-| 15. Export, UX Migration & Hardening | v2.0 | 0/3 | Planned | - |
+| 15. Export, UX Migration & Hardening | v2.0 | 2/3 | In Progress|  |
