@@ -56,7 +56,7 @@ Audit: `.planning/milestones/v1.2-MILESTONE-AUDIT.md` (status: passed)
 - [x] **Phase 12: Intent Classifier & Unified Route** — Input único que detecta e roteia qualquer pedido para os resolvers existentes, com pill de intent e override
 - [x] **Phase 13: Clarification Loop** — Loop multi-turn com teto de 2 turns, ConfirmationCard e escape hatch "Gerar mesmo assim" antes de gerar tabelas (completed 2026-06-08)
 - [x] **Phase 14: Tabela Viva** — Grid editável com recálculo de fórmulas vivas, localização pt-BR completa e segurança XSS (completed 2026-06-09)
-- [ ] **Phase 15: Export, UX Migration & Hardening** — Export CSV/XLSX sanitizado, migração do ToolNav para o chat unificado e fixture fallback
+- [x] **Phase 15: Export, UX Migration & Hardening** — Export CSV/XLSX sanitizado, migração do ToolNav para o chat unificado e fixture fallback (completed 2026-06-10)
 
 ## Phase Details
 
@@ -181,7 +181,7 @@ Audit: `.planning/milestones/v1.2-MILESTONE-AUDIT.md` (status: passed)
 
 **Wave 2** *(bloqueada pelo 15-01)*
 
-- [ ] 15-02-PLAN.md — Wiring dos botoes Exportar CSV/XLSX no toolbar do TableGridPanel + teste de componente
+- [x] 15-02-PLAN.md — Wiring dos botoes Exportar CSV/XLSX no toolbar do TableGridPanel + teste de componente
 
 **UI hint**: yes
 
@@ -203,4 +203,4 @@ Audit: `.planning/milestones/v1.2-MILESTONE-AUDIT.md` (status: passed)
 | 12. Intent Classifier & Unified Route | v2.0 | 1/4 | In Progress|  |
 | 13. Clarification Loop | v2.0 | 4/4 | Complete    | 2026-06-09 |
 | 14. Tabela Viva | v2.0 | 6/6 | Complete   | 2026-06-09 |
-| 15. Export, UX Migration & Hardening | v2.0 | 2/3 | In Progress|  |
+| 15. Export, UX Migration & Hardening | v2.0 | 3/3 | Complete   | 2026-06-10 |
