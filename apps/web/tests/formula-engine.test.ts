@@ -273,3 +273,141 @@ describe("WR-01 — critérios unários em CONT.SE e SOMASE", () => {
     expect(result).toBe("ok");
   });
 });
+
+// ───────────────────────────────────────────────────────────────────────────
+// REGRESSÃO: table-formulas-name-error
+// Bug: fórmulas de EXPRESSÃO ARITMÉTICA geradas pela IA (ex.: "=D{row}*E{row}",
+// "=Quantidade*Preço") avaliavam para #NAME? em todas as linhas porque o motor
+// só aceitava chamadas de função "=FUNC(...)" e o caso isolado "=A1".
+// Descoberto no UAT da Phase 15, Test 6 (coluna "Total" de tabela de vendas).
+// ───────────────────────────────────────────────────────────────────────────
+
+let isArithmeticExpression: ((formula: string) => boolean) | undefined;
+let evaluateArithmetic:
+  | ((formula: string, rows: unknown[], columns: unknown[], rowIdx: number) => unknown)
+  | undefined;
+
+try {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const engine = require("../src/features/unified-chat/hooks/use-formula-engine") as Record<string, unknown>;
+  if (typeof engine.isArithmeticExpression === "function") {
+    isArithmeticExpression = engine.isArithmeticExpression as typeof isArithmeticExpression;
+  }
+  if (typeof engine.evaluateArithmetic === "function") {
+    evaluateArithmetic = engine.evaluateArithmetic as typeof evaluateArithmetic;
+  }
+} catch {
+  // módulo ainda não existe
+}
+
+describe("table-formulas-name-error — expressões aritméticas geradas pela IA", () => {
+  it("REPRO: tabela de vendas com Total=Quantidade*Preço via LETRAS calcula valores reais (não #NAME?)", () => {
+    if (!recalcAll) {
+      expect(true).toBe(true);
+      return;
+    }
+    // Colunas na ordem real do CSV do UAT: ID,Nome,Data,Quantidade,Preço,Total,Status
+    // Total = Quantidade(D) * Preço(E) → "=D{row}*E{row}"
+    const rows = [
+      { id: 1, nome: "Camiseta Polo", data: "2026-05-02", quantidade: 3, preco: 79.9, total: "", status: "ok" },
+      { id: 2, nome: "Caneca", data: "2026-05-10", quantidade: 10, preco: 24.5, total: "", status: "ok" },
+    ];
+    const columns = [
+      { name: "ID", type: "number" as const, key: "id" },
+      { name: "Nome do Produto", type: "text" as const, key: "nome" },
+      { name: "Data da Venda", type: "date" as const, key: "data" },
+      { name: "Quantidade", type: "number" as const, key: "quantidade" },
+      { name: "Preço Unitário", type: "currency" as const, key: "preco" },
+      { name: "Total", type: "formula" as const, key: "total", formula: "=D{row}*E{row}" },
+      { name: "Status Estoque", type: "text" as const, key: "status" },
+    ];
+    const result = recalcAll(rows as never, columns as never, ";") as Record<string, unknown>[];
+    expect(result[0].total).toBeCloseTo(239.7, 5); // 3 * 79.9
+    expect(result[1].total).toBeCloseTo(245, 5); // 10 * 24.5
+    // Nenhuma linha pode ser #NAME?
+    expect(String(result[0].total)).not.toContain("#NAME");
+    expect(String(result[1].total)).not.toContain("#NAME");
+  });
+
+  it("Total por NOME de coluna (=Quantidade*Preco) também resolve", () => {
+    if (!recalcAll) {
+      expect(true).toBe(true);
+      return;
+    }
+    const rows = [{ quantidade: 4, preco: 10, total: "" }];
+    const columns = [
+      { name: "Quantidade", type: "number" as const, key: "quantidade" },
+      { name: "Preco", type: "number" as const, key: "preco" },
+      { name: "Total", type: "formula" as const, key: "total", formula: "=Quantidade*Preco" },
+    ];
+    const result = recalcAll(rows as never, columns as never, ";") as Record<string, unknown>[];
+    expect(result[0].total).toBe(40);
+  });
+
+  it("expressão com parênteses e desconto: =(C{row}-D{row})*B{row}", () => {
+    if (!recalcAll) {
+      expect(true).toBe(true);
+      return;
+    }
+    const rows = [{ qtd: 2, bruto: 100, desc: 10, total: "" }];
+    const columns = [
+      { name: "Qtd", type: "number" as const, key: "qtd" },
+      { name: "Bruto", type: "number" as const, key: "bruto" },
+      { name: "Desconto", type: "number" as const, key: "desc" },
+      { name: "Total", type: "formula" as const, key: "total", formula: "=(B{row}-C{row})*A{row}" },
+    ];
+    const result = recalcAll(rows as never, columns as never, ";") as Record<string, unknown>[];
+    expect(result[0].total).toBe(180); // (100 - 10) * 2
+  });
+
+  it("divisão por zero retorna #DIV/0!", () => {
+    if (!evaluateArithmetic) {
+      expect(true).toBe(true);
+      return;
+    }
+    const rows = [{ a: 10, b: 0 }];
+    const columns = [
+      { name: "A", type: "number" as const, key: "a" },
+      { name: "B", type: "number" as const, key: "b" },
+    ];
+    const result = evaluateArithmetic("=A1/B1", rows as never, columns as never, 0);
+    expect(String(result)).toContain("#DIV/0");
+  });
+
+  it("isArithmeticExpression: distingue aritmética de chamada de função e de string", () => {
+    if (!isArithmeticExpression) {
+      expect(true).toBe(true);
+      return;
+    }
+    expect(isArithmeticExpression("=D2*E2")).toBe(true);
+    expect(isArithmeticExpression("=A1+B1")).toBe(true);
+    expect(isArithmeticExpression("=SOMA(A1;B1)")).toBe(false); // é função
+    expect(isArithmeticExpression("=A1")).toBe(false); // ref simples, sem operador
+    expect(isArithmeticExpression('=SE(A1>0;"a-b";"c")')).toBe(false); // tem aspas
+  });
+
+  it("PRODUTO mapeia para PRODUCT (forma de função de multiplicação)", () => {
+    if (!PT_BR_TO_EN) {
+      expect(true).toBe(true);
+      return;
+    }
+    expect(PT_BR_TO_EN["PRODUTO"]).toBe("PRODUCT");
+  });
+
+  it("não regride: fixture =SOMA(C{row};-D{row}) continua calculando", () => {
+    if (!recalcAll) {
+      expect(true).toBe(true);
+      return;
+    }
+    const rows = [{ valor: 2000, desconto: 100, total: "" }];
+    const columns = [
+      { name: "Descrição", type: "text" as const, key: "descricao" },
+      { name: "Categoria", type: "text" as const, key: "categoria" },
+      { name: "Valor", type: "currency" as const, key: "valor" },
+      { name: "Desconto", type: "currency" as const, key: "desconto" },
+      { name: "Total", type: "formula" as const, key: "total", formula: "=SOMA(C{row};-D{row})" },
+    ];
+    const result = recalcAll(rows as never, columns as never, ";") as Record<string, unknown>[];
+    expect(result[0].total).toBe(1900); // 2000 + (-100)
+  });
+});

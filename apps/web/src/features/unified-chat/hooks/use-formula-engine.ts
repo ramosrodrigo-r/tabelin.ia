@@ -181,6 +181,248 @@ function coerceSimpleValue(s: string): string | number | boolean {
   return s;
 }
 
+// ─── Avaliador de expressão aritmética (DEBUG: table-formulas-name-error) ───────
+//
+// O motor original só avaliava fórmulas no formato CHAMADA DE FUNÇÃO `=FUNCAO(...)`
+// e o caso isolado `=A1`. A IA (gpt-5-mini), porém, gera naturalmente fórmulas de
+// EXPRESSÃO ARITMÉTICA para colunas como "Total" (ex.: `=D{row}*E{row}` ou
+// `=Quantidade*Preço`), que não começam com função → retornavam "#NAME?" em todas
+// as linhas (confirmado no UAT da Phase 15, Test 6).
+//
+// Este avaliador trata expressões aritméticas seguras:
+//   - operadores binários: + - * /
+//   - menos unário (ex.: -D2, -(A1+B1))
+//   - parênteses
+//   - números BR (decimal com vírgula) e simples
+//   - referências de célula (D2) e nomes de coluna (Quantidade)
+// Resolução de operandos é delegada a `resolveOperand` (cell ref → grid; nome de
+// coluna → valor da row). NÃO usa eval; tokeniza + shunting-yard explícito.
+
+type ArithToken =
+  | { kind: "num"; value: number }
+  | { kind: "ref"; raw: string }
+  | { kind: "op"; op: "+" | "-" | "*" | "/" }
+  | { kind: "uminus" }
+  | { kind: "lparen" }
+  | { kind: "rparen" };
+
+/**
+ * Detecta se uma fórmula (já com {row} substituído, sem o "=" prefixo opcional)
+ * é uma expressão aritmética — i.e. contém um operador aritmético binário fora de
+ * strings e NÃO é uma chamada de função `=FUNC(...)`.
+ */
+export function isArithmeticExpression(formula: string): boolean {
+  if (extractFunctionName(formula) !== null) return false;
+  const body = formula.replace(/^=/, "");
+  // Precisa conter ao menos um operador aritmético e nenhum caractere proibido
+  // (aspas, ponto-e-vírgula, dois-pontos de range, ! de multi-planilha).
+  if (/["';:!]/.test(body)) return false;
+  return /[+\-*/]/.test(body);
+}
+
+/** Tokeniza uma expressão aritmética. Retorna null se encontrar token inválido. */
+function tokenizeArithmetic(body: string): ArithToken[] | null {
+  const tokens: ArithToken[] = [];
+  let i = 0;
+  const isOpChar = (c: string) => c === "+" || c === "-" || c === "*" || c === "/";
+
+  while (i < body.length) {
+    const c = body[i];
+    if (c === " " || c === "\t") {
+      i++;
+      continue;
+    }
+    if (c === "(") {
+      tokens.push({ kind: "lparen" });
+      i++;
+      continue;
+    }
+    if (c === ")") {
+      tokens.push({ kind: "rparen" });
+      i++;
+      continue;
+    }
+    if (isOpChar(c)) {
+      // Menos/mais unário: no início, após outro operador ou após "("
+      const prev = tokens[tokens.length - 1];
+      const isUnaryPos =
+        !prev || prev.kind === "op" || prev.kind === "lparen" || prev.kind === "uminus";
+      if (c === "-" && isUnaryPos) {
+        tokens.push({ kind: "uminus" });
+        i++;
+        continue;
+      }
+      if (c === "+" && isUnaryPos) {
+        // mais unário é no-op
+        i++;
+        continue;
+      }
+      tokens.push({ kind: "op", op: c as "+" | "-" | "*" | "/" });
+      i++;
+      continue;
+    }
+    // Número (com vírgula decimal BR ou ponto) ou referência/nome de coluna.
+    // Lemos uma sequência de caracteres "de operando" até um operador/paren/espaço.
+    let j = i;
+    while (j < body.length) {
+      const cj = body[j];
+      if (cj === " " || cj === "\t" || cj === "(" || cj === ")" || isOpChar(cj)) break;
+      j++;
+    }
+    const chunk = body.slice(i, j);
+    if (chunk === "") return null;
+    // É um número puro?
+    const num = parseBRNumber(chunk);
+    const looksNumeric = /^\d[\d.,]*$/.test(chunk);
+    if (looksNumeric && !isNaN(num)) {
+      tokens.push({ kind: "num", value: num });
+    } else {
+      tokens.push({ kind: "ref", raw: chunk });
+    }
+    i = j;
+  }
+  return tokens.length > 0 ? tokens : null;
+}
+
+/**
+ * Resolve um operando (cell ref ou nome de coluna) para um número.
+ * Retorna null se não conseguir resolver para um número finito.
+ */
+function resolveArithmeticOperand(
+  raw: string,
+  rows: RowData[],
+  columns: TableColumn[],
+  rowIdx: number
+): number | null {
+  // Referência de célula A1
+  const cellRef = parseA1(raw);
+  if (cellRef) {
+    const row = rows[cellRef.row];
+    if (!row) return null;
+    const colKeys = columns.map((c) => c.key ?? c.name);
+    const key = colKeys[cellRef.col];
+    if (!key) return null;
+    return toNumber(row[key]);
+  }
+  // Nome de coluna (case-insensitive, contra name ou key) na MESMA linha (rowIdx)
+  const row = rows[rowIdx];
+  if (row) {
+    const lower = raw.toLowerCase();
+    const col = columns.find(
+      (c) => c.name.toLowerCase() === lower || (c.key ?? "").toLowerCase() === lower
+    );
+    if (col) {
+      const key = col.key ?? col.name;
+      return toNumber(row[key]);
+    }
+  }
+  return null;
+}
+
+/** Converte um valor de célula (string BR ou number) para number, ou null. */
+function toNumber(v: string | number | undefined): number | null {
+  if (v === undefined || v === "") return null;
+  if (typeof v === "number") return isFinite(v) ? v : null;
+  const n = parseBRNumber(String(v));
+  return isNaN(n) ? null : n;
+}
+
+/**
+ * Avalia uma expressão aritmética sobre rows/columns para uma linha específica.
+ * Retorna number, ou um código de erro estilo Excel ("#VALUE!", "#DIV/0!", "#NAME?").
+ *
+ * `formula` deve já ter {row} substituído. Aceita com ou sem "=" no início.
+ */
+export function evaluateArithmetic(
+  formula: string,
+  rows: RowData[],
+  columns: TableColumn[],
+  rowIdx: number
+): number | string {
+  const body = formula.replace(/^=/, "");
+  const tokens = tokenizeArithmetic(body);
+  if (!tokens) return "#NAME?";
+
+  // Shunting-yard → RPN
+  const prec: Record<string, number> = { "+": 1, "-": 1, "*": 2, "/": 2 };
+  const output: ArithToken[] = [];
+  const opStack: ArithToken[] = [];
+
+  for (const tok of tokens) {
+    if (tok.kind === "num" || tok.kind === "ref") {
+      output.push(tok);
+    } else if (tok.kind === "uminus") {
+      opStack.push(tok);
+    } else if (tok.kind === "op") {
+      while (opStack.length) {
+        const top = opStack[opStack.length - 1];
+        if (top.kind === "uminus") {
+          output.push(opStack.pop()!);
+        } else if (top.kind === "op" && prec[top.op] >= prec[tok.op]) {
+          output.push(opStack.pop()!);
+        } else break;
+      }
+      opStack.push(tok);
+    } else if (tok.kind === "lparen") {
+      opStack.push(tok);
+    } else if (tok.kind === "rparen") {
+      let matched = false;
+      while (opStack.length) {
+        const top = opStack.pop()!;
+        if (top.kind === "lparen") {
+          matched = true;
+          break;
+        }
+        output.push(top);
+      }
+      if (!matched) return "#NAME?"; // parênteses desbalanceados
+    }
+  }
+  while (opStack.length) {
+    const top = opStack.pop()!;
+    if (top.kind === "lparen") return "#NAME?";
+    output.push(top);
+  }
+
+  // Avalia RPN
+  const stack: number[] = [];
+  for (const tok of output) {
+    if (tok.kind === "num") {
+      stack.push(tok.value);
+    } else if (tok.kind === "ref") {
+      const val = resolveArithmeticOperand(tok.raw, rows, columns, rowIdx);
+      if (val === null) return "#NAME?"; // ref/nome de coluna não resolvido para número
+      stack.push(val);
+    } else if (tok.kind === "uminus") {
+      const a = stack.pop();
+      if (a === undefined) return "#NAME?";
+      stack.push(-a);
+    } else if (tok.kind === "op") {
+      const b = stack.pop();
+      const a = stack.pop();
+      if (a === undefined || b === undefined) return "#NAME?";
+      switch (tok.op) {
+        case "+":
+          stack.push(a + b);
+          break;
+        case "-":
+          stack.push(a - b);
+          break;
+        case "*":
+          stack.push(a * b);
+          break;
+        case "/":
+          if (b === 0) return "#DIV/0!";
+          stack.push(a / b);
+          break;
+      }
+    }
+  }
+  if (stack.length !== 1) return "#NAME?";
+  const result = stack[0];
+  return isFinite(result) ? result : "#VALUE!";
+}
+
 /**
  * Resolve um argumento de fórmula para o valor que será passado ao formulajs.
  *
@@ -426,7 +668,14 @@ export function recalcAll(
         continue;
       }
       try {
-        const result = evaluateFormulaCells(formula, rows, columns, separator, evaluating);
+        const result = evaluateFormulaCells(
+          formula,
+          rows,
+          columns,
+          separator,
+          evaluating,
+          rowIdx
+        );
         const key = col.key ?? col.name;
         updated[key] = result;
       } catch {
@@ -444,16 +693,27 @@ export function recalcAll(
  *
  * WR-04: recebe evaluating Set por parâmetro (criado por invocação em recalcAll)
  * em vez de usar o Set module-scope anterior.
+ *
+ * DEBUG (table-formulas-name-error): quando a fórmula NÃO é uma chamada de função
+ * `=FUNC(...)` mas é uma EXPRESSÃO ARITMÉTICA (ex.: `=D2*E2`, `=Quantidade*Preço`),
+ * delega para evaluateArithmetic em vez de retornar "#NOME?"/"#NAME?".
  */
 function evaluateFormulaCells(
   formula: string,
   rows: RowData[],
   columns: TableColumn[],
   separator: ";" | ",",
-  evaluating: Set<string>
+  evaluating: Set<string>,
+  rowIdx: number
 ): string | number {
   const fnName = extractFunctionName(formula);
-  if (!fnName) return "#NOME?";
+  if (!fnName) {
+    // Não é chamada de função. Tenta expressão aritmética sobre cell refs / nomes de coluna.
+    if (isArithmeticExpression(formula)) {
+      return evaluateArithmetic(formula, rows, columns, rowIdx);
+    }
+    return "#NOME?";
+  }
 
   const enFnName = translateFunctionName(fnName);
   if (!enFnName) return "#NAME?";

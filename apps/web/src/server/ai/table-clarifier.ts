@@ -124,6 +124,12 @@ function buildClarificationSystemPrompt(
  *
  * WR-06: originalPrompt é delimitado com marcadores anti-injection (mesmo padrão
  * de injectCollectedSpecIntoPrompt) para evitar prompt injection pelo usuário.
+ *
+ * DEBUG (table-formulas-name-error): o prompt antigo só exemplificava a forma de
+ * CHAMADA DE FUNÇÃO (=SOMA(...)), mas a IA gerava naturalmente expressões aritméticas
+ * (=D{row}*E{row}) que o motor não avaliava → #NAME?. O motor agora avalia ambas; o
+ * prompt documenta isso explicitamente e exige referências por LETRA de coluna (A,B,C…)
+ * — nunca por nome de coluna — para que as referências resolvam corretamente.
  */
 function buildSpecSystemPrompt(originalPrompt: string): string {
   return (
@@ -135,9 +141,14 @@ function buildSpecSystemPrompt(originalPrompt: string): string {
     `    • type: "text" | "number" | "date" | "currency" | "formula"\n` +
     `    • key: chave de objeto (camelCase, sem espaços)\n` +
     `    • formula: SE type="formula", template usando {row} como placeholder de linha.\n` +
-    `      Exemplos: "=SOMA(B{row};C{row})", "=SE(B{row}>0;\\"positivo\\";\\"negativo\\")"\n` +
+    `      DUAS formas são aceitas:\n` +
+    `        1) CHAMADA DE FUNÇÃO: "=SOMA(B{row};C{row})", "=SE(B{row}>0;\\"positivo\\";\\"negativo\\")"\n` +
+    `        2) EXPRESSÃO ARITMÉTICA com + - * / e parênteses: "=D{row}*E{row}", "=(B{row}-C{row})*0,1"\n` +
+    `      Refira-se SEMPRE às outras colunas pela LETRA da coluna na ordem do array (A=1ª coluna, B=2ª, …)\n` +
+    `      seguida de {row} — ex.: se "Quantidade" é a 4ª coluna e "Preço" a 5ª, "Total" = "=D{row}*E{row}".\n` +
+    `      NUNCA use o NOME da coluna na fórmula (ex.: NÃO escreva "=Quantidade*Preço").\n` +
     `      Use SEMPRE ponto-e-vírgula (;) como separador de argumentos e vírgula (,) como decimal.\n` +
-    `      Nomes de função em PORTUGUÊS (SOMA, SE, PROCV, SOMASE, MÉDIA, etc.).\n` +
+    `      Nomes de função em PORTUGUÊS (SOMA, SE, PROCV, SOMASE, MÉDIA, PRODUTO, etc.).\n` +
     `      Referências de range (ex.: B1:C10) devem ser absolutas — NÃO use {row} dentro de ranges.\n` +
     `      NÃO gere referências multi-planilha (ex.: Plan1!A1).\n` +
     `- rowCount: número de linhas (mínimo 1, máximo 200; padrão 10 se não especificado)\n` +

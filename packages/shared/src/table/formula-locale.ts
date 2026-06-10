@@ -20,6 +20,10 @@ export const PT_BR_TO_EN: Record<string, string> = {
   MOD: "MOD",
   RAIZ: "SQRT",
   POTÊNCIA: "POWER",
+  // DEBUG (table-formulas-name-error): PRODUTO ausente fazia a forma de função de
+  // multiplicação (=PRODUTO(D{row};E{row})) cair em #NAME?. A coluna "Total" de uma
+  // tabela de vendas (Quantidade × Preço) precisa de produto.
+  PRODUTO: "PRODUCT",
   // Lógica
   SE: "IF",
   E: "AND",
