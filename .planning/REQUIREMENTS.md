@@ -1,109 +1,139 @@
-# Requirements — Milestone v2.0 Chat Unificado & Tabela Viva
+# Requirements — Milestone v3.0 Planilha Viva + Chat de IA (pivô / redução de escopo)
 
-**Milestone goal:** Substituir as abas de tools por um único chat onde a IA roteia o intent automaticamente, e introduzir geração de tabelas interativas estilo planilha (fórmulas vivas no browser), com um loop de clarificação que confirma especificações antes de gerar qualquer tabela.
+**Defined:** 2026-06-10
+**Core Value:** Usuários brasileiros trabalham numa planilha viva sempre na tela e pedem em português que a IA manipule os dados na própria grade — ou responda dúvidas sobre eles — sem escolher ferramentas nem navegar entre módulos.
 
-**Research:** `.planning/research/SUMMARY.md` (HIGH confidence). Decisões técnicas fixadas: engine de fórmulas `@formulajs/formulajs` (MIT, **não** HyperFormula GPL); grid `react-datasheet-grid` (MIT); manter partição `userId+toolKind` + novo kind `"unified_table"` (sem migração Prisma); `TableSpecPayload` persistido em `ConversationExchange.assistantPayload`, estado do grid efêmero (privacidade, padrão File Analysis).
+**Fonte da verdade:** `PRD-MILESTONE-PLANILHA-VIVA.md` — decisões de escopo D1–D6 (§3), escopo IN (§4), escopo OUT (§5), critérios de deleção (§6), requisitos funcionais RF/RNF (§7), critérios de aceite (§9).
 
----
-
-## v2.0 Requirements
-
-### Chat Unificado (UNI)
-
-- [x] **UNI-01**: Usuário digita qualquer pedido em um único input e a IA detecta o intent (fórmula/SQL/regex/scripts/análise/OCR/tabela) sem precisar escolher um tool antes
-- [x] **UNI-02**: Usuário vê um pill com o tipo detectado e pode corrigir o roteamento com um clique (override de intent)
-- [x] **UNI-03**: Outputs heterogêneos (código, grid de tabela, texto) renderizam inline no mesmo thread de conversa
-- [x] **UNI-04**: Follow-ups preservam o contexto da capacidade resolvida (ex.: "agora explica" continua em fórmula) sem regressão das 7 capacidades existentes
-- [x] **UNI-05**: Seleção de plataforma/dialeto (Excel/Sheets; dialeto SQL) persiste entre turns relacionados na sessão unificada
-- [x] **UNI-06**: Classificação de intent embutida em chamada única (OpenAI Structured Outputs, campo de intent primeiro no schema) — o início do streaming permanece dentro do SLA de 2,5s
-- [x] **UNI-07**: Páginas/atalhos por-tool permanecem acessíveis (sem remoção forçada das abas); o chat unificado torna-se o ponto de entrada default
-
-### Loop de Clarificação (CLAR)
-
-- [x] **CLAR-01**: Ao detectar pedido de tabela, a IA faz perguntas de clarificação (uma pergunta por turno) antes de gerar
-- [x] **CLAR-02**: A clarificação tem teto rígido de 2 turns; depois disso a geração prossegue (sem loop infinito), com indicador de progresso ("Pergunta 1 de 2")
-- [x] **CLAR-03**: Botão "Gerar mesmo assim" disponível desde o primeiro turno de clarificação (escape hatch com defaults razoáveis)
-- [x] **CLAR-04**: Antes de gerar, um ConfirmationCard resume a especificação coletada (colunas, linhas, formato) para o usuário confirmar ou ajustar
-- [x] **CLAR-05**: Cota é debitada apenas na geração da tabela, nunca nos turns de clarificação
-
-### Tabela Interativa (TAB)
-
-- [x] **TAB-01**: Usuário recebe um grid editável (click-to-edit, navegação Tab/Enter/setas) renderizado no thread de conversa
-- [x] **TAB-02**: Colunas de fórmula recalculam ao vivo no browser após cada edição de célula
-- [x] **TAB-03**: Usuário pode adicionar e remover linhas e colunas
-- [x] **TAB-04**: Usuário pode copiar/colar (Ctrl+C/V) e desfazer/refazer (Ctrl+Z/Y) dentro do grid
-- [x] **TAB-05**: Usuário pode ordenar por coluna
-- [x] **TAB-06**: O grid é limitado (≤200 linhas × 26 colunas) e virtualizado; sem merge de células, freeze panes ou multi-sheet (fronteira explícita "mini-Excel")
-
-### Localização Brasileira (LOC)
-
-- [x] **LOC-01**: Fórmulas usam nomes de função em pt-BR (PROCV, SE, SOMASE, MÉDIA, CONT.SE… ~20 funções core) via tabela de mapeamento PT-BR→EN
-- [x] **LOC-02**: Fórmulas usam `;` como separador de argumento e `,` como separador decimal
-- [x] **LOC-03**: Colunas numéricas de valor/preço/total formatam como R$ (BRL); datas formatam como DD/MM/AAAA
-
-### Export (EXP)
-
-- [x] **EXP-01**: Usuário pode exportar a tabela para CSV
-- [x] **EXP-02**: Usuário pode exportar a tabela para XLSX (reusando a lib `xlsx` já instalada)
-
-### Segurança (SEC — continua de v1.2)
-
-- [x] **SEC-04**: Export CSV/XLSX sanitiza injeção de fórmula — prefixo `'` em qualquer célula iniciada por `=`, `+`, `-`, `@`, `\t`, `\r`; células editadas pelo usuário gravadas como texto (`t:"s"`) no XLSX
-- [x] **SEC-05**: Conteúdo de célula renderiza sem XSS (apenas textContent; sem `dangerouslySetInnerHTML`)
+**Natureza do milestone:** este é um pivô. Aproximadamente metade do trabalho é **construção** (tela única, protocolo de mutação chat→grade, ingestão tri-estado) e metade é **remoção comprovada** de cadeias de código morto. As remoções são tão deliveráveis quanto as construções e têm critério de aceite próprio (busca de referências, árvore verde). O agente **deriva** o conjunto de deleção pelos critérios da §6 — não recebe lista fixa de arquivos.
 
 ---
 
-## Future Requirements (deferred to v2.x)
+## v1 Requirements (v3.0)
 
-- AutoFiltro (filtro dropdown por coluna) — validar demanda antes
-- Edição retroativa da tabela via chat ("adicione uma coluna de % desconto") — exige gestão de delta de estado robusta (v2.1)
-- Language pack pt-BR completo (100+ funções) — começar com ~20, ampliar via dados de uso
-- Chips de sugestão de "próximo passo" abaixo de cada output
-- Histórico unificado com filtro por tipo de output (só fórmulas, só SQL)
+### Tela Única (SHELL)
 
-## Out of Scope (v2.0)
+- [ ] **SHELL-01**: Ao autenticar, o usuário cai direto numa tela com a planilha viva ocupando o espaço principal e o chat de IA acessível ao lado/abaixo (RF-01)
+- [ ] **SHELL-02**: Nenhuma navegação para ferramentas separadas (sidebar/tool-nav, abas/deep-links de tool) permanece acessível pela UI nem por rota de API (RF-01, aceite §9.1/§9.6)
+- [ ] **SHELL-03**: Shell mínimo permanece: topbar com sessão do usuário, página de privacidade e o necessário para servir a tela única (§4.10)
 
-- Multi-sheet (múltiplas abas) na tabela interativa — multiplicador de complexidade de estado; diferido para v3+
-- Colaboração em tempo real / múltiplos cursores na tabela — fora do escopo do produto (PROJECT.md)
-- Versionamento persistido da tabela entre sessões — undo/redo permanece em memória da sessão
-- Recálculo de fórmula no servidor — quebra o contrato de UX de planilha (latência por edição)
-- HyperFormula sob GPL sem licença comercial assinada — risco legal em SaaS closed-source
-- Migração de partição de histórico para `userId+sessionId` — mantida em `userId+toolKind` + kind `"unified_table"` (sem migração Prisma)
-- Formatos adicionais de export (ODS, PDF, HTML)
+### Estados Iniciais da Planilha (DATA)
+
+- [ ] **DATA-01**: Usuário pode abrir a planilha com uma planilha-amostra (seed) de exemplo (RF-02a)
+- [ ] **DATA-02**: Usuário pode abrir uma planilha em branco (RF-02b)
+- [ ] **DATA-03**: Usuário pode importar CSV/XLSX e o arquivo vira a planilha viva, substituindo a grade (RF-02c, §4.4)
+- [ ] **DATA-04**: O arquivo importado é efêmero — só a planilha resultante (conteúdo extraído) é persistida (RNF-02, §4.9)
+
+### Chat sobre a Planilha (CHAT)
+
+- [ ] **CHAT-01**: O pedido do usuário é enviado ao modelo junto com o estado atual da planilha (colunas, tipos, amostra de linhas) (RF-03)
+- [ ] **CHAT-02**: A IA retorna operações estruturadas (sobre células/colunas/linhas/fórmulas) que são aplicadas à grade aberta — contrato de saída do protocolo de mutação chat→grade (RF-03, §7)
+- [ ] **CHAT-03**: As mudanças que a IA aplica à grade podem ser desfeitas pelo usuário (undo) (RF-03)
+- [ ] **CHAT-04**: Perguntas analíticas sobre os dados ("qual a média da coluna Valor?", "quantas linhas acima de 1000?") retornam resposta em texto no chat, sem alterar a grade (RF-04)
+- [ ] **CHAT-05**: A resposta do chat faz streaming ao usuário (§4.5)
+- [ ] **CHAT-06**: Com `OPENAI_API_KEY` ausente, o chat responde por fixture (dev/test sem custo) (RNF-03)
+
+### Export & Persistência (PERS)
+
+- [ ] **PERS-01**: Usuário pode exportar a planilha atual (com fórmulas já calculadas) para CSV (RF-05)
+- [ ] **PERS-02**: Usuário pode exportar a planilha atual (com fórmulas já calculadas) para XLSX (RF-05)
+- [ ] **PERS-03**: A planilha do usuário é salva e recuperada entre sessões (RF-06)
+- [ ] **PERS-04**: A conversa associada à planilha do usuário é salva e recuperada entre sessões (RF-06)
+
+### Localização (LOC) — regressão-guard
+
+- [ ] **LOC-01**: Fórmulas (nomes de função pt-BR), separador `;`, formatação R$/DD-MM-AAAA e cópia de UI permanecem em pt-BR após o pivô, sem regressão (RNF-01)
+
+### Remoção Comprovada de Capacidades OUT (CLEAN)
+
+- [ ] **CLEAN-01**: A cadeia completa dos geradores de texto avulsos (Fórmula, Scripts, SQL, Regex, Template como tools/páginas/rotas) é removida — sem entrada pela UI nem por rota (§5.1). A *avaliação* de fórmula dentro da planilha viva permanece (§4.2)
+- [ ] **CLEAN-02**: A cadeia completa do OCR (imagem→tabela) é removida — página, rota, módulo de Vision, fixtures e assets de imagem (§5.2)
+- [ ] **CLEAN-03**: A Análise de Arquivos como ferramenta separada (página/rota/chat próprios) é removida; sobra apenas o caminho de ingestão CSV/XLSX da DATA-03 (§5.3)
+- [ ] **CLEAN-04**: Toda a monetização/cota é removida — checkout, provedor de pagamento (Mercado Pago), webhooks, plano Pro, entitlement gates, sistema de cota/usage ledger e UI de upsell/limite (§5.4)
+- [ ] **CLEAN-05**: A navegação multi-ferramenta (sidebar/tool-nav e roteamento entre módulos sem destino) é removida (§5.5)
+- [ ] **CLEAN-06**: O classificador de intent e o render-dispatcher são **reduzidos** ao que serve à planilha + Q&A; ramos que apontam para capacidades removidas saem (§5.6)
+- [ ] **CLEAN-07**: A geração de tabela do zero pela IA (stub → clarificação → confirmação de spec) é removida (§5.7, D5)
+- [ ] **CLEAN-08**: Modelos Prisma e migrations órfãos (billing/cota/ferramentas removidas) são removidos via migration coerente e revisável; o banco aplica as migrations limpo, preservando dados de usuário (contas, planilhas) (§6.4, aceite §9.9)
+- [ ] **CLEAN-09**: Dependências de `package.json` que ficam sem qualquer import após a remoção são removidas — e somente essas (§6.5, aceite §9.10)
+- [ ] **CLEAN-10**: Configuração órfã é limpa/atualizada — env vars, `.env.example`, `docker-compose`, scripts, README e docs que descrevem só capacidades OUT (§6.6, aceite §9.10/§9.13)
+- [ ] **CLEAN-11**: Testes e fixtures (unit/e2e) que exercitam exclusivamente capacidades OUT são removidos (§6.7, aceite §9.11)
+- [ ] **CLEAN-12**: Assets soltos do repositório que só serviam às capacidades OUT (ex.: amostras de OCR) são removidos, preservando os assets do escopo IN (ex.: planilha-amostra de seed) (§6.8)
+
+### Higiene & Verificação da Limpeza (QA)
+
+- [ ] **QA-01**: Zero imports quebrados e zero referências pendentes a código removido, comprovado por busca (imports, `href`, chamadas, uso de tipos) (aceite §9.7)
+- [ ] **QA-02**: `pnpm -r typecheck`, `lint`, `test` e `build` passam verdes ao fim do milestone (aceite §9.8)
+
+> **Regra de segurança (§6):** símbolos compartilhados entre IN e OUT (locale de fórmula, cliente OpenAI, validação de bytes do upload, schema do unified-chat) **ficam** — remove-se só o ramo comprovadamente sem consumidor IN. Na dúvida, investigar referências antes de remover.
+>
+> **Higiene de processo (aceite §9.12):** commits atômicos por bloco de remoção, cada um deixando a árvore verde (typecheck+test), para permitir bisseção/rollback.
+
+---
+
+## Future Requirements (deferred)
+
+- **AbacatePay** — novo provedor de pagamento que substituirá a monetização removida, em milestone futuro (§8). Nada de billing entra em v3.0
+- **Edição retroativa avançada via chat** — operações de delta mais ricas além do protocolo de mutação base (herdado de v2.x deferrals)
+- **Language pack pt-BR completo (100+ funções)** — começar com o mapa core já existente, ampliar via uso
+- **AutoFiltro (filtro dropdown por coluna)** na planilha
+
+## Out of Scope (v3.0)
+
+| Feature | Reason |
+|---------|--------|
+| Geração de tabela do zero por linguagem natural | D5 — a IA atua sobre a planilha já aberta, não monta tabela nova via stub/clarificação/spec |
+| OCR (imagem → tabela) | D6 — removido por completo neste milestone |
+| Billing / monetização (Mercado Pago, Pro, cota) | D3 — removido agora; AbacatePay é milestone futuro (§8) |
+| Geradores de texto avulsos (SQL/regex/script/fórmula como resposta independente) | D1 — substituídos pelo chat que opera na planilha + Q&A |
+| Gráficos, relatórios executivos de BI, dashboards | §8 — fora do foco da planilha viva |
+| Colaboração multiusuário em tempo real | §8 — fora do escopo do produto |
+| Múltiplas abas/planilhas por documento | §8 — só se trivial a partir do que já existe |
 
 ---
 
 ## Traceability
 
+Preenchida na criação do roadmap (cada requisito mapeia para exatamente uma fase).
+
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| UNI-01 | Phase 12 | Complete |
-| UNI-02 | Phase 12 | Complete |
-| UNI-03 | Phase 12 | Complete |
-| UNI-04 | Phase 12 | Complete |
-| UNI-05 | Phase 12 | Complete |
-| UNI-06 | Phase 12 | Complete |
-| UNI-07 | Phase 12 | Complete |
-| CLAR-01 | Phase 13 | Complete |
-| CLAR-02 | Phase 13 | Complete |
-| CLAR-03 | Phase 13 | Complete |
-| CLAR-04 | Phase 13 | Complete |
-| CLAR-05 | Phase 13 | Complete |
-| TAB-01 | Phase 14 | Complete |
-| TAB-02 | Phase 14 | Complete |
-| TAB-03 | Phase 14 | Complete |
-| TAB-04 | Phase 14 | Complete |
-| TAB-05 | Phase 14 | Complete |
-| TAB-06 | Phase 14 | Complete |
-| LOC-01 | Phase 14 | Complete |
-| LOC-02 | Phase 14 | Complete |
-| LOC-03 | Phase 14 | Complete |
-| SEC-05 | Phase 14 | Complete |
-| EXP-01 | Phase 15 | Complete |
-| EXP-02 | Phase 15 | Complete |
-| SEC-04 | Phase 15 | Complete |
+| SHELL-01 | TBD | Pending |
+| SHELL-02 | TBD | Pending |
+| SHELL-03 | TBD | Pending |
+| DATA-01 | TBD | Pending |
+| DATA-02 | TBD | Pending |
+| DATA-03 | TBD | Pending |
+| DATA-04 | TBD | Pending |
+| CHAT-01 | TBD | Pending |
+| CHAT-02 | TBD | Pending |
+| CHAT-03 | TBD | Pending |
+| CHAT-04 | TBD | Pending |
+| CHAT-05 | TBD | Pending |
+| CHAT-06 | TBD | Pending |
+| PERS-01 | TBD | Pending |
+| PERS-02 | TBD | Pending |
+| PERS-03 | TBD | Pending |
+| PERS-04 | TBD | Pending |
+| LOC-01 | TBD | Pending |
+| CLEAN-01 | TBD | Pending |
+| CLEAN-02 | TBD | Pending |
+| CLEAN-03 | TBD | Pending |
+| CLEAN-04 | TBD | Pending |
+| CLEAN-05 | TBD | Pending |
+| CLEAN-06 | TBD | Pending |
+| CLEAN-07 | TBD | Pending |
+| CLEAN-08 | TBD | Pending |
+| CLEAN-09 | TBD | Pending |
+| CLEAN-10 | TBD | Pending |
+| CLEAN-11 | TBD | Pending |
+| CLEAN-12 | TBD | Pending |
+| QA-01 | TBD | Pending |
+| QA-02 | TBD | Pending |
+
+**Coverage:**
+- v1 requirements (v3.0): 31 total
+- Mapped to phases: 0 (preenchido pelo roadmapper)
+- Unmapped: 31 ⚠️ (até o roadmap)
 
 ---
-
-*Created: 2026-06-08 — milestone v2.0 requirements (25 requisitos, 6 categorias). Research-backed (SUMMARY.md, HIGH confidence).*
-*Traceability filled: 2026-06-08 — roadmap Phase 12–15 mapped, 25/25 requirements covered.*
+*Requirements defined: 2026-06-10 — milestone v3.0 (31 requisitos, 8 categorias). Derivados do PRD-MILESTONE-PLANILHA-VIVA.md (escopo travado D1–D6).*
