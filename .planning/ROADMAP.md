@@ -5,7 +5,8 @@
 - ✅ **v1.0 MVP** — Phases 1–5 (shipped 2026-05-26)
 - ✅ **v1.1 Conversas Persistentes** — Phases 6–8 (shipped 2026-06-02)
 - ✅ **v1.2 Anexos Universais** — Phases 9–11 (shipped 2026-06-05)
-- 🚧 **v2.0 Chat Unificado & Tabela Viva** — Phases 12–15 (em progresso)
+- ✅ **v2.0 Chat Unificado & Tabela Viva** — Phases 12–15 (shipped 2026-06-10)
+- 🚧 **v3.0 Planilha Viva + Chat de IA (pivô)** — Phases 16–22 (em progresso)
 
 ## Phases
 
@@ -49,14 +50,33 @@ Audit: `.planning/milestones/v1.2-MILESTONE-AUDIT.md` (status: passed)
 
 </details>
 
-### 🚧 v2.0 Chat Unificado & Tabela Viva (Em Progresso)
+<details>
+<summary>✅ v2.0 Chat Unificado & Tabela Viva (Phases 12–15) — SHIPPED 2026-06-10</summary>
 
 **Milestone Goal:** Substituir as abas de tools por um único chat com roteamento de intent automático, introduzir geração de tabelas interativas com fórmulas vivas no browser e loop de clarificação multi-turn antes de gerar qualquer tabela.
 
-- [x] **Phase 12: Intent Classifier & Unified Route** — Input único que detecta e roteia qualquer pedido para os resolvers existentes, com pill de intent e override
-- [x] **Phase 13: Clarification Loop** — Loop multi-turn com teto de 2 turns, ConfirmationCard e escape hatch "Gerar mesmo assim" antes de gerar tabelas (completed 2026-06-08)
-- [x] **Phase 14: Tabela Viva** — Grid editável com recálculo de fórmulas vivas, localização pt-BR completa e segurança XSS (completed 2026-06-09)
-- [x] **Phase 15: Export, UX Migration & Hardening** — Export CSV/XLSX sanitizado, migração do ToolNav para o chat unificado e fixture fallback (completed 2026-06-10)
+- [x] Phase 12: Intent Classifier & Unified Route (4/4 plans) — completed 2026-06-08
+- [x] Phase 13: Clarification Loop (4/4 plans) — completed 2026-06-08
+- [x] Phase 14: Tabela Viva (6/6 plans) — completed 2026-06-09
+- [x] Phase 15: Export, UX Migration & Hardening (3/3 plans) — completed 2026-06-10
+
+Full details: ver seções abaixo (Phase 12-15) ou `.planning/milestones/v2.0-ROADMAP.md`
+
+</details>
+
+### 🚧 v3.0 Planilha Viva + Chat de IA (Em Progresso — pivô / redução de escopo)
+
+**Milestone Goal:** Estreitar o produto para uma única tela — planilha viva sempre presente + chat de IA que opera sobre ela — removendo a cadeia completa de código morto (billing/cota, OCR, tools de texto avulsos, navegação multi-ferramenta, geração de tabela do zero), comprovadamente e sem imports quebrados.
+
+**Fonte da verdade:** `PRD-MILESTONE-PLANILHA-VIVA.md`
+
+- [ ] **Phase 16: Tela Única & Fim da Navegação Multi-Ferramenta** - Shell consolida planilha+chat numa rota única; sidebar/tool-nav e rotas órfãs de tool são removidas
+- [ ] **Phase 17: Desligar Monetização & Cota** - Billing/Mercado Pago/Pro/cota saem por completo; rota de chat permanece funcional sem gate
+- [ ] **Phase 18: Remover Tools Avulsos, OCR, File Analysis & Reduzir Dispatcher** - Geradores de texto, OCR, Análise de Arquivos e geração de tabela do zero saem; classificador de intent e render-dispatcher reduzidos a planilha + Q&A
+- [ ] **Phase 19: Ingestão Tri-Estado da Planilha** - Usuário abre a planilha viva com seed, em branco, ou via upload CSV/XLSX (substitui a grade)
+- [ ] **Phase 20: Protocolo de Mutação Chat→Grade & Q&A** - Chat aplica operações estruturadas à grade aberta com undo, responde dúvidas analíticas em texto, com streaming e fixture sem chave
+- [ ] **Phase 21: Export & Persistência da Planilha+Conversa** - Export CSV/XLSX com fórmulas calculadas; planilha e conversa do usuário persistem entre sessões
+- [ ] **Phase 22: Limpeza Final — Prisma, Dependências, Config, Testes & QA Verde** - Migrations destrutivas (preservando dados), deps órfãs, config/docs/env órfãos, testes/fixtures/assets de capacidades OUT removidos; suíte completa verde
 
 ## Phase Details
 
@@ -185,6 +205,114 @@ Audit: `.planning/milestones/v1.2-MILESTONE-AUDIT.md` (status: passed)
 
 **UI hint**: yes
 
+### Phase 16: Tela Única & Fim da Navegação Multi-Ferramenta
+
+**Goal**: Ao autenticar, o usuário cai direto numa única tela com a planilha viva ocupando o espaço principal e o chat de IA acessível ao lado/abaixo — sem nenhuma navegação para ferramentas separadas (sidebar/tool-nav, abas/deep-links de tool) acessível pela UI nem por rota
+**Depends on**: Phase 15 (parte da tabela viva e do chat unificado de v2.0 já existem)
+**Requirements**: SHELL-01, SHELL-02, SHELL-03, CLEAN-05
+**Success Criteria** (what must be TRUE):
+
+  1. Usuário autenticado é direcionado para uma rota única que renderiza a planilha viva (espaço principal) e o chat ao lado/abaixo, sem precisar navegar
+  2. Sidebar/tool-nav não aparece em nenhuma tela; busca por componentes/rotas de navegação multi-ferramenta (`ToolNav`, sidebar de tools) retorna zero referências de UI no escopo IN
+  3. Rotas de página dos tools antigos (Fórmula/Scripts/SQL/Regex/Template/OCR/Análise de Arquivos como destinos próprios) não respondem mais ou redirecionam para a tela única — nenhum link da UI aponta para elas
+  4. Topbar com sessão do usuário e link para página de privacidade continuam acessíveis a partir da tela única
+  5. `pnpm -r typecheck` e `pnpm -r test` permanecem verdes após a consolidação do shell
+
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 17: Desligar Monetização & Cota
+
+**Goal**: Toda a monetização/cota (Mercado Pago, checkout, webhooks, plano Pro, entitlement gates, usage ledger, UI de upsell) é removida da superfície acessível, sem quebrar a rota de chat que permanece — o gate sai, o streaming fica
+**Depends on**: Phase 16
+**Requirements**: CLEAN-04
+**Success Criteria** (what must be TRUE):
+
+  1. Rotas de checkout, webhook do Mercado Pago e qualquer endpoint de gerenciamento de plano Pro não respondem mais (404 ou removidas do roteador)
+  2. A rota de chat de IA continua streamando respostas normalmente para qualquer usuário autenticado, sem gate de cota/entitlement bloqueando a chamada
+  3. Nenhuma UI de upsell, aviso de limite, badge de plano Pro ou CTA de upgrade aparece em qualquer tela
+  4. Busca por símbolos de cota/entitlement/usage-ledger (reserve/confirm/release, `entitlement`, `quota`, `mercadopago`) usados como gate na rota de chat retorna zero — exceto símbolos comprovadamente compartilhados com IN, documentados como exceção
+  5. `pnpm -r typecheck` e `pnpm -r test` verdes após a remoção do gate (commit atômico isolado, permitindo bisseção)
+
+**Plans**: TBD
+
+### Phase 18: Remover Tools Avulsos, OCR, File Analysis & Reduzir Dispatcher
+
+**Goal**: A cadeia completa dos geradores de texto avulsos (Fórmula/Scripts/SQL/Regex/Template), do OCR (imagem→tabela) e da Análise de Arquivos como ferramenta separada é removida; a geração de tabela do zero (stub→clarificação→confirmação de spec) sai; o classificador de intent e o render-dispatcher são reduzidos ao que serve planilha + Q&A
+**Depends on**: Phase 16, Phase 17
+**Requirements**: CLEAN-01, CLEAN-02, CLEAN-03, CLEAN-06, CLEAN-07
+**Success Criteria** (what must be TRUE):
+
+  1. Nenhuma rota de API responde para Fórmula/Scripts/SQL/Regex/Template/OCR/Análise de Arquivos como ferramentas independentes; busca por essas rotas retorna zero referências de UI ou roteamento
+  2. A *avaliação* de fórmulas dentro da planilha viva (motor pt-BR) continua funcionando normalmente — não foi afetada pela remoção dos geradores de texto avulsos
+  3. O classificador de intent só reconhece/roteia para "operação na planilha" e "pergunta analítica (Q&A)"; não existe mais ramo de intent que aponte para tools removidos ou para geração de tabela do zero
+  4. O render-dispatcher não possui mais branches para stub/clarificação/confirmação de spec de tabela nova, nem para outputs de tools removidos (código/SQL/regex/script avulsos)
+  5. `pnpm -r typecheck` e `pnpm -r test` verdes após cada bloco de remoção (commits atômicos por capacidade)
+
+**Plans**: TBD
+
+### Phase 19: Ingestão Tri-Estado da Planilha
+
+**Goal**: O usuário pode abrir a planilha viva em três estados iniciais — planilha-amostra (seed), planilha em branco, ou importar CSV/XLSX (que substitui a grade) — com o arquivo importado sendo efêmero e só o conteúdo extraído persistido
+**Depends on**: Phase 18
+**Requirements**: DATA-01, DATA-02, DATA-03, DATA-04
+**Success Criteria** (what must be TRUE):
+
+  1. Ao abrir a tela única pela primeira vez (ou por escolha explícita), o usuário vê uma planilha-amostra populada de exemplo
+  2. O usuário tem uma opção para começar com uma planilha em branco (grade vazia editável)
+  3. O usuário pode fazer upload de um arquivo CSV/XLSX e a grade é substituída pelo conteúdo do arquivo (colunas, linhas, tipos detectados)
+  4. Após a importação, o arquivo bruto enviado não é mantido — apenas a planilha resultante (dados extraídos) é persistida; busca confirma que nenhum armazenamento de arquivo bruto ocorre fora do fluxo efêmero de processamento
+  5. A validação de bytes (magic bytes/anti-ZIP-bomb) reaproveitada do pipeline de extração continua ativa no caminho de upload da planilha
+
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 20: Protocolo de Mutação Chat→Grade & Q&A
+
+**Goal**: O chat de IA recebe o estado atual da planilha (colunas, tipos, amostra de linhas) e retorna operações estruturadas que são aplicadas à grade aberta — com undo — ou responde dúvidas analíticas em texto sem alterar a grade; tudo com streaming e fallback fixture sem `OPENAI_API_KEY`
+**Depends on**: Phase 18, Phase 19
+**Requirements**: CHAT-01, CHAT-02, CHAT-03, CHAT-04, CHAT-05, CHAT-06, LOC-01
+**Success Criteria** (what must be TRUE):
+
+  1. Toda mensagem enviada ao modelo inclui o estado atual da planilha (colunas, tipos inferidos, amostra de linhas) como contexto
+  2. Um pedido de manipulação ("ordene pela coluna Valor", "crie uma coluna de fórmula que some D e E", "preencha os valores faltantes") resulta em operações estruturadas (tipadas sobre células/colunas/linhas/fórmulas) aplicadas visivelmente à grade aberta
+  3. O usuário pode desfazer (undo) qualquer mutação aplicada pela IA, retornando a grade ao estado anterior
+  4. Uma pergunta analítica ("qual a média da coluna Valor?", "quantas linhas acima de 1000?") retorna resposta em texto no chat sem alterar nenhuma célula da grade
+  5. A resposta do chat (mutação ou Q&A) faz streaming visível ao usuário; sem `OPENAI_API_KEY`, o chat responde via fixture determinístico (dev/test sem custo) e a localização pt-BR (nomes de função, separador `;`, formatação R$/DD-MM-AAAA, cópia de UI) permanece sem regressão em ambos os caminhos
+
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 21: Export & Persistência da Planilha+Conversa
+
+**Goal**: O usuário pode exportar a planilha atual (com fórmulas já calculadas) para CSV e XLSX, e tanto a planilha quanto a conversa associada são salvas e recuperadas entre sessões
+**Depends on**: Phase 20
+**Requirements**: PERS-01, PERS-02, PERS-03, PERS-04
+**Success Criteria** (what must be TRUE):
+
+  1. Usuário pode exportar a planilha atual para CSV, com os valores de fórmula já calculados (não as fórmulas como texto)
+  2. Usuário pode exportar a planilha atual para XLSX, com os valores de fórmula já calculados e sanitização contra injeção de fórmula preservada (regressão de SEC-04/v2.0)
+  3. Ao sair e voltar a acessar a tela única (nova sessão), a planilha do usuário é recarregada no estado em que foi deixada (incluindo dados de seed/upload/edições da IA)
+  4. Ao recarregar a tela única, a conversa do chat associada à planilha é recarregada — o usuário vê o histórico de trocas anteriores
+  5. Export e persistência funcionam tanto para uma planilha originada de seed/em branco quanto de upload CSV/XLSX
+
+**Plans**: TBD
+
+### Phase 22: Limpeza Final — Prisma, Dependências, Config, Testes & QA Verde
+
+**Goal**: Modelos Prisma e migrations órfãos são removidos via migration coerente preservando dados de usuário; dependências, configuração, testes/fixtures e assets que existiam só por causa das capacidades OUT são removidos; a suíte completa (`typecheck`, `lint`, `test`, `build`) passa verde, comprovando zero referências pendentes
+**Depends on**: Phase 16, Phase 17, Phase 18, Phase 19, Phase 20, Phase 21
+**Requirements**: CLEAN-08, CLEAN-09, CLEAN-10, CLEAN-11, CLEAN-12, QA-01, QA-02
+**Success Criteria** (what must be TRUE):
+
+  1. Uma migration Prisma coerente remove modelos/colunas órfãos de billing/cota/tools removidos; o banco aplica a migration limpo (`prisma migrate deploy` sem erro) e contas + planilhas de usuários existentes permanecem intactas
+  2. `package.json` (raiz e pacotes) não contém nenhuma dependência sem import ativo no código restante — verificado por busca de uso real, não por suposição
+  3. `.env.example`, `docker-compose`, scripts e README/docs principais não mencionam mais Mercado Pago, OCR, tools avulsos, cota/Pro nem geração de tabela do zero — apenas o escopo v3.0
+  4. Nenhum teste/fixture unit ou e2e exercita exclusivamente uma capacidade OUT (geradores avulsos, OCR, billing, file-analysis-como-tool, geração de tabela do zero); assets soltos (ex.: amostras de OCR) são removidos preservando os assets IN (ex.: planilha-amostra de seed)
+  5. `pnpm -r typecheck`, `pnpm -r lint`, `pnpm -r test` e `pnpm -r build` passam verdes na árvore final; busca abrangente por símbolos/rotas/imports de todas as capacidades da §5 do PRD retorna zero referências de dentro do escopo IN
+
+**Plans**: TBD
+
 ## Progress
 
 | Phase | Milestone | Plans Complete | Status | Completed |
@@ -200,7 +328,14 @@ Audit: `.planning/milestones/v1.2-MILESTONE-AUDIT.md` (status: passed)
 | 9. Extraction Infrastructure | v1.2 | 5/5 | Complete | 2026-06-03 |
 | 10. Persistence & LLM Context | v1.2 | 4/4 | Complete | 2026-06-04 |
 | 11. Attachment UI & Pro Gating | v1.2 | 5/5 | Complete | 2026-06-04 |
-| 12. Intent Classifier & Unified Route | v2.0 | 1/4 | In Progress|  |
+| 12. Intent Classifier & Unified Route | v2.0 | 4/4 | Complete | 2026-06-08 |
 | 13. Clarification Loop | v2.0 | 4/4 | Complete    | 2026-06-09 |
 | 14. Tabela Viva | v2.0 | 6/6 | Complete   | 2026-06-09 |
 | 15. Export, UX Migration & Hardening | v2.0 | 3/3 | Complete    | 2026-06-10 |
+| 16. Tela Única & Fim da Navegação Multi-Ferramenta | v3.0 | 0/TBD | Not started | - |
+| 17. Desligar Monetização & Cota | v3.0 | 0/TBD | Not started | - |
+| 18. Remover Tools Avulsos, OCR, File Analysis & Reduzir Dispatcher | v3.0 | 0/TBD | Not started | - |
+| 19. Ingestão Tri-Estado da Planilha | v3.0 | 0/TBD | Not started | - |
+| 20. Protocolo de Mutação Chat→Grade & Q&A | v3.0 | 0/TBD | Not started | - |
+| 21. Export & Persistência da Planilha+Conversa | v3.0 | 0/TBD | Not started | - |
+| 22. Limpeza Final — Prisma, Dependências, Config, Testes & QA Verde | v3.0 | 0/TBD | Not started | - |

@@ -97,43 +97,43 @@ Preenchida na criação do roadmap (cada requisito mapeia para exatamente uma fa
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| SHELL-01 | TBD | Pending |
-| SHELL-02 | TBD | Pending |
-| SHELL-03 | TBD | Pending |
-| DATA-01 | TBD | Pending |
-| DATA-02 | TBD | Pending |
-| DATA-03 | TBD | Pending |
-| DATA-04 | TBD | Pending |
-| CHAT-01 | TBD | Pending |
-| CHAT-02 | TBD | Pending |
-| CHAT-03 | TBD | Pending |
-| CHAT-04 | TBD | Pending |
-| CHAT-05 | TBD | Pending |
-| CHAT-06 | TBD | Pending |
-| PERS-01 | TBD | Pending |
-| PERS-02 | TBD | Pending |
-| PERS-03 | TBD | Pending |
-| PERS-04 | TBD | Pending |
-| LOC-01 | TBD | Pending |
-| CLEAN-01 | TBD | Pending |
-| CLEAN-02 | TBD | Pending |
-| CLEAN-03 | TBD | Pending |
-| CLEAN-04 | TBD | Pending |
-| CLEAN-05 | TBD | Pending |
-| CLEAN-06 | TBD | Pending |
-| CLEAN-07 | TBD | Pending |
-| CLEAN-08 | TBD | Pending |
-| CLEAN-09 | TBD | Pending |
-| CLEAN-10 | TBD | Pending |
-| CLEAN-11 | TBD | Pending |
-| CLEAN-12 | TBD | Pending |
-| QA-01 | TBD | Pending |
-| QA-02 | TBD | Pending |
+| SHELL-01 | Phase 16 | Pending |
+| SHELL-02 | Phase 16 | Pending |
+| SHELL-03 | Phase 16 | Pending |
+| DATA-01 | Phase 19 | Pending |
+| DATA-02 | Phase 19 | Pending |
+| DATA-03 | Phase 19 | Pending |
+| DATA-04 | Phase 19 | Pending |
+| CHAT-01 | Phase 20 | Pending |
+| CHAT-02 | Phase 20 | Pending |
+| CHAT-03 | Phase 20 | Pending |
+| CHAT-04 | Phase 20 | Pending |
+| CHAT-05 | Phase 20 | Pending |
+| CHAT-06 | Phase 20 | Pending |
+| PERS-01 | Phase 21 | Pending |
+| PERS-02 | Phase 21 | Pending |
+| PERS-03 | Phase 21 | Pending |
+| PERS-04 | Phase 21 | Pending |
+| LOC-01 | Phase 20 | Pending |
+| CLEAN-01 | Phase 18 | Pending |
+| CLEAN-02 | Phase 18 | Pending |
+| CLEAN-03 | Phase 18 | Pending |
+| CLEAN-04 | Phase 17 | Pending |
+| CLEAN-05 | Phase 16 | Pending |
+| CLEAN-06 | Phase 18 | Pending |
+| CLEAN-07 | Phase 18 | Pending |
+| CLEAN-08 | Phase 22 | Pending |
+| CLEAN-09 | Phase 22 | Pending |
+| CLEAN-10 | Phase 22 | Pending |
+| CLEAN-11 | Phase 22 | Pending |
+| CLEAN-12 | Phase 22 | Pending |
+| QA-01 | Phase 22 | Pending |
+| QA-02 | Phase 22 | Pending |
 
 **Coverage:**
-- v1 requirements (v3.0): 31 total
-- Mapped to phases: 0 (preenchido pelo roadmapper)
-- Unmapped: 31 ⚠️ (até o roadmap)
+- v1 requirements (v3.0): 32 total (nota: PRD/seção inicial citam 31; a lista detalhada acima contém 32 itens — todos mapeados)
+- Mapped to phases: 32 (100%)
+- Unmapped: 0 ✓
 
 ---
-*Requirements defined: 2026-06-10 — milestone v3.0 (31 requisitos, 8 categorias). Derivados do PRD-MILESTONE-PLANILHA-VIVA.md (escopo travado D1–D6).*
+*Requirements defined: 2026-06-10 — milestone v3.0 (32 requisitos, 8 categorias). Derivados do PRD-MILESTONE-PLANILHA-VIVA.md (escopo travado D1–D6).*
