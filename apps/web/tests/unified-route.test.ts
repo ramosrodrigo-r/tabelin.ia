@@ -672,3 +672,107 @@ describe("unified_table — clarification loop", () => {
     expect(routeMocks.confirmToolUse).toHaveBeenCalledOnce();
   });
 });
+
+
+// ---------------------------------------------------------------------------
+// REGRESSÃO: table-clarification-misroute (Phase 12/13)
+// A resposta de uma clarificação unified_table reclassifica como formula/template,
+// mas o roteamento DEVE permanecer em unified_table quando há clarificação aberta
+// no histórico OU a requisição carrega overrideGenerate/specOverride.
+// ---------------------------------------------------------------------------
+describe("unified_table — regressão de misroute na clarificação", () => {
+  const openClarHistory = [
+    { assistantPayload: { kind: "table_clar_question", question: "Q1", turnIndex: 0, totalTurns: 2, canSkip: true, spec: {} } },
+  ];
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    routeMocks.reserveToolUse.mockResolvedValue({ allowed: true, reservationKey: "res_123" });
+    routeMocks.confirmToolUse.mockResolvedValue({ confirmed: true });
+    routeMocks.releaseToolUse.mockResolvedValue({ released: true });
+    routeMocks.getUserEntitlement.mockResolvedValue({ plan: "free", status: "active" });
+    routeMocks.saveConversationExchange.mockResolvedValue(null);
+    routeMocks.recordToolRequest.mockResolvedValue(null);
+    routeMocks.askClarificationQuestion.mockResolvedValue("Quantas colunas a tabela deve ter?");
+    routeMocks.buildTableSpec.mockResolvedValue(routeMocks.tableSpecFixture);
+  });
+
+  it("resposta de clarificação reclassificada como formula + clarificação aberta → permanece em unified_table (emite próxima pergunta)", async () => {
+    // BUG: classificador manda a resposta curta para formula
+    routeMocks.classifyIntent.mockResolvedValue({ intent: "formula", confidence: "high" });
+    routeMocks.findConversationExchanges.mockResolvedValue(openClarHistory);
+
+    const response = await POST(authedJson({ prompt: "10, texto" }));
+    const events = await readEvents(response);
+
+    expect(response.status).toBe(200);
+    // Curto-circuito forçou unified_table: emite a 2ª pergunta de clarificação
+    expect(events.at(-1)).toMatchObject({
+      type: "complete",
+      payload: { kind: "table_clar_question", turnIndex: 1 },
+    });
+    // NÃO caiu no fluxo de fórmula
+    expect(routeMocks.resolveFormulaPayload).not.toHaveBeenCalled();
+    expect(routeMocks.askClarificationQuestion).toHaveBeenCalledOnce();
+  });
+
+  it("overrideGenerate=true reclassificado como template → força geração de tabela (não no-op)", async () => {
+    // BUG: "Gerar mesmo assim" antes era no-op porque o case unified_table não era atingido
+    routeMocks.classifyIntent.mockResolvedValue({ intent: "template", confidence: "high" });
+    routeMocks.findConversationExchanges.mockResolvedValue(openClarHistory);
+
+    const response = await POST(authedJson({ prompt: "10, texto", overrideGenerate: "true" }));
+    const events = await readEvents(response);
+
+    expect(response.status).toBe(200);
+    expect(events.at(-1)).toMatchObject({
+      type: "complete",
+      payload: { kind: "table_spec" },
+    });
+    expect(routeMocks.buildTableSpec).toHaveBeenCalledOnce();
+    expect(routeMocks.resolveTemplatePayload).not.toHaveBeenCalled();
+  });
+
+  it("specOverride reclassificado como formula → força geração com a spec do client", async () => {
+    routeMocks.classifyIntent.mockResolvedValue({ intent: "formula", confidence: "high" });
+    routeMocks.findConversationExchanges.mockResolvedValue(openClarHistory);
+
+    const editedSpec = {
+      kind: "table_spec",
+      title: "Tabela Editada",
+      columns: [{ name: "Produto", type: "text" }],
+      rowCount: 5,
+    };
+
+    // handleConfirmSpec envia overrideGenerate=true + specOverride juntos
+    const response = await POST(authedJson({ prompt: "confirmar", overrideGenerate: "true", specOverride: JSON.stringify(editedSpec) }));
+    const events = await readEvents(response);
+
+    expect(response.status).toBe(200);
+    expect(events.at(-1)).toMatchObject({
+      type: "complete",
+      payload: { kind: "table_spec", title: "Tabela Editada" },
+    });
+    expect(routeMocks.resolveFormulaPayload).not.toHaveBeenCalled();
+  });
+
+  it("guarda: SEM clarificação aberta (última é table_spec finalizada) → NÃO sequestra o roteamento", async () => {
+    // Pedido novo após uma tabela já gerada: deve respeitar a classificação (formula)
+    routeMocks.classifyIntent.mockResolvedValue({ intent: "formula", confidence: "high" });
+    routeMocks.findConversationExchanges.mockResolvedValue([
+      { assistantPayload: { kind: "table_clar_question", question: "Q1", turnIndex: 0, totalTurns: 2, canSkip: true, spec: {} } },
+      { assistantPayload: { kind: "table_spec", title: "Tabela Pronta", columns: [], rowCount: 1 } },
+    ]);
+    routeMocks.resolveFormulaPayload.mockResolvedValue(routeMocks.formulaPayload);
+
+    const response = await POST(authedJson({ prompt: "soma da coluna A" }));
+    await readEvents(response);
+
+    expect(response.status).toBe(200);
+    // Não forçou unified_table: o fluxo de tabela não foi acionado
+    expect(routeMocks.askClarificationQuestion).not.toHaveBeenCalled();
+    expect(routeMocks.buildTableSpec).not.toHaveBeenCalled();
+    expect(routeMocks.resolveFormulaPayload).toHaveBeenCalledOnce();
+  });
+});
+

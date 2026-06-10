@@ -38,6 +38,7 @@ import { confirmToolUse, releaseToolUse, reserveToolUse } from "@/server/usage/q
 
 const MAX_PROMPT_CHARS = 8_000;
 const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
+const MAX_CLAR_TURNS = 2;
 
 type ResolvedToolKind =
   | "formula"
@@ -275,6 +276,19 @@ function countClarTurns(history: ConversationExchangeLike[]): number {
 }
 
 /**
+ * Detecta se há uma clarificação unified_table ABERTA no histórico.
+ * "Aberta" = o último exchange unified_table é uma table_clar_question
+ * (ainda não finalizada em table_spec) E o teto de turns não foi atingido.
+ * Derivado exclusivamente do banco — nunca de campo client-side (T-13-08).
+ */
+function hasOpenTableClarification(history: ConversationExchangeLike[], MAX: number): boolean {
+  if (history.length === 0) return false;
+  const lastPayload = history[history.length - 1]?.assistantPayload as Record<string, unknown> | null;
+  const lastIsClarQuestion = lastPayload?.kind === "table_clar_question";
+  return lastIsClarQuestion && countClarTurns(history) < MAX;
+}
+
+/**
  * Extrai a spec parcial mais recente do histórico de clarificação.
  * Utilizada para alimentar o LLM no próximo turno.
  */
@@ -392,7 +406,28 @@ export async function POST(request: Request) {
       lastIntent: lastIntentResult.value,
       overrideIntent: overrideResult.value as OverrideIntent | undefined,
     });
-    const resolvedToolKind = INTENT_TO_TOOL_KIND[classification.intent];
+    let resolvedToolKind = INTENT_TO_TOOL_KIND[classification.intent];
+
+    // CURTO-CIRCUITO DE CLARIFICAÇÃO (Phase 12/13 — bug table-clarification-misroute):
+    // Se há uma clarificação unified_table aberta no histórico, OU a requisição
+    // carrega overrideGenerate/specOverride (botões "Gerar mesmo assim" / "Confirmar
+    // spec" do card de clarificação), o roteamento NÃO pode depender da reclassificação
+    // do texto atual (uma resposta curta como "10, texto" cairia em formula/template).
+    // Forçamos unified_table para que o loop de clarificação seja re-entrado e o flag
+    // overrideGenerate/specOverride seja efetivamente avaliado. Estado derivado do banco
+    // (T-13-08) — nunca de campo client-side bruto.
+    if (resolvedToolKind !== "unified_table" && !file) {
+      const wantsTableOverride =
+        fields.overrideGenerate === "true" || Boolean(fields.specOverride);
+      if (wantsTableOverride) {
+        resolvedToolKind = "unified_table";
+      } else {
+        const tableHistory = await findConversationExchanges(user.id, "unified_table");
+        if (hasOpenTableClarification(tableHistory, MAX_CLAR_TURNS)) {
+          resolvedToolKind = "unified_table";
+        }
+      }
+    }
 
     if ((classification.intent === "file_analysis" || classification.intent === "ocr") && !file) {
       await releaseToolUse(quotaCheck.reservationKey);
@@ -607,7 +642,6 @@ export async function POST(request: Request) {
       }
 
       case "unified_table": {
-        const MAX_CLAR_TURNS = 2;
         const tableHistory = await findConversationExchanges(user.id, "unified_table");
         const clarTurnCount = conservativeClarTurnCount(tableHistory, promptResult.prompt, MAX_CLAR_TURNS);
         const collectedSpec = mergeSpecFromHistory(tableHistory);
