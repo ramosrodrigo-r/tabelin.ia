@@ -96,3 +96,11 @@ None - no external service configuration required.
 ---
 *Phase: 15-export-ux-migration-hardening*
 *Completed: 2026-06-10*
+
+## Self-Check: PASSED
+- FOUND: apps/web/src/features/unified-chat/lib/table-export.ts
+- FOUND: apps/web/tests/table-export.test.ts
+- FOUND: .planning/phases/15-export-ux-migration-hardening/15-01-SUMMARY.md
+- FOUND commit: 45177c8 (test)
+- FOUND commit: c91ec5d (feat)
+- FOUND commit: 12bec25 (docs)
