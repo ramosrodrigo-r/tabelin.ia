@@ -90,7 +90,7 @@ note: "T1/T3/T4/T5/T6 verde (T3 desbloqueado após fixes de roteamento+spec). T2
     - "FORA DO ESCOPO DA PHASE 15 — encaminhar para /gsd:debug: (a) ao atender clarificação de unified_table, forçar intent=unified_table em vez de re-classificar a resposta; (b) corrigir 'Gerar mesmo assim' (overrideGenerate) para de fato gerar a tabela. Provavelmente Phase 13." # RESOLVIDO commit f4222a6 + follow-on 11510ea (kind no fallback)
 
 - truth: "As fórmulas vivas de uma tabela gerada pela IA são avaliadas corretamente no grid (sem erro)"
-  status: failed
+  status: resolved  # commit a0466ce — avaliador aritmético adicionado; 61/61 suites de fórmula verdes; repro calcula 239.7/245 em vez de #NAME?. PENDENTE reconfirmação no browser.
   reason: "Observado no UAT Test 6: a coluna 'Total' de uma tabela gerada ao vivo (gpt-5-mini) exporta `#NAME?` em TODAS as linhas — o motor de fórmulas (@formulajs / localização pt-BR) não reconhece as fórmulas geradas pela IA (nome de função ou referência de coluna não resolvida). O EXPORT está correto (exporta fielmente displayRows = valor calculado, conforme EXP-01); o defeito é a AVALIAÇÃO da fórmula."
   severity: major
   test: 6
