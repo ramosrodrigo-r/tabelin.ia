@@ -320,7 +320,11 @@ export async function buildTableSpec(
 
     const raw = JSON.parse(
       fallbackCompletion.choices[0]?.message?.content ?? "{}"
-    ) as unknown;
-    return tableSpecPayloadSchema.parse(raw);
+    ) as Record<string, unknown>;
+    // O fallback json_object não força o discriminador `kind` (o modelo não o emite),
+    // diferente do caminho Structured Outputs. O servidor sabe que está construindo um
+    // table_spec, então injeta o discriminador antes do parse. O spread depois de `kind`
+    // permite que um eventual `kind` vindo do modelo prevaleça (que seria "table_spec").
+    return tableSpecPayloadSchema.parse({ kind: "table_spec", ...raw });
   }
 }

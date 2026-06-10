@@ -1,4 +1,4 @@
-import { afterAll, beforeEach, describe, expect, it } from "vitest";
+import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 // NOTE: Esses imports falharão com "cannot find module" até o Plan 02 criar os módulos.
 // O scaffold existe para garantir que os contratos estejam definidos antes da implementação.
@@ -8,6 +8,13 @@ import { askClarificationQuestion, buildTableSpec } from "../src/server/ai/table
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore — schema criado no Plan 02
 import { tableSpecPayloadSchema } from "@tabelin/shared";
+
+import { createOpenAIClient } from "../src/server/ai/openai-client";
+
+vi.mock("../src/server/ai/openai-client", () => ({
+  createOpenAIClient: vi.fn(),
+  getOpenAIModel: vi.fn(() => "gpt-test"),
+}));
 
 const REAL_OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
@@ -268,5 +275,53 @@ describe("buildTableSpec — fixture estendida Phase 14", () => {
     }
 
     expect(result.separator).toBe(";");
+  });
+});
+
+describe("buildTableSpec — fallback json_object injeta kind (regressão misroute-spec)", () => {
+  beforeEach(() => {
+    process.env.OPENAI_API_KEY = "test-key";
+    vi.clearAllMocks();
+  });
+
+  afterAll(() => {
+    if (REAL_OPENAI_API_KEY) {
+      process.env.OPENAI_API_KEY = REAL_OPENAI_API_KEY;
+    } else {
+      delete process.env.OPENAI_API_KEY;
+    }
+  });
+
+  it("quando Structured Outputs falha e o modelo não emite `kind`, o servidor injeta kind: 'table_spec'", async () => {
+    // Corpo de spec válido EXCETO pelo discriminador `kind` (o fallback json_object não o emite)
+    const specSemKind = {
+      title: "Estoque",
+      columns: [
+        { name: "Descrição", type: "text", key: "descricao" },
+        { name: "Valor (R$)", type: "currency", key: "valor" },
+      ],
+      rowCount: 1,
+      rows: [{ descricao: "Aluguel", valor: 2000 }],
+      formulaLanguage: "pt-BR",
+      separator: ";",
+    };
+
+    const fakeClient = {
+      chat: {
+        completions: {
+          // força o caminho de fallback (mensagem casa shouldFallbackFromStructuredOutputs)
+          parse: vi.fn().mockRejectedValue(new Error("structured outputs unsupported")),
+          create: vi.fn().mockResolvedValue({
+            choices: [{ message: { content: JSON.stringify(specSemKind) } }],
+          }),
+        },
+      },
+    };
+    (createOpenAIClient as unknown as ReturnType<typeof vi.fn>).mockReturnValue(fakeClient);
+
+    const result = await buildTableSpec({ prompt: "controle de estoque", collectedSpec: {} });
+
+    expect(result.kind).toBe("table_spec");
+    expect(tableSpecPayloadSchema.safeParse(result).success).toBe(true);
   });
 });
