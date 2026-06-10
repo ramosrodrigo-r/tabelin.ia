@@ -6,7 +6,6 @@ import { AttachmentButton } from "@/components/app/attachment-button";
 import { AttachmentChip } from "@/components/app/attachment-chip";
 import { ChatInput } from "@/components/app/chat-input";
 import { PrivacyNotice } from "@/components/app/privacy-notice";
-import { ToolNav } from "@/components/app/tool-nav";
 import type { RegexMode } from "../hooks/use-regex-stream";
 
 export function RegexInputPanel({
@@ -95,7 +94,6 @@ export function RegexInputPanel({
             />
           ) : undefined
         }
-        bottomNav={<ToolNav />}
       />
 
       {mode === "generate" && pendingFile ? (

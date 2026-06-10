@@ -3,8 +3,6 @@
 import type { OcrResponse, UserEntitlement } from "@tabelin/shared";
 import { useState } from "react";
 
-import { ToolNav } from "@/components/app/tool-nav";
-
 import { useImageUpload } from "./hooks/use-image-upload";
 import { ImageUploadPanel } from "./components/image-upload-panel";
 import { OcrResultPanel } from "./components/ocr-result-panel";
@@ -61,8 +59,6 @@ export function OcrTool({}: Props) {
           result={result}
         />
       ) : null}
-
-      <ToolNav />
     </div>
   );
 }

@@ -8,7 +8,6 @@ import { AttachmentButton } from "@/components/app/attachment-button";
 import { AttachmentChip } from "@/components/app/attachment-chip";
 import { ChatInput } from "@/components/app/chat-input";
 import { PrivacyNotice } from "@/components/app/privacy-notice";
-import { ToolNav } from "@/components/app/tool-nav";
 
 export function ScriptsInputPanel({
   scriptType,
@@ -81,7 +80,6 @@ export function ScriptsInputPanel({
             onFileSelect={onFileSelect}
           />
         }
-        bottomNav={<ToolNav />}
       />
 
       {pendingFile ? (
