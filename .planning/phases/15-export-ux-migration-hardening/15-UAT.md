@@ -18,9 +18,10 @@ result: pass
 
 ### 2. Navegação — Sidebar visível, ToolNav removido, deep links (UNI-07)
 expected: Em /workspace a Sidebar mostra Formula/Scripts/SQL/Regex/Templates/File Analysis/OCR; NÃO há ToolNav (barra de abas) embaixo do input; clicar "SQL" vai para /workspace/sql; voltar mostra o chat.
-result: issue
+result: resolved
 reported: "a única aba que não aparece a toolnav embaixo do chat é a de fórmulas (chat unificado / raiz), todas as outras (SQL, Regex, Scripts, Templates, File Analysis, OCR) ainda mostram a ToolNav — agora com Sidebar + ToolNav duplicadas"
 severity: major
+resolution: "Corrigido em `fix(15): remove ToolNav duplicada dos 7 painéis...` — ToolNav removido de ocr/file-analysis/formula/regex/template/sql/scripts; `grep -rc ToolNav src/` == 0 fora de tool-nav.tsx; typecheck verde, suíte 358 verde. (tool-nav.tsx ficou órfão — dead code, mantido por ora.) PENDENTE re-verificação visual do usuário: confirmar que /workspace/sql etc. mostram só a Sidebar."
 
 ### 3. Gerar uma tabela no chat unificado (pré-requisito do export)
 expected: Pedir uma tabela no chat gera um TableGridPanel (grid) com toolbar contendo "Adicionar linha", "Adicionar coluna", "Exportar CSV", "Exportar XLSX".
@@ -59,7 +60,7 @@ blocked: 3
 ## Gaps
 
 - truth: "Após a migração de UX, a navegação entre tools é feita pela Sidebar; a ToolNav não coexiste duplicada nas páginas de tool"
-  status: failed
+  status: resolved
   reason: "User reported: a ToolNav ainda aparece em todas as páginas de tool exceto o chat unificado raiz; com a Sidebar agora montada globalmente no workspace layout, as 6+ páginas de tool exibem navegação duplicada (Sidebar + ToolNav)"
   severity: major
   test: 2
