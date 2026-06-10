@@ -3,10 +3,14 @@ import React from "react";
 import { describe, expect, it, vi } from "vitest";
 
 // Mocks da util de export (Plan 01) — evita efeito DOM/fs real (Pitfall 4).
-const buildCsvMock = vi.fn(() => "csv-content");
-const buildXlsxMock = vi.fn(() => ({ SheetNames: [], Sheets: {} }));
-const downloadCsvMock = vi.fn();
-const downloadXlsxMock = vi.fn();
+// vi.hoisted: vi.mock é hoisted ao topo do arquivo, então as referências usadas
+// na factory precisam ser declaradas via vi.hoisted para evitar TDZ.
+const { buildCsvMock, buildXlsxMock, downloadCsvMock, downloadXlsxMock } = vi.hoisted(() => ({
+  buildCsvMock: vi.fn(() => "csv-content"),
+  buildXlsxMock: vi.fn(() => ({ SheetNames: [], Sheets: {} })),
+  downloadCsvMock: vi.fn(),
+  downloadXlsxMock: vi.fn(),
+}));
 
 vi.mock("../src/features/unified-chat/lib/table-export", () => ({
   buildCsv: buildCsvMock,
@@ -29,6 +33,7 @@ if (typeof window !== "undefined" && !window.ResizeObserver) {
 // Import direto: o módulo já existe nesta fase (Wave 2) — usado pelos testes
 // de export EXP-01/EXP-02 que precisam de render real (não skip-graceful).
 import { TableGridPanel as TableGridPanelDirect } from "../src/features/unified-chat/components/table-grid-panel";
+import type { TableSpecPayload } from "@tabelin/shared";
 
 // NOTE: TableGridPanel será criado no Wave 2.
 // Import dinâmico com try/catch para skip-graceful enquanto o módulo não existe.
@@ -303,7 +308,7 @@ describe("WR-05 — undo/redo scopado ao grid focado", () => {
 
 describe("TableGridPanel — EXP-01/EXP-02 export CSV/XLSX", () => {
   it("renderiza botões 'Exportar CSV' e 'Exportar XLSX' no toolbar", () => {
-    render(<TableGridPanelDirect spec={SPEC_FIXTURE} />);
+    render(<TableGridPanelDirect spec={SPEC_FIXTURE as TableSpecPayload} />);
     expect(screen.getAllByLabelText("Exportar CSV")[0]).toBeInTheDocument();
     expect(screen.getAllByLabelText("Exportar XLSX")[0]).toBeInTheDocument();
   });
@@ -311,7 +316,7 @@ describe("TableGridPanel — EXP-01/EXP-02 export CSV/XLSX", () => {
   it("clicar em 'Exportar CSV' chama downloadCsv exatamente uma vez", () => {
     downloadCsvMock.mockClear();
     buildCsvMock.mockClear();
-    render(<TableGridPanelDirect spec={SPEC_FIXTURE} />);
+    render(<TableGridPanelDirect spec={SPEC_FIXTURE as TableSpecPayload} />);
     fireEvent.click(screen.getAllByLabelText("Exportar CSV")[0]);
     expect(buildCsvMock).toHaveBeenCalledTimes(1);
     expect(downloadCsvMock).toHaveBeenCalledTimes(1);
@@ -320,7 +325,7 @@ describe("TableGridPanel — EXP-01/EXP-02 export CSV/XLSX", () => {
   it("clicar em 'Exportar XLSX' chama downloadXlsx exatamente uma vez", () => {
     downloadXlsxMock.mockClear();
     buildXlsxMock.mockClear();
-    render(<TableGridPanelDirect spec={SPEC_FIXTURE} />);
+    render(<TableGridPanelDirect spec={SPEC_FIXTURE as TableSpecPayload} />);
     fireEvent.click(screen.getAllByLabelText("Exportar XLSX")[0]);
     expect(buildXlsxMock).toHaveBeenCalledTimes(1);
     expect(downloadXlsxMock).toHaveBeenCalledTimes(1);
