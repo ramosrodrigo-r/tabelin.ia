@@ -43,12 +43,12 @@
 
 ### Export (EXP)
 
-- [ ] **EXP-01**: Usuário pode exportar a tabela para CSV
-- [ ] **EXP-02**: Usuário pode exportar a tabela para XLSX (reusando a lib `xlsx` já instalada)
+- [x] **EXP-01**: Usuário pode exportar a tabela para CSV
+- [x] **EXP-02**: Usuário pode exportar a tabela para XLSX (reusando a lib `xlsx` já instalada)
 
 ### Segurança (SEC — continua de v1.2)
 
-- [ ] **SEC-04**: Export CSV/XLSX sanitiza injeção de fórmula — prefixo `'` em qualquer célula iniciada por `=`, `+`, `-`, `@`, `\t`, `\r`; células editadas pelo usuário gravadas como texto (`t:"s"`) no XLSX
+- [x] **SEC-04**: Export CSV/XLSX sanitiza injeção de fórmula — prefixo `'` em qualquer célula iniciada por `=`, `+`, `-`, `@`, `\t`, `\r`; células editadas pelo usuário gravadas como texto (`t:"s"`) no XLSX
 - [x] **SEC-05**: Conteúdo de célula renderiza sem XSS (apenas textContent; sem `dangerouslySetInnerHTML`)
 
 ---
@@ -99,9 +99,9 @@
 | LOC-02 | Phase 14 | Complete |
 | LOC-03 | Phase 14 | Complete |
 | SEC-05 | Phase 14 | Complete |
-| EXP-01 | Phase 15 | Pending |
-| EXP-02 | Phase 15 | Pending |
-| SEC-04 | Phase 15 | Pending |
+| EXP-01 | Phase 15 | Complete |
+| EXP-02 | Phase 15 | Complete |
+| SEC-04 | Phase 15 | Complete |
 
 ---
 

@@ -203,4 +203,4 @@ Audit: `.planning/milestones/v1.2-MILESTONE-AUDIT.md` (status: passed)
 | 12. Intent Classifier & Unified Route | v2.0 | 1/4 | In Progress|  |
 | 13. Clarification Loop | v2.0 | 4/4 | Complete    | 2026-06-09 |
 | 14. Tabela Viva | v2.0 | 6/6 | Complete   | 2026-06-09 |
-| 15. Export, UX Migration & Hardening | v2.0 | 3/3 | Complete   | 2026-06-10 |
+| 15. Export, UX Migration & Hardening | v2.0 | 3/3 | Complete    | 2026-06-10 |
