@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 
+import { Sidebar } from "@/components/app/sidebar";
 import { Topbar } from "@/components/app/topbar";
 import { WorkspaceShell } from "@/components/app/workspace-shell";
 import { getCachedEntitlement, getCachedUser } from "@/server/request-cache";
@@ -23,9 +24,12 @@ export default async function WorkspaceLayout({
     <WorkspaceShell>
       <div className="workspace-page">
         <Topbar user={user} entitlement={entitlement} supportLinks={supportLinks} />
-        <main className="workspace-content">
-          <div className="workspace-center">{children}</div>
-        </main>
+        <div className="workspace-body">
+          <Sidebar />
+          <main className="workspace-content">
+            <div className="workspace-center">{children}</div>
+          </main>
+        </div>
       </div>
     </WorkspaceShell>
   );
