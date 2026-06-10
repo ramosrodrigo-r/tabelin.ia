@@ -13,12 +13,17 @@ files_reviewed_list:
   - apps/web/tests/table-export.test.ts
   - apps/web/tests/table-grid-panel.test.tsx
 findings:
-  critical: 1
+  critical: 0
   warning: 5
   info: 4
-  total: 10
+  total: 9
 status: issues_found
+resolved:
+  - "CR-01 (fixed in commit fix(15): harden SEC-04 sanitization — leading-neutralizer bypass closed + 6 regression tests)"
 ---
+
+> **Update 2026-06-10:** CR-01 (Critical) RESOLVED during execute-phase. `sanitizeCellForExport` now evaluates the dangerous-lead trigger on the value with leading whitespace/quote/backtick neutralizers stripped (`LEADING_NEUTRALIZERS`), with 6 added regression tests (`"=cmd"`, ` =1+1`, `\t=1+1`, `'=1+1`, `` `=1+1 ``, plus negative cases). The remaining WARNING/INFO items are advisory and unaddressed — run `/gsd:code-review 15 --fix` to triage them.
+
 
 # Phase 15: Code Review Report
 
