@@ -16,7 +16,7 @@ Brazilian spreadsheet users can describe the outcome they need in Portuguese and
 
 Usuários Pro agora anexam documentos (CSV/XLSX, PNG/JPEG, PDF, TXT) em qualquer um dos 5 tools de texto via botão paperclip ou drag-and-drop. Um pipeline de extração multi-formato (dispatcher único, validação de magic bytes + anti-ZIP-bomb) gera texto plano que é injetado no system prompt com delimitadores anti-injection, persistido em `attachmentContext` (arquivo bruto nunca salvo — D-07) e reusado em follow-ups. Pro-gate e cota são aplicados no backend antes de qualquer extração; free vê CTA de upgrade. Auditoria de milestone `passed` (25/25 requisitos), Nyquist 100% compliant, UAT humano 3/3.
 
-**Next milestone:** v2.0 Chat Unificado & Tabela Viva — em definição (requirements → roadmap).
+**Em implementação:** v2.0 Chat Unificado & Tabela Viva — **todas as 4 fases executadas** (Phases 12–15). Phase 15 (Export, UX Migration & Hardening) concluída 2026-06-10: export CSV/XLSX com sanitização de injeção de fórmula (SEC-04, hardening CR-01 aplicado), Sidebar montada + ToolNav removido da raiz, fixture fallback de `buildTableSpec` coberto. Pendente: verificação humana manual (smoke test de download + navegação) e auditoria de milestone antes de marcar como shipped.
 
 ## Current Milestone: v2.0 Chat Unificado & Tabela Viva
 
@@ -149,4 +149,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-06-08 — início do milestone v2.0 Chat Unificado & Tabela Viva: chat único com roteamento de intent (abas removidas), tabela interativa estilo mini-Excel (fórmulas vivas) e loop de clarificação antes de gerar tabelas. Requisitos em definição.*
+*Last updated: 2026-06-10 — Phase 15 concluída; todas as 4 fases do milestone v2.0 (Chat Unificado & Tabela Viva) executadas. Export CSV/XLSX sanitizado, migração de navegação para o chat unificado e fixture fallback entregues. Pendente verificação humana manual + auditoria de milestone.*
