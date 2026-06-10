@@ -2,32 +2,45 @@
 
 ## What This Is
 
-Tabelin.IA is a Brazilian SaaS for spreadsheet and data productivity. It helps Brazilian analysts, finance teams, marketers, HR operators, accountants, administrators, and BI users turn natural-language requests into localized spreadsheet formulas, automation scripts, SQL queries, regex patterns, and structured analysis from files or table images.
+Tabelin.IA é um SaaS brasileiro de produtividade em planilhas, consolidado em **uma única tela**: uma **planilha viva** (grid editável estilo Excel/Sheets, com motor de fórmulas pt-BR recalculando ao vivo no browser) sempre presente, e um **chat de IA em português** ao lado que trabalha em cima dela — edita células, cria e preenche colunas de fórmula, ordena, filtra, transforma e completa dados, e responde dúvidas analíticas sobre os dados em texto.
 
-The product is inspired by the capabilities of GPTExcel, but the product definition is Brazil-first: Portuguese prompts, Brazilian Excel syntax with semicolon separators, Pix and local card checkout, and workflows shaped around Brazilian office users.
+A partir de v3.0 o produto deixa de ser um "canivete suíço" multi-ferramenta (geradores avulsos de fórmula/SQL/regex/script, OCR, billing) e estreita-se para essa experiência única e profunda. Localização Brasil-first permanece o diferencial: prompts em português, sintaxe de Excel brasileira com separador `;`, formatação R$/DD-MM-AAAA e fluxos moldados para o usuário de escritório brasileiro.
+
+> **Histórico:** v1.0–v2.0 entregaram o SaaS multi-ferramenta inspirado no GPTExcel (auth, billing Mercado Pago, 7 tools de texto, OCR, file analysis, chat unificado e a tabela viva). v3.0 é um pivô que mantém o núcleo (auth, persistência, planilha viva, chat) e remove o resto.
 
 ## Core Value
 
-Brazilian spreadsheet users can describe the outcome they need in Portuguese and quickly receive correct, copy-ready formulas, code, queries, or structured table outputs that fit their actual tools.
+Usuários brasileiros trabalham numa planilha viva sempre na tela e pedem em português que a IA manipule os dados na própria grade — ou responda dúvidas sobre eles — sem escolher ferramentas nem navegar entre módulos.
 
 ## Current State
 
-**Shipped:** v1.2 Anexos Universais (2026-06-05) — Phases 9–11.
+**Executado:** v2.0 Chat Unificado & Tabela Viva (2026-06-10) — Phases 12–15.
 
-Usuários Pro agora anexam documentos (CSV/XLSX, PNG/JPEG, PDF, TXT) em qualquer um dos 5 tools de texto via botão paperclip ou drag-and-drop. Um pipeline de extração multi-formato (dispatcher único, validação de magic bytes + anti-ZIP-bomb) gera texto plano que é injetado no system prompt com delimitadores anti-injection, persistido em `attachmentContext` (arquivo bruto nunca salvo — D-07) e reusado em follow-ups. Pro-gate e cota são aplicados no backend antes de qualquer extração; free vê CTA de upgrade. Auditoria de milestone `passed` (25/25 requisitos), Nyquist 100% compliant, UAT humano 3/3.
+Chat unificado roteia o intent automaticamente (OpenAI Structured Outputs, SLA 2,5s) e a **tabela viva** entregou um grid editável estilo mini-Excel com motor de fórmulas pt-BR (`@formulajs/formulajs`), undo/redo, ordenação, tooltips de erro estilo Excel e export CSV/XLSX sanitizado (SEC-04). UAT 6/6. Detalhes em MILESTONES.md.
 
-**Em implementação:** v2.0 Chat Unificado & Tabela Viva — **todas as 4 fases executadas** (Phases 12–15). Phase 15 (Export, UX Migration & Hardening) concluída 2026-06-10: export CSV/XLSX com sanitização de injeção de fórmula (SEC-04, hardening CR-01 aplicado), Sidebar montada + ToolNav removido da raiz, fixture fallback de `buildTableSpec` coberto. Pendente: verificação humana manual (smoke test de download + navegação) e auditoria de milestone antes de marcar como shipped.
+**Acumulado v1.0–v1.2:** SaaS multi-ferramenta completo — auth (Better Auth), billing Mercado Pago (Pix/card, free-tier quota), 5 tools de texto (fórmula/scripts/SQL/regex/template), OCR (Vision), file analysis, anexos universais, histórico persistente. Tudo shipped e validado.
 
-## Current Milestone: v2.0 Chat Unificado & Tabela Viva
+**Próximo (este milestone):** v3.0 Planilha Viva — pivô que estreita o produto para a tela única e remove a cadeia de código morto.
 
-**Goal:** Substituir as abas de tools por um único chat onde a IA roteia o intent automaticamente, e introduzir geração de tabelas interativas estilo planilha (fórmulas vivas no browser), com um loop de clarificação que confirma especificações antes de gerar qualquer tabela.
+## Current Milestone: v3.0 Planilha Viva + Chat de IA (pivô / redução de escopo)
 
-**Target features:**
-- Chat unificado com classificação de intent (formula, SQL, regex, scripts, análise de arquivo, OCR, **tabela**) — remoção das sections dedicadas, sem regressão das capacidades existentes
-- Geração de **tabela interativa** estilo mini-Excel: grid editável com recálculo de fórmulas vivas no browser
-- **Loop de clarificação** multi-turn: a IA pergunta tudo até ter certeza antes de gerar qualquer tabela
-- Edição inline de células e export da tabela (CSV/XLSX)
-- Migração da navegação/UX do modelo multi-aba para o chat único
+**Goal:** Estreitar o produto de um SaaS multi-ferramenta para uma única tela — planilha viva sempre presente + chat de IA que opera sobre ela — removendo toda a cadeia de código morto (billing/cota, OCR, tools de texto avulsos, navegação multi-ferramenta, geração de tabela do zero), comprovadamente e sem imports quebrados.
+
+**Fonte da verdade:** `PRD-MILESTONE-PLANILHA-VIVA.md` (decisões de escopo D1–D6, escopo IN §4, escopo OUT §5, critérios de deleção §6, RF/RNF §7, aceite §9).
+
+**Target features (IN / construir):**
+- Tela única autenticada: planilha viva ocupando o espaço principal + chat de IA ao lado/abaixo, sem menu de ferramentas
+- 3 estados iniciais da grade: planilha-amostra (seed), planilha em branco, upload CSV/XLSX (importar substitui a grade)
+- **Protocolo de mutação chat→grade** (trabalho novo): a IA recebe o estado da planilha e retorna operações estruturadas (células/colunas/linhas/fórmulas) aplicadas à grade, com undo
+- Chat responde dúvidas analíticas sobre os dados em texto, sem alterar a grade
+- Export CSV/XLSX com fórmulas calculadas; persistência da planilha + conversa por usuário entre sessões; localização pt-BR; modo fixture sem `OPENAI_API_KEY`
+
+**Removals (OUT / deletar a cadeia completa):**
+- Geradores de texto avulsos: Fórmula, Scripts, SQL, Regex, Template como tools/páginas/rotas independentes
+- OCR (imagem→tabela) inteiro; Análise de Arquivos como ferramenta separada (sobra só o caminho de ingestão)
+- Toda monetização/cota: Mercado Pago, checkout, webhooks, plano Pro, entitlement gates, usage ledger e UI de upsell
+- Navegação multi-ferramenta (sidebar/tool-nav); geração de tabela do zero pela IA (stub/clarificação/confirmação de spec)
+- Modelos Prisma, migrations, deps, env e testes que existem **somente** por causa do que sai (derivados pelos critérios §6, não por lista fixa)
 
 ## Requirements
 
@@ -65,22 +78,32 @@ Usuários Pro agora anexam documentos (CSV/XLSX, PNG/JPEG, PDF, TXT) em qualquer
 - ✓ Transparência do conteúdo extraído (painel expansível + aviso de extração parcial em truncagem) e CTA de upgrade para usuário free — Phase 11 (ATT-07, ATT-08, PRO-01)
 - ✓ Delimitadores anti-injection no prompt + render seguro sem `dangerouslySetInnerHTML`; aviso LGPD de que o conteúdo fica no histórico e é limpo via "Nova conversa" — Phase 11 (SEC-01, SEC-03)
 - ✓ Erros acionáveis de extração (PDF escaneado, tipo não suportado, arquivo grande) surfacados ao usuário nos 5 hooks — v1.2 pós-auditoria (SEAM-05)
+- ✓ Chat unificado com classificação de intent embutida (OpenAI Structured Outputs, SLA 2,5s), pill de tipo + override, outputs heterogêneos inline — Phase 12 (UNI-01..07)
+- ✓ Loop de clarificação multi-turn (teto 2 turns, escape hatch, ConfirmationCard, cota só na geração) — Phase 13 (CLAR-01..05)
+- ✓ Tabela viva: grid editável (Tab/Enter/setas), recálculo de fórmulas vivas no browser, add/remove linha+coluna, copy/paste + undo/redo, ordenação, limite ≤200×26 virtualizado — Phase 14 (TAB-01..06)
+- ✓ Localização de fórmula pt-BR (PROCV/SE/SOMASE… via mapa PT-BR→EN), separador `;`, formatação R$/DD-MM-AAAA — Phase 14 (LOC-01..03)
+- ✓ Export da tabela para CSV e XLSX com sanitização de injeção de fórmula (prefixo `'`) e render sem XSS — Phase 14/15 (EXP-01..02, SEC-04, SEC-05)
+
+> ⚠️ **Removido no pivô v3.0:** um subconjunto das capacidades validadas acima é deliberadamente desmontado neste milestone — billing/cota (Mercado Pago, checkout, webhooks, Pro, usage ledger), OCR, geradores de texto avulsos (Fórmula/Scripts/SQL/Regex/Template como tools), File Analysis como tool separada, navegação multi-ferramenta e a geração de tabela do zero (clarificação/confirmação de spec). Permanecem validados: auth, persistência, planilha viva, motor de fórmulas pt-BR, export e o caminho de ingestão CSV/XLSX. Ao concluir v3.0, as entradas removidas migram para Out of Scope.
 
 ### Active
 
-Milestone **v2.0 Chat Unificado & Tabela Viva** — requisitos em definição via `/gsd:new-milestone`. Ver `## Current Milestone` acima.
-
-All v1.0 + v1.1 + v1.2 requirements validated — see Validated section above.
+Milestone **v3.0 Planilha Viva + Chat de IA** — requisitos definidos via `/gsd:new-milestone` (ver REQUIREMENTS.md e `## Current Milestone` acima). Mistura de construção (tela única, protocolo de mutação chat→grade, ingestão tri-estado) e remoção comprovada (cadeia OUT da §5 do PRD).
 
 ### Out of Scope
 
+- **Monetização / billing (removido no pivô v3.0)** — Mercado Pago, checkout, webhooks, plano Pro, gates de entitlement, cota/usage ledger. Substituição futura por AbacatePay em milestone próprio (§8 do PRD).
+- **Geradores de texto avulsos (removido no pivô v3.0)** — SQL, regex, script e fórmula como "resposta de texto" independente deixam de existir; o chat opera na planilha + Q&A.
+- **OCR imagem→tabela (removido no pivô v3.0)** — cadeia inteira deletada.
+- **Geração de tabela do zero por linguagem natural (fora de v3.0)** — a IA atua sobre a planilha já aberta, não monta uma tabela nova via stub/clarificação/confirmação.
+- Gráficos, relatórios executivos de BI, dashboards — fora do foco da planilha viva.
+- Múltiplas abas/planilhas por documento — só se trivial a partir do que já existe.
 - Legal or brand-identical cloning of GPTExcel — functional parity and Brazil-specific user value, not trademark/visual duplication
 - Native mobile apps — first release is web SaaS
 - Real-time multi-user spreadsheet collaboration — not required for core formula and analysis workflow
 - Enterprise SSO, SOC2 procurement flows, and multi-tenant admin consoles — defer until Pro adoption proves demand
-- Unbounded large-file analytics — v1 capped at 5 MB to control cost, latency, and privacy risk
 - Training custom foundation models — use commercial LLM APIs with appropriate data privacy settings
-- CI pipeline integration for smoke tests — deferred to v2 (tests run locally, T-05-03-SC accepted)
+- CI pipeline integration for smoke tests — deferred (tests run locally, T-05-03-SC accepted)
 
 ## Context
 
@@ -101,8 +124,9 @@ The recommended technical direction from the PRD is a web SaaS with a Next.js/Ta
 - **Performance**: Simple formula generation must begin streaming within 2.5 seconds.
 - **Monetization**: Free-tier usage limits and Pro entitlement enforcement are part of the MVP, not a later add-on.
 - **File handling**: v1 spreadsheet uploads are capped at 5 MB, with at most 5 files per history for free users.
-- **AI reliability**: Generated formulas, SQL, regex, and scripts need structured prompts, platform selectors, explanations, and copy-ready output to reduce incorrect usage.
-- **Payments**: Checkout must support Brazilian purchase behavior, especially Pix.
+- **AI reliability**: As mutações chat→grade e o Q&A precisam de saída estruturada (operações tipadas sobre células/colunas/fórmulas) com o estado da planilha no contexto, para aplicar mudanças corretas e desfazíveis.
+- **Single-screen**: a partir de v3.0 não há navegação multi-ferramenta — uma única tela autenticada (planilha + chat). Capacidades que não cabem nela saem.
+- **Payments (suspenso em v3.0)**: billing removido neste milestone; quando voltar (AbacatePay, futuro), o checkout deve suportar comportamento de compra brasileiro, especialmente Pix.
 
 ## Key Decisions
 
@@ -130,6 +154,11 @@ The recommended technical direction from the PRD is a web SaaS with a Next.js/Ta
 | Pro-gate no backend ANTES de qualquer I/O de extração | Anti-bypass: free não deve disparar OCR/parse; 403 antes de reservar cota | Validado — v1.2 (Phase 10, PRO-02) |
 | PDF escaneado → erro acionável (sem fallback OCR automático) | Custo/latência de converter páginas→Vision a validar com uso Pro real; orienta usuário ao tool de OCR dedicado | Validado — v1.2 (Phase 9, EXT-06); erro surfacado na UI pós-auditoria (SEAM-05) |
 | Formula como amostra Nyquist representativa dos 5 tools | Os 5 tools compartilham componentes e replicam o mesmo padrão de hook; testar render completo no Formula + grep/code-review nos demais | Validado — v1.2 (Phase 11) |
+| Pivotar para tela única (planilha viva + chat), abandonar o modelo multi-ferramenta | Produto está "largo e raso"; a tabela viva já madura é o ativo mais valioso e deve ser o centro, não um output ocasional | — Pending (v3.0) |
+| Remover toda a monetização/cota agora, AbacatePay depois | Mercado Pago/checkout/Pro/ledger são camada transversal pesada acoplada às rotas; removê-los simplifica drasticamente a superfície antes de reintroduzir billing | — Pending (v3.0) |
+| Derivar o conjunto de deleção por critérios (§6 do PRD), não por lista fixa de arquivos | Código morto deve ser comprovado por ausência de referências de entrada (zero consumidores IN), não presumido; protege símbolos compartilhados (locale, cliente IA, validação de bytes) | — Pending (v3.0) |
+| Geração de tabela do zero pela IA sai; protocolo de mutação chat→grade entra | O valor passa a ser operar sobre a planilha já aberta (editar células/colunas/fórmulas), não montar tabelas novas via clarificação/spec | — Pending (v3.0) |
+| Commits atômicos por bloco de remoção, cada um deixando a árvore verde | Permite bisseção/rollback de uma limpeza grande e destrutiva (migrations Prisma irreversíveis); reduz risco do pivô | — Pending (v3.0) |
 
 ## Evolution
 
@@ -149,4 +178,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-06-10 — Phase 15 concluída; todas as 4 fases do milestone v2.0 (Chat Unificado & Tabela Viva) executadas. Export CSV/XLSX sanitizado, migração de navegação para o chat unificado e fixture fallback entregues. Pendente verificação humana manual + auditoria de milestone.*
+*Last updated: 2026-06-10 — início do milestone v3.0 Planilha Viva + Chat de IA (pivô / redução de escopo). v2.0 arquivado em MILESTONES.md; PROJECT.md repivotado para a tela única; requisitos v3.0 definidos via /gsd:new-milestone.*

@@ -1,5 +1,31 @@
 # Milestones: Tabelin.IA
 
+## v2.0 Chat Unificado & Tabela Viva (Executado: 2026-06-10)
+
+**Phases:** 12–15 | **Plans:** 17 (17 concluídos)
+**Timeline:** ~2 days (2026-06-08 → 2026-06-10)
+**Git range:** feat(12) → test(15) (#NAME? gap resolvido via debug `table-formulas-name-error`)
+
+**Delivered:** Substituiu as abas de tools por um chat unificado que roteia o intent automaticamente (OpenAI Structured Outputs, campo intent primeiro, SLA 2,5s preservado) e introduziu a **tabela viva** — grid editável estilo mini-Excel com motor de fórmulas pt-BR (`@formulajs/formulajs`, MIT) recalculando ao vivo no browser, undo/redo, ordenação, tooltips de erro estilo Excel e export CSV/XLSX sanitizado contra injeção de fórmula (SEC-04).
+
+**Key accomplishments:**
+
+- **Classificador de intent + rota unificada** (Phase 12): intent embutido na chamada de geração, pill de tipo detectado com override de um clique, outputs heterogêneos (código/grid/texto) renderizando inline no mesmo thread.
+- **Loop de clarificação** (Phase 13): multi-turn stub→clarificação→confirmação de spec antes de gerar qualquer tabela.
+- **Tabela viva** (Phase 14): `react-datasheet-grid` (MIT) + motor de fórmulas pt-BR (funções localizadas + avaliador aritmético `=D{row}*E{row}`), separador `;`/`,`, mapeamento de erros estilo Excel, recálculo derivado display-only. Bug #NAME? em fórmulas aritméticas resolvido via sessão de debug.
+- **Export, migração de UX & hardening** (Phase 15): export CSV/XLSX com fórmulas calculadas + sanitização SEC-04 (CR-01), Sidebar montada + ToolNav removido da raiz, fixture fallback de `buildTableSpec`. UAT 6/6.
+
+**Decisões-chave:** engine `@formulajs/formulajs` (HyperFormula GPL bloqueado); partição `userId+toolKind` + kind `"unified_table"` (sem migração Prisma); `TableSpecPayload` em `ConversationExchange.assistantPayload`, grid efêmero; abas por-tool preservadas como deep links.
+
+**Archives:**
+- `.planning/milestones/v2.0-ROADMAP.md` — phase details
+- `.planning/milestones/v2.0-REQUIREMENTS.md` — requisitos UNI/TBL/CLR/etc.
+- `.planning/milestones/v2.0-MILESTONE-AUDIT.md` — auditoria
+
+> Nota: v3.0 (pivô Planilha Viva) inverte parte deste escopo — o chat unificado e a tabela viva permanecem como núcleo, mas o roteamento multi-tool e os geradores de texto avulsos são removidos. Ver PRD-MILESTONE-PLANILHA-VIVA.
+
+---
+
 ## v1.2 Anexos Universais (Shipped: 2026-06-05)
 
 **Phases:** 9–11 | **Plans:** 14 | **Tasks:** 10

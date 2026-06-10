@@ -1,17 +1,16 @@
 ---
 gsd_state_version: 1.0
-milestone: v2.0
-milestone_name: Chat Unificado & Tabela Viva
-status: milestone_complete
-last_updated: 2026-06-10T13:10:53.766Z
-last_activity: 2026-06-10 -- Phase 15 execution started
+milestone: v3.0
+milestone_name: Planilha Viva + Chat de IA
+status: planning
+last_updated: "2026-06-10T22:01:25.125Z"
+last_activity: 2026-06-10
 progress:
-  total_phases: 4
-  completed_phases: 3
-  total_plans: 17
-  completed_plans: 17
-  percent: 75
-stopped_at: Milestone complete (Phase 15 was final phase)
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
@@ -25,12 +24,10 @@ See: .planning/PROJECT.md (updated 2026-06-08)
 
 ## Current Position
 
-Phase: 15
-Plan: Not started
-Status: Milestone complete
-Last activity: 2026-06-10
-
-Progress: [██████████] 100%
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-06-10 — Milestone v3.0 started
 
 ## Performance Metrics
 
