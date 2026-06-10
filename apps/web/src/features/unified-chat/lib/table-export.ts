@@ -20,15 +20,28 @@ const NEEDS_QUOTING = /[",;\r\n]/;
 // ─── Funções puras (module-scope, testáveis sem React) ─────────────────────────
 
 /**
+ * Caracteres "neutros" que alguns importadores (Excel/Sheets) descartam no
+ * início de uma célula ANTES de decidir se o conteúdo é fórmula: espaços em
+ * branco, aspas simples/duplas e crase. Ver CR-01 (15-REVIEW).
+ */
+const LEADING_NEUTRALIZERS = /^[\s'"`]+/;
+
+/**
  * Sanitiza uma célula para export (CSV/XLSX), prefixando com `'` (aspa simples)
  * toda célula cujo primeiro caractere seja potencialmente perigoso (= + - @ TAB CR LF).
+ *
+ * CR-01 hardening (SEC-04): além do primeiro caractere bruto, o gatilho é
+ * avaliado também sobre o conteúdo com neutralizadores iniciais removidos
+ * (espaços/aspas/crase). Isso fecha o bypass em que `"=cmd"` ou ` =1+1`
+ * voltariam a iniciar com `=` após o importador descartar o lead.
  *
  * Mitiga T-15-01 (CSV/Excel formula injection — OWASP).
  * Coage `value` para string via `String(value ?? "")`; null/undefined viram "".
  */
 export function sanitizeCellForExport(value: string | number): string {
   const s = String(value ?? "");
-  return DANGEROUS_LEAD.test(s) ? `'${s}` : s;
+  const normalized = s.replace(LEADING_NEUTRALIZERS, "");
+  return DANGEROUS_LEAD.test(s) || DANGEROUS_LEAD.test(normalized) ? `'${s}` : s;
 }
 
 /**

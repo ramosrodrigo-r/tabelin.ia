@@ -45,6 +45,26 @@ describe("sanitizeCellForExport — SEC-04 prefixo de injeção de fórmula", ()
     expect(sanitizeCellForExport(null as unknown as string)).toBe("");
     expect(sanitizeCellForExport(undefined as unknown as string)).toBe("");
   });
+
+  // CR-01 (15-REVIEW): importadores podem descartar aspas/espaços iniciais
+  // antes de avaliar a fórmula — o gatilho precisa olhar o conteúdo normalizado.
+  it.each([
+    ['"=cmd"', `'"=cmd"`],
+    [" =1+1", "' =1+1"],
+    ["\t=1+1", "'\t=1+1"],
+    ["'=1+1", "''=1+1"],
+    ["`=1+1", "'`=1+1"],
+  ])(
+    "CR-01: prefixa célula com gatilho após neutralizador inicial (%j)",
+    (input, expected) => {
+      expect(sanitizeCellForExport(input)).toBe(expected);
+    },
+  );
+
+  it("CR-01: não prefixa célula com aspa inicial mas sem gatilho", () => {
+    expect(sanitizeCellForExport('"texto"')).toBe('"texto"');
+    expect(sanitizeCellForExport(" Categoria")).toBe(" Categoria");
+  });
 });
 
 describe("buildCsv — EXP-01", () => {
