@@ -25,10 +25,11 @@ resolution: "Corrigido em `fix(15): remove ToolNav duplicada dos 7 painéis...` 
 
 ### 3. Gerar uma tabela no chat unificado (pré-requisito do export)
 expected: Pedir uma tabela no chat gera um TableGridPanel (grid) com toolbar contendo "Adicionar linha", "Adicionar coluna", "Exportar CSV", "Exportar XLSX".
-result: issue
+result: resolved
 reported: "Pedir 'tabela' detecta intent tabela e abre clarificação, mas ao responder a pergunta ('10, texto') o sistema re-classifica a RESPOSTA como novo prompt e devolve 'Fórmula · detectado' (ou texto/template) — nunca renderiza o grid. Botão 'Gerar mesmo assim' é clicável mas não faz nada."
 severity: blocker
 attribution: upstream — Phase 12 (intent classifier) + Phase 13 (clarification loop); NÃO Phase 15
+resolution: "Corrigido via debug session table-clarification-misroute → commit `fix(13): honrar clarificação unified_table aberta no roteamento...`. Curto-circuito server-side (hasOpenTableClarification) força unified_table quando há clarificação aberta no histórico ou overrideGenerate/specOverride presentes. +4 testes de regressão; suíte 361 verde. PENDENTE re-verificação manual no browser (re-rodar Tests 3–6)."
 
 ### 4. Exportar CSV (EXP-01)
 expected: Clicar "Exportar CSV" baixa `<titulo>.csv`; abrir no Excel/Sheets mostra acentos corretos (BOM UTF-8), separador `;`, e os VALORES calculados (não fórmulas template `{row}`).
@@ -77,8 +78,8 @@ blocked: 3
     - "Remover `bottomNav={<ToolNav />}` dos 5 input-panels (sql/regex/scripts/template/formula) e o `<ToolNav />` standalone de ocr-tool e file-analysis-tool; limpar os imports órfãos de ToolNav; confirmar `grep -rc ToolNav src/` == 0 fora de tool-nav.tsx; opcionalmente remover o componente tool-nav.tsx se ficar sem uso"
 
 - truth: "Pedir uma tabela no chat unificado renderiza um TableGridPanel (grid editável) com os botões de export"
-  status: failed
-  reason: "User reported: ao responder a pergunta de clarificação de tabela, a resposta é re-classificada como novo prompt (route.ts:609 roteia por `classification` da resposta) e cai em 'Fórmula'/'Template' — o grid nunca renderiza. 'Gerar mesmo assim' (handleSkipClarification → overrideGenerate) não dispara nada."
+  status: resolved
+  reason: "User reported: ao responder a pergunta de clarificação de tabela, a resposta é re-classificada como novo prompt (route.ts:609 roteia por `classification` da resposta) e cai em 'Fórmula'/'Template' — o grid nunca renderiza. 'Gerar mesmo assim' (handleSkipClarification → overrideGenerate) não dispara nada. RESOLVIDO: debug session table-clarification-misroute, commit fix(13)."
   severity: blocker
   test: 3
   attribution: "UPSTREAM — Phase 12 (intent classifier / unified route) + Phase 13 (clarification loop). NÃO é regressão da Phase 15 (15-03 só removeu ToolNav de unified-chat-tool.tsx; clarificação vem do commit e5cbbd1/Phase 13-04)."
