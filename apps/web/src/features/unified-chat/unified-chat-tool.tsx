@@ -279,17 +279,41 @@ export function UnifiedChatTool({
   function handleSkipClarification() {
     const last = lastSubmitInputRef.current;
     if (!last) return;
-    void stream.submit({ ...last, overrideGenerate: true });
+    const contextSnapshot: UnifiedContext = {
+      platform: last.platform,
+      formulaLanguage: last.formulaLanguage,
+      separator: last.separator,
+      sqlDialect: last.sqlDialect,
+      scriptType: last.scriptType,
+    };
+    setSubmittedText(last.prompt);
+    setSubmittedContext(contextSnapshot);
+    setSubmittedCorrected(false);
+    const submitInput = { ...last, overrideGenerate: true };
+    lastSubmitInputRef.current = submitInput;
+    void stream.submit(submitInput);
   }
 
   function handleConfirmSpec(spec: TableSpecPayload) {
     const last = lastSubmitInputRef.current;
     if (!last) return;
-    void stream.submit({
+    const contextSnapshot: UnifiedContext = {
+      platform: last.platform,
+      formulaLanguage: last.formulaLanguage,
+      separator: last.separator,
+      sqlDialect: last.sqlDialect,
+      scriptType: last.scriptType,
+    };
+    setSubmittedText(last.prompt);
+    setSubmittedContext(contextSnapshot);
+    setSubmittedCorrected(false);
+    const submitInput = {
       ...last,
       overrideGenerate: true,
       specOverride: JSON.stringify(spec),
-    });
+    };
+    lastSubmitInputRef.current = submitInput;
+    void stream.submit(submitInput);
   }
 
   function handleOverride(exchange: UnifiedExchange, overrideIntent: OverrideIntent) {
