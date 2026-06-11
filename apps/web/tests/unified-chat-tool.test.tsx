@@ -536,6 +536,8 @@ describe("UnifiedChatTool", () => {
       await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
       const secondBody = parseJsonRequestBody(fetchMock, 1);
       expect(secondBody.overrideGenerate).toBe("true");
+
+      await waitFor(() => expect(screen.getByText("=SOMA(A:A)")).toBeInTheDocument());
     });
 
     // CLAR-04: ConfirmationCard no DOM; click "Confirmar e Gerar" dispara request com overrideGenerate + specOverride
@@ -565,6 +567,8 @@ describe("UnifiedChatTool", () => {
       const parsedSpec = JSON.parse(secondBody.specOverride as string) as { title: string; columns: { name: string }[] };
       expect(parsedSpec.title).toBe("Tabela de Vendas");
       expect(parsedSpec.columns).toHaveLength(2);
+
+      await waitFor(() => expect(screen.getByText("=SOMA(A:A)")).toBeInTheDocument());
     });
 
     // Cenário de resposta/onAnswer: o request NÃO inclui overrideGenerate="true"
