@@ -43,9 +43,6 @@ export function useUnifiedChatStream() {
   const [metadata, setMetadata] = useState<unknown | null>(null);
   const [warnings, setWarnings] = useState<string[]>([]);
   const [error, setError] = useState("");
-  const [quotaBlocked, setQuotaBlocked] = useState(false);
-  const [proBlocked, setProBlocked] = useState(false);
-  const [lastFreeUse, setLastFreeUse] = useState(false);
   const [needsFile, setNeedsFile] = useState<FileDependentIntent | null>(null);
   const [attachmentStatus, setAttachmentStatus] = useState<"uploading" | "extracting" | null>(null);
   const [attachmentMeta, setAttachmentMeta] = useState<UnifiedAttachmentMeta | null>(null);
@@ -59,9 +56,6 @@ export function useUnifiedChatStream() {
     setMetadata(null);
     setWarnings([]);
     setError("");
-    setQuotaBlocked(false);
-    setProBlocked(false);
-    setLastFreeUse(false);
     setNeedsFile(null);
     setAttachmentStatus(null);
     setAttachmentMeta(null);
@@ -76,9 +70,6 @@ export function useUnifiedChatStream() {
     setMetadata(null);
     setWarnings([]);
     setError("");
-    setQuotaBlocked(false);
-    setProBlocked(false);
-    setLastFreeUse(false);
     setNeedsFile(null);
     setAttachmentStatus(null);
     setAttachmentMeta(null);
@@ -120,33 +111,6 @@ export function useUnifiedChatStream() {
     const response = await fetch("/api/chat/unified", { method: "POST", headers, body });
 
     if (!response.ok) {
-      if (response.status === 403) {
-        const errorData = await response.json().catch(() => ({}));
-        if (errorData.code === "pro_required" && errorData.feature === "attachment") {
-          setError("Recurso exclusivo Pro. Assine o plano Pro para enviar documentos.");
-          setAttachmentStatus(null);
-          setStatus("error");
-          return;
-        }
-        if (errorData.code === "pro_required") {
-          setStatus("idle");
-          setProBlocked(true);
-          setAttachmentStatus(null);
-          setError("");
-          return;
-        }
-      }
-
-      if (response.status === 429) {
-        const errorData = await response.json().catch(() => ({}));
-        if (errorData.code === "quota_exceeded") {
-          setStatus("idle");
-          setQuotaBlocked(true);
-          setError("");
-          return;
-        }
-      }
-
       if (response.status === 413 || response.status === 422) {
         const errorData = await response.json().catch(() => ({}));
         setError(
@@ -220,10 +184,6 @@ export function useUnifiedChatStream() {
         setWarnings((current) => [...current, event.warning]);
       }
 
-      if (event.type === "quota_warning") {
-        setLastFreeUse(event.lastFreeUse);
-      }
-
       if (event.type === "delta") {
         setAttachmentStatus(null);
         setDraft((current) => `${current}${event.text}`);
@@ -277,9 +237,6 @@ export function useUnifiedChatStream() {
     metadata,
     warnings,
     error,
-    quotaBlocked,
-    proBlocked,
-    lastFreeUse,
     needsFile,
     attachmentStatus,
     attachmentMeta,

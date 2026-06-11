@@ -1,23 +1,19 @@
 "use client";
 
-import { LogOut, Mail, MessageCircle, Sparkles } from "lucide-react";
+import { LogOut } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
 import { useInvokeNewConversation } from "@/components/app/workspace-conversation-context";
 import type { SessionUser } from "@/server/auth/session";
 import type { SupportLinks } from "@/server/support/support-config";
-import type { UserEntitlement } from "@tabelin/shared";
 
 export function Topbar({
   user,
-  entitlement,
-  supportLinks,
   toolKind: toolKindProp,
   onNewConversation: onNewConversationProp,
 }: {
   user: SessionUser;
-  entitlement: UserEntitlement;
   supportLinks: SupportLinks;
   toolKind?: string;
   onNewConversation?: () => void;
@@ -27,7 +23,6 @@ export function Topbar({
   const [showNewConvPopover, setShowNewConvPopover] = useState(false);
   const newConvTriggerRef = useRef<HTMLButtonElement>(null);
   const newConvContainerRef = useRef<HTMLDivElement>(null);
-  const isPro = entitlement.plan === "pro" && entitlement.status === "active";
 
   // toolKind fixo "unified" — única tela após o corte de navegação multi-ferramenta
   const toolKind = toolKindProp ?? "unified";
@@ -85,12 +80,6 @@ export function Topbar({
     <header className="topbar">
       <strong className="topbar-brand">Tabelin.IA</strong>
       <div className="topbar-actions">
-        {isPro ? (
-          <span className="pro-badge" title="Plano Pro ativo">
-            <Sparkles aria-hidden size={14} />
-            Pro
-          </span>
-        ) : null}
         {toolKind ? (
           <div className="account-menu-container" ref={newConvContainerRef}>
             <button
@@ -146,30 +135,6 @@ export function Topbar({
           </button>
           {showAccountMenu ? (
             <div className="account-menu" role="menu">
-              {isPro ? (
-                <>
-                  <div className="menu-section">
-                    <span className="menu-label">Suporte Pro</span>
-                    <a href={supportLinks.emailHref} className="menu-item" role="menuitem">
-                      <Mail aria-hidden size={16} />
-                      Email prioritario
-                    </a>
-                    {supportLinks.whatsAppHref ? (
-                      <a
-                        href={supportLinks.whatsAppHref}
-                        className="menu-item"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        role="menuitem"
-                      >
-                        <MessageCircle aria-hidden size={16} />
-                        WhatsApp
-                      </a>
-                    ) : null}
-                  </div>
-                  <div className="menu-divider" />
-                </>
-              ) : null}
               <button className="menu-item" type="button" onClick={signOut} role="menuitem">
                 <LogOut aria-hidden size={16} />
                 Sair
