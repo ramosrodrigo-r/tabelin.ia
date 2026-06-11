@@ -8,13 +8,11 @@ import type { SessionUser } from "@/server/auth/session";
 import type { UserEntitlement } from "@tabelin/shared";
 
 const navigationMock = vi.hoisted(() => ({
-  pathname: "/workspace",
   push: vi.fn(),
 }));
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: navigationMock.push }),
-  usePathname: () => navigationMock.pathname,
 }));
 
 const user: SessionUser = {
@@ -29,7 +27,6 @@ const proEntitlement: UserEntitlement = { plan: "pro", status: "active", cycle: 
 describe("Topbar", () => {
   beforeEach(() => {
     vi.restoreAllMocks();
-    navigationMock.pathname = "/workspace";
   });
 
   it("renders validated Pro support links for Pro users", async () => {
@@ -96,16 +93,9 @@ describe("Topbar", () => {
     expect(fetchMock).toHaveBeenCalledWith("/api/conversations/unified", { method: "DELETE" });
   });
 
-  it("keeps SQL conversation deletion on the SQL deep link", async () => {
-    navigationMock.pathname = "/workspace/sql";
-    const browserUser = userEvent.setup();
-    const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(null, { status: 200 }));
-
+  it("renders a link to /privacidade", () => {
     render(<Topbar user={user} entitlement={freeEntitlement} supportLinks={getSupportLinks({})} />);
 
-    await browserUser.click(screen.getByRole("button", { name: "Nova conversa" }));
-    await browserUser.click(screen.getByRole("button", { name: "Apagar histórico" }));
-
-    expect(fetchMock).toHaveBeenCalledWith("/api/conversations/sql", { method: "DELETE" });
+    expect(screen.getByRole("link", { name: "Privacidade" })).toHaveAttribute("href", "/privacidade");
   });
 });
