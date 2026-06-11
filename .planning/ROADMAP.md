@@ -218,7 +218,16 @@ Full details: ver seções abaixo (Phase 12-15) ou `.planning/milestones/v2.0-RO
   4. Topbar com sessão do usuário e link para página de privacidade continuam acessíveis a partir da tela única
   5. `pnpm -r typecheck` e `pnpm -r test` permanecem verdes após a consolidação do shell
 
-**Plans**: TBD
+**Plans**: 2 plans
+
+**Wave 1** *(sem dependencias)*
+
+- [ ] 16-01-PLAN.md — Redirects 308 das rotas antigas de tool, Topbar enxuta (link /privacidade) e SAMPLE_SPEC
+
+**Wave 2** *(bloqueada pelo 16-01 — consome SAMPLE_SPEC)*
+
+- [ ] 16-02-PLAN.md — WorkspaceSplit + reescrita do WorkspaceLayout (split planilha/chat) + CSS + remoção Sidebar/ToolNav
+
 **UI hint**: yes
 
 ### Phase 17: Desligar Monetização & Cota
