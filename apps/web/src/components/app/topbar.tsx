@@ -1,28 +1,13 @@
 "use client";
 
 import { LogOut, Mail, MessageCircle, Sparkles } from "lucide-react";
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
 import { useInvokeNewConversation } from "@/components/app/workspace-conversation-context";
 import type { SessionUser } from "@/server/auth/session";
 import type { SupportLinks } from "@/server/support/support-config";
 import type { UserEntitlement } from "@tabelin/shared";
-
-/** Deriva o toolKind canônico a partir da URL do workspace atual. */
-function useWorkspaceToolKind(): string | undefined {
-  const pathname = usePathname();
-  if (!pathname) return undefined;
-  // Rotas: /workspace (unified), /workspace/sql, /workspace/regex, /workspace/scripts, /workspace/templates
-  if (/\/workspace\/sql(\/|$)/.test(pathname)) return "sql";
-  if (/\/workspace\/regex(\/|$)/.test(pathname)) return "regex";
-  if (/\/workspace\/scripts(\/|$)/.test(pathname)) return "script";
-  if (/\/workspace\/templates(\/|$)/.test(pathname)) return "template";
-  // Chat unificado é a raiz exata /workspace — NÃO usar prefixo, senão captura
-  // /workspace/file-analysis e /workspace/ocr (efêmeros, sem histórico — D-07).
-  if (/\/workspace\/?$/.test(pathname)) return "unified";
-  return undefined;
-}
 
 export function Topbar({
   user,
@@ -44,9 +29,8 @@ export function Topbar({
   const newConvContainerRef = useRef<HTMLDivElement>(null);
   const isPro = entitlement.plan === "pro" && entitlement.status === "active";
 
-  // Deriva toolKind da rota atual — usa prop legada se fornecida (compatibilidade futura)
-  const toolKindFromPath = useWorkspaceToolKind();
-  const toolKind = toolKindProp ?? toolKindFromPath;
+  // toolKind fixo "unified" — única tela após o corte de navegação multi-ferramenta
+  const toolKind = toolKindProp ?? "unified";
   const deleteCopy =
     toolKind === "unified"
       ? "Apagar todo o histórico do chat unificado? Esta ação não pode ser desfeita."
@@ -147,6 +131,9 @@ export function Topbar({
             ) : null}
           </div>
         ) : null}
+        <a href="/privacidade" className="ghost-button">
+          Privacidade
+        </a>
         <div className="account-menu-container">
           <button
             className="ghost-button"
