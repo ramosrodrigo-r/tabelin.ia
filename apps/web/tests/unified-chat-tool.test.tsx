@@ -7,19 +7,11 @@ import { IntentPill } from "@/features/unified-chat/components/intent-pill";
 import { RenderDispatcher } from "@/features/unified-chat/components/render-dispatcher";
 import { SessionContextSelector } from "@/features/unified-chat/components/session-context-selector";
 import { UnifiedChatTool } from "@/features/unified-chat/unified-chat-tool";
-import type { UnifiedCompletePayload, UserEntitlement } from "@tabelin/shared";
+import type { UnifiedCompletePayload } from "@tabelin/shared";
 
 vi.mock("react-shiki", () => ({
   useShikiHighlighter: () => null,
 }));
-
-const freeEntitlement: UserEntitlement = { plan: "free", status: "active" };
-const proEntitlement: UserEntitlement = {
-  plan: "pro",
-  status: "active",
-  cycle: "monthly",
-  currentPeriodEnd: new Date("2027-01-01"),
-};
 
 const formulaPayload = {
   kind: "formula",
@@ -264,7 +256,7 @@ describe("UnifiedChatTool", () => {
   });
 
   it("renders the empty state and selector defaults", () => {
-    render(<UnifiedChatTool entitlement={freeEntitlement} />);
+    render(<UnifiedChatTool />);
 
     expect(screen.getByText("O que você quer resolver hoje?")).toBeInTheDocument();
     expect(screen.getByLabelText("Separador")).toHaveValue(";");
@@ -285,7 +277,7 @@ describe("UnifiedChatTool", () => {
       )
     );
 
-    render(<UnifiedChatTool entitlement={freeEntitlement} />);
+    render(<UnifiedChatTool />);
 
     await user.type(screen.getByLabelText("Pedido"), "Some a coluna A");
     await user.click(screen.getByRole("button", { name: "Enviar" }));
@@ -311,7 +303,7 @@ describe("UnifiedChatTool", () => {
     const user = userEvent.setup();
     const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(formulaStream());
 
-    render(<UnifiedChatTool entitlement={freeEntitlement} />);
+    render(<UnifiedChatTool />);
 
     await user.type(screen.getByLabelText("Pedido"), "Some a coluna A");
     await user.click(screen.getByRole("button", { name: "Enviar" }));
@@ -333,7 +325,7 @@ describe("UnifiedChatTool", () => {
     const user = userEvent.setup();
     vi.spyOn(globalThis, "fetch").mockResolvedValue(rawStreamResponse(["not-json\n"]));
 
-    render(<UnifiedChatTool entitlement={freeEntitlement} />);
+    render(<UnifiedChatTool />);
 
     await user.type(screen.getByLabelText("Pedido"), "Some a coluna A");
     await user.click(screen.getByRole("button", { name: "Enviar" }));
@@ -351,7 +343,7 @@ describe("UnifiedChatTool", () => {
       ])
     );
 
-    render(<UnifiedChatTool entitlement={proEntitlement} />);
+    render(<UnifiedChatTool />);
 
     const input = document.querySelector('input[type="file"]') as HTMLInputElement;
     await user.upload(input, new File(["a,b\n1,2"], "dados.csv", { type: "text/csv" }));
@@ -371,7 +363,7 @@ describe("UnifiedChatTool", () => {
       .mockResolvedValueOnce(formulaStream())
       .mockResolvedValueOnce(sqlStream());
 
-    render(<UnifiedChatTool entitlement={freeEntitlement} />);
+    render(<UnifiedChatTool />);
 
     await user.type(screen.getByLabelText("Pedido"), "Tenho PROCV, mas quero SQL");
     await user.click(screen.getByRole("button", { name: "Enviar" }));
@@ -403,7 +395,7 @@ describe("UnifiedChatTool", () => {
     render(
       <WorkspaceConversationProvider>
         <ClearButton />
-        <UnifiedChatTool entitlement={freeEntitlement} />
+        <UnifiedChatTool />
       </WorkspaceConversationProvider>
     );
 
@@ -423,7 +415,7 @@ describe("UnifiedChatTool", () => {
       .mockResolvedValueOnce(formulaStream())
       .mockResolvedValueOnce(formulaStream());
 
-    render(<UnifiedChatTool entitlement={freeEntitlement} />);
+    render(<UnifiedChatTool />);
 
     await user.selectOptions(screen.getByLabelText("Dialeto SQL"), "mysql");
     await user.type(screen.getByLabelText("Pedido"), "Primeiro pedido");
@@ -438,15 +430,15 @@ describe("UnifiedChatTool", () => {
     expect(parseJsonRequestBody(fetchMock, 1).sqlDialect).toBe("mysql");
   });
 
-  it("free user drag-and-drop is ignored", () => {
-    render(<UnifiedChatTool entitlement={freeEntitlement} />);
+  it("drag-and-drop attaches a valid file", () => {
+    render(<UnifiedChatTool />);
 
     const workspace = screen.getByLabelText("Chat unificado");
     fireEvent.drop(workspace, {
       dataTransfer: { files: [new File(["a,b\n1,2"], "dados.csv", { type: "text/csv" })] },
     });
 
-    expect(screen.queryByRole("status", { name: /Arquivo anexado/ })).not.toBeInTheDocument();
+    expect(screen.getByLabelText("Arquivo anexado: dados.csv, 0 KB")).toBeInTheDocument();
   });
 
   it("does not use dangerouslySetInnerHTML in unified-chat source", () => {
@@ -499,7 +491,7 @@ describe("UnifiedChatTool", () => {
       const user = userEvent.setup();
       vi.spyOn(globalThis, "fetch").mockResolvedValue(clarStream(clarPayload));
 
-      render(<UnifiedChatTool entitlement={freeEntitlement} />);
+      render(<UnifiedChatTool />);
 
       await user.type(screen.getByLabelText("Pedido"), "cria uma tabela de vendas");
       await user.click(screen.getByRole("button", { name: "Enviar" }));
@@ -515,7 +507,7 @@ describe("UnifiedChatTool", () => {
       const user = userEvent.setup();
       vi.spyOn(globalThis, "fetch").mockResolvedValue(clarStream(clarPayloadTurn1));
 
-      render(<UnifiedChatTool entitlement={freeEntitlement} />);
+      render(<UnifiedChatTool />);
 
       await user.type(screen.getByLabelText("Pedido"), "cria uma tabela de vendas");
       await user.click(screen.getByRole("button", { name: "Enviar" }));
@@ -530,7 +522,7 @@ describe("UnifiedChatTool", () => {
         .mockResolvedValueOnce(clarStream(clarPayload))
         .mockResolvedValueOnce(formulaStream());
 
-      render(<UnifiedChatTool entitlement={freeEntitlement} />);
+      render(<UnifiedChatTool />);
 
       await user.type(screen.getByLabelText("Pedido"), "cria uma tabela de vendas");
       await user.click(screen.getByRole("button", { name: "Enviar" }));
@@ -553,7 +545,7 @@ describe("UnifiedChatTool", () => {
         .mockResolvedValueOnce(clarStream(tableSpecPayload))
         .mockResolvedValueOnce(formulaStream());
 
-      render(<UnifiedChatTool entitlement={freeEntitlement} />);
+      render(<UnifiedChatTool />);
 
       await user.type(screen.getByLabelText("Pedido"), "cria uma tabela de vendas");
       await user.click(screen.getByRole("button", { name: "Enviar" }));
@@ -582,7 +574,7 @@ describe("UnifiedChatTool", () => {
         .mockResolvedValueOnce(clarStream(clarPayload))
         .mockResolvedValueOnce(clarStream(clarPayloadTurn1));
 
-      render(<UnifiedChatTool entitlement={freeEntitlement} />);
+      render(<UnifiedChatTool />);
 
       await user.type(screen.getByLabelText("Pedido"), "cria uma tabela de vendas");
       await user.click(screen.getByRole("button", { name: "Enviar" }));

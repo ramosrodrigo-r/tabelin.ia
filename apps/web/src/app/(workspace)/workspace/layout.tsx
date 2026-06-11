@@ -5,7 +5,7 @@ import { WorkspaceShell } from "@/components/app/workspace-shell";
 import { WorkspaceSplit } from "@/components/app/workspace-split";
 import { TableGridPanel } from "@/features/unified-chat/components/table-grid-panel";
 import { SAMPLE_SPEC } from "@/features/unified-chat/lib/sample-spec";
-import { getCachedEntitlement, getCachedUser } from "@/server/request-cache";
+import { getCachedUser } from "@/server/request-cache";
 import { getSupportLinks } from "@/server/support/support-config";
 
 export default async function WorkspaceLayout({
@@ -19,13 +19,12 @@ export default async function WorkspaceLayout({
     redirect("/sign-in");
   }
 
-  const entitlement = await getCachedEntitlement(user.id);
   const supportLinks = getSupportLinks();
 
   return (
     <WorkspaceShell>
       <div className="workspace-page">
-        <Topbar user={user} entitlement={entitlement} supportLinks={supportLinks} />
+        <Topbar user={user} supportLinks={supportLinks} />
         <div className="workspace-body">
           <WorkspaceSplit grid={<TableGridPanel spec={SAMPLE_SPEC} />} chat={children} />
         </div>
