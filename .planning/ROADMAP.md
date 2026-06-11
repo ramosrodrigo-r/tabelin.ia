@@ -243,7 +243,13 @@ Full details: ver seções abaixo (Phase 12-15) ou `.planning/milestones/v2.0-RO
   4. Busca por símbolos de cota/entitlement/usage-ledger (reserve/confirm/release, `entitlement`, `quota`, `mercadopago`) usados como gate na rota de chat retorna zero — exceto símbolos comprovadamente compartilhados com IN, documentados como exceção
   5. `pnpm -r typecheck` e `pnpm -r test` verdes após a remoção do gate (commit atômico isolado, permitindo bisseção)
 
-**Plans**: TBD
+**Plans**: 3 plans
+
+**Wave 1** *(sem dependências — paralelizáveis; sem overlap de arquivos; cada plano bisseccionável)*
+
+- [ ] 17-01-PLAN.md — Desacoplar o gate de cota/entitlement da rota de chat /api/chat/unified (mantém auth + streaming) + editar unified-route.test.ts
+- [ ] 17-02-PLAN.md — Remover UI de upsell (Topbar badge/Suporte Pro, banners quota/pro, hook de stream, layout/page sem entitlement, CSS) + editar testes de componente/e2e
+- [ ] 17-03-PLAN.md — Deletar provedor de pagamento (Mercado Pago client/checkout/webhook, rotas, página de retorno), podar entitlements (manter getUserEntitlement), remover dep+env MP, deletar testes de billing
 
 ### Phase 18: Remover Tools Avulsos, OCR, File Analysis & Reduzir Dispatcher
 
@@ -342,7 +348,7 @@ Full details: ver seções abaixo (Phase 12-15) ou `.planning/milestones/v2.0-RO
 | 14. Tabela Viva | v2.0 | 6/6 | Complete   | 2026-06-09 |
 | 15. Export, UX Migration & Hardening | v2.0 | 3/3 | Complete    | 2026-06-10 |
 | 16. Tela Única & Fim da Navegação Multi-Ferramenta | v3.0 | 2/2 | Complete    | 2026-06-11 |
-| 17. Desligar Monetização & Cota | v3.0 | 0/TBD | Not started | - |
+| 17. Desligar Monetização & Cota | v3.0 | 0/3 | Planned | - |
 | 18. Remover Tools Avulsos, OCR, File Analysis & Reduzir Dispatcher | v3.0 | 0/TBD | Not started | - |
 | 19. Ingestão Tri-Estado da Planilha | v3.0 | 0/TBD | Not started | - |
 | 20. Protocolo de Mutação Chat→Grade & Q&A | v3.0 | 0/TBD | Not started | - |
