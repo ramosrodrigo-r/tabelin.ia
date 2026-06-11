@@ -1,9 +1,9 @@
 ---
 phase: 16
 slug: tela-nica-fim-da-navega-o-multi-ferramenta
-status: draft
-nyquist_compliant: false
-wave_0_complete: false
+status: ready
+nyquist_compliant: true
+wave_0_complete: true
 created: 2026-06-11
 ---
 
@@ -38,12 +38,14 @@ created: 2026-06-11
 
 | Task ID | Plan | Wave | Requirement | Threat Ref | Secure Behavior | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|------------|-----------------|-----------|-------------------|-------------|--------|
-| 16-XX | TBD | TBD | SHELL-01 | — | Authenticated user lands on `/workspace` rendering grid (main) + chat (side) without navigating | integration/manual | `pnpm exec tsc --noEmit` + manual visit | ✅ existing | ⬜ pending |
-| 16-XX | TBD | TBD | SHELL-02 | — | Old tool page routes 308-redirect to `/workspace`; no Sidebar/ToolNav reachable | grep + manual | `grep -r ToolNav apps/web/src` returns no UI usage | ✅ existing | ⬜ pending |
-| 16-XX | TBD | TBD | SHELL-03 | — | Topbar exposes session + logout + `/privacidade` link from single screen | source assertion | `grep -r '/privacidade' apps/web/src/components/app/topbar.tsx` | ✅ existing | ⬜ pending |
-| 16-XX | TBD | TBD | CLEAN-05 | — | Active multi-tool nav (Sidebar 7 navItems) removed from shell | source assertion | Sidebar not imported by layout; typecheck green | ✅ existing | ⬜ pending |
+| 16-01 Task 1 | 16-01 | 1 | SHELL-02 | — | Old tool page routes 308-redirect to `/workspace` via `next.config.ts redirects()` (page files untouched) | source + typecheck | `cd apps/web && pnpm exec tsc --noEmit` | ✅ existing | ⬜ pending |
+| 16-01 Task 2 | 16-01 | 1 | SHELL-03 | — | Lean Topbar keeps session + "Sair" (logout) + adds `/privacidade` link | source + unit | `cd apps/web && pnpm exec tsc --noEmit && pnpm exec vitest run -t topbar` | ✅ existing | ⬜ pending |
+| 16-01 Task 3 | 16-01 | 1 | SHELL-01 | — | `SAMPLE_SPEC` (TableSpecPayload "Controle de Gastos") exported for TableGridPanel `spec` | source + typecheck | `cd apps/web && pnpm exec tsc --noEmit` | ✅ existing | ⬜ pending |
+| 16-02 Task 1 | 16-02 | 2 | SHELL-01 | — | `WorkspaceSplit` client component: grid+chat with responsive toggle (no unmount) | source + typecheck | `cd apps/web && pnpm exec tsc --noEmit` | ✅ existing | ⬜ pending |
+| 16-02 Task 2 | 16-02 | 2 | SHELL-01 | — | `WorkspaceLayout` renders TableGridPanel (main) + UnifiedChatTool (side); Sidebar removed from layout | unit + typecheck | `cd apps/web && pnpm exec vitest run .../workspace/__tests__/layout.test.tsx && pnpm exec tsc --noEmit` | ✅ existing | ⬜ pending |
+| 16-02 Task 3 | 16-02 | 2 | SHELL-02, CLEAN-05 | — | `sidebar.tsx`/`tool-nav.tsx` deleted, sidebar CSS removed; full suite green | full suite | `cd apps/web && pnpm exec tsc --noEmit && cd <root> && pnpm -r test` | ✅ existing | ⬜ pending |
 
-*Per-task rows finalized by planner; Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
+*Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky. Per-task verify commands carried in the PLAN.md `<automated>` blocks (source of truth during execution).*
 
 ---
 
@@ -68,11 +70,11 @@ created: 2026-06-11
 
 ## Validation Sign-Off
 
-- [ ] All tasks have `<automated>` verify or Wave 0 dependencies
-- [ ] Sampling continuity: no 3 consecutive tasks without automated verify
-- [ ] Wave 0 covers all MISSING references
-- [ ] No watch-mode flags
-- [ ] Feedback latency < 120s
-- [ ] `nyquist_compliant: true` set in frontmatter
+- [x] All tasks have `<automated>` verify or Wave 0 dependencies
+- [x] Sampling continuity: no 3 consecutive tasks without automated verify
+- [x] Wave 0 covers all MISSING references (none — existing vitest/tsc infra)
+- [x] No watch-mode flags
+- [x] Feedback latency < 120s (per-task tsc fast; full `pnpm -r test` reserved for end-of-plan wave check — 16-02 Task 3)
+- [x] `nyquist_compliant: true` set in frontmatter
 
-**Approval:** pending
+**Approval:** approved 2026-06-11
