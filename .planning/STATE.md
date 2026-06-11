@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Planilha Viva + Chat de IA
 status: executing
-last_updated: "2026-06-11T20:20:39.738Z"
-last_activity: 2026-06-11 -- Phase 17 planning complete
+last_updated: "2026-06-11T20:22:11.014Z"
+last_activity: 2026-06-11 -- Phase 17 execution started
 progress:
   total_phases: 11
   completed_phases: 1
@@ -20,14 +20,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-06-08)
 
 **Core value:** Usuários brasileiros trabalham numa planilha viva sempre na tela e pedem em português que a IA manipule os dados na própria grade — ou responda dúvidas sobre eles — sem escolher ferramentas nem navegar entre módulos.
-**Current focus:** Phase 17 — desligar monetização & cota
+**Current focus:** Phase 17 — desligar-monetiza-o-cota
 
 ## Current Position
 
-Phase: 17
-Plan: Not started
-Status: Ready to execute
-Last activity: 2026-06-11 -- Phase 17 planning complete
+Phase: 17 (desligar-monetiza-o-cota) — EXECUTING
+Plan: 1 of 3
+Status: Executing Phase 17
+Last activity: 2026-06-11 -- Phase 17 execution started
 
 ## Performance Metrics
 

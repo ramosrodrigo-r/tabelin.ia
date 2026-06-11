@@ -71,7 +71,7 @@ Full details: ver seções abaixo (Phase 12-15) ou `.planning/milestones/v2.0-RO
 **Fonte da verdade:** `PRD-MILESTONE-PLANILHA-VIVA.md`
 
 - [x] **Phase 16: Tela Única & Fim da Navegação Multi-Ferramenta** - Shell consolida planilha+chat numa rota única; sidebar/tool-nav e rotas órfãs de tool são removidas (completed 2026-06-11)
-- [ ] **Phase 17: Desligar Monetização & Cota** - Billing/Mercado Pago/Pro/cota saem por completo; rota de chat permanece funcional sem gate
+- [x] **Phase 17: Desligar Monetização & Cota** - Billing/Mercado Pago/Pro/cota saem por completo; rota de chat permanece funcional sem gate (completed 2026-06-11)
 - [ ] **Phase 18: Remover Tools Avulsos, OCR, File Analysis & Reduzir Dispatcher** - Geradores de texto, OCR, Análise de Arquivos e geração de tabela do zero saem; classificador de intent e render-dispatcher reduzidos a planilha + Q&A
 - [ ] **Phase 19: Ingestão Tri-Estado da Planilha** - Usuário abre a planilha viva com seed, em branco, ou via upload CSV/XLSX (substitui a grade)
 - [ ] **Phase 20: Protocolo de Mutação Chat→Grade & Q&A** - Chat aplica operações estruturadas à grade aberta com undo, responde dúvidas analíticas em texto, com streaming e fixture sem chave
@@ -247,9 +247,9 @@ Full details: ver seções abaixo (Phase 12-15) ou `.planning/milestones/v2.0-RO
 
 **Wave 1** *(sem dependências — paralelizáveis; sem overlap de arquivos; cada plano bisseccionável)*
 
-- [ ] 17-01-PLAN.md — Desacoplar o gate de cota/entitlement da rota de chat /api/chat/unified (mantém auth + streaming) + editar unified-route.test.ts
-- [ ] 17-02-PLAN.md — Remover UI de upsell (Topbar badge/Suporte Pro, banners quota/pro, hook de stream, layout/page sem entitlement, CSS) + editar testes de componente/e2e
-- [ ] 17-03-PLAN.md — Deletar provedor de pagamento (Mercado Pago client/checkout/webhook, rotas, página de retorno), podar entitlements (manter getUserEntitlement), remover dep+env MP, deletar testes de billing
+- [x] 17-01-PLAN.md — Desacoplar o gate de cota/entitlement da rota de chat /api/chat/unified (mantém auth + streaming) + editar unified-route.test.ts
+- [x] 17-02-PLAN.md — Remover UI de upsell (Topbar badge/Suporte Pro, banners quota/pro, hook de stream, layout/page sem entitlement, CSS) + editar testes de componente/e2e
+- [x] 17-03-PLAN.md — Deletar provedor de pagamento (Mercado Pago client/checkout/webhook, rotas, página de retorno), podar entitlements (manter getUserEntitlement), remover dep+env MP, deletar testes de billing
 
 ### Phase 18: Remover Tools Avulsos, OCR, File Analysis & Reduzir Dispatcher
 
@@ -348,7 +348,7 @@ Full details: ver seções abaixo (Phase 12-15) ou `.planning/milestones/v2.0-RO
 | 14. Tabela Viva | v2.0 | 6/6 | Complete   | 2026-06-09 |
 | 15. Export, UX Migration & Hardening | v2.0 | 3/3 | Complete    | 2026-06-10 |
 | 16. Tela Única & Fim da Navegação Multi-Ferramenta | v3.0 | 2/2 | Complete    | 2026-06-11 |
-| 17. Desligar Monetização & Cota | v3.0 | 0/3 | Planned | - |
+| 17. Desligar Monetização & Cota | v3.0 | 3/3 | Complete   | 2026-06-11 |
 | 18. Remover Tools Avulsos, OCR, File Analysis & Reduzir Dispatcher | v3.0 | 0/TBD | Not started | - |
 | 19. Ingestão Tri-Estado da Planilha | v3.0 | 0/TBD | Not started | - |
 | 20. Protocolo de Mutação Chat→Grade & Q&A | v3.0 | 0/TBD | Not started | - |
