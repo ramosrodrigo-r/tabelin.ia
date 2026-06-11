@@ -2,16 +2,15 @@
 gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Planilha Viva + Chat de IA
-status: ready_to_plan
-last_updated: 2026-06-11T14:22:33.985Z
-last_activity: 2026-06-11 -- Phase 16 execution started
+status: executing
+last_updated: "2026-06-11T20:20:39.738Z"
+last_activity: 2026-06-11 -- Phase 17 planning complete
 progress:
   total_phases: 11
-  completed_phases: 0
-  total_plans: 2
+  completed_phases: 1
+  total_plans: 5
   completed_plans: 2
-  percent: 0
-stopped_at: Phase 16 complete (2/2) — ready to discuss Phase 17
+  percent: 9
 ---
 
 # Project State
@@ -27,8 +26,8 @@ See: .planning/PROJECT.md (updated 2026-06-08)
 
 Phase: 17
 Plan: Not started
-Status: Ready to plan
-Last activity: 2026-06-11
+Status: Ready to execute
+Last activity: 2026-06-11 -- Phase 17 planning complete
 
 ## Performance Metrics
 
@@ -66,7 +65,7 @@ None yet.
 ### Blockers/Concerns
 
 - Phase 14: PT_BR_TO_EN mapping (~20 funções) deve ser validado empiricamente com `=PROCV()`, `=SOMASE()`, `=SE()` antes de conectar o grid ao gerador
-- Phase 12: Validar acurácia do classificador com 20 prompts reais em português antes de avançar
+- Phase 12 → reescrito para o pivô v3.0: o classificador de 9 vias (`intent-classifier.ts`) é demolido na Phase 18 (ramos sql/regex/script/template/file_analysis/ocr saem do switch do `route.ts` e do `render-dispatcher.tsx`), então a antiga matriz de confusão evapora — NÃO re-validar o classificador velho. O risco migra para um eixo binário NOVO criado na Phase 20: *operação na planilha* (SC#2, ops estruturadas na grade) vs *pergunta analítica/Q&A* (SC#4, só texto). Falha assimétrica: Q&A lido como mutação altera a grade indevidamente (undo salva, mas surpreende); mutação lida como Q&A faz a proposta de valor falhar silenciosamente. **Validação:** definir ~20 prompts PT reais ambíguos ("some a coluna Valor" = fórmula na grade ou total no chat?) como critério de aceite/UAT da Phase 20. **Checkpoint:** na transição 17→18, confirmar que esse eval binário foi plantado no plano da Phase 18 (rótulos de intent) e Phase 20 (UAT). Não bloqueia a Phase 17.
 
 ## Deferred Items
 
@@ -89,11 +88,12 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-06-11T13:19:59.931Z
-Stopped at: Phase 16 UI-SPEC approved
-Resume file: .planning/phases/16-tela-nica-fim-da-navega-o-multi-ferramenta/16-UI-SPEC.md
+Last session: 2026-06-11T14:22:33.985Z
+Stopped at: Phase 16 completa (2/2) e verificada — sessão resumida, indo para Phase 17
+Resume file: none
 
 ## Operator Next Steps
 
-- Run `/gsd-plan-phase 14` to plan Phase 14 (Tabela Viva — grid editável com fórmulas vivas, localização pt-BR, segurança XSS). No CONTEXT.md yet.
-- ⚠️ Antes de executar qualquer fase: há ~50 deleções pendentes de docs das Phases 09/10/11 na árvore git (não staged). Limpar/commitar antes de rodar execute-phase para não contaminar o worktree do executor.
+- Phase 17 (Desligar Monetização & Cota) ainda não tem diretório nem CONTEXT.md. Rodar `/gsd-plan-phase 17` para planejar direto (ou `/gsd-discuss-phase 17` para levantar contexto antes).
+- ⚠️ Checkpoint na transição 17→18: confirmar que o eval binário "mutação na grade vs Q&A" (~20 prompts PT reais) foi plantado no plano da Phase 18 (rótulos de intent corretos) e da Phase 20 (UAT/aceite). Ver concern reescrito da Phase 12 em Blockers/Concerns.
+- Árvore git limpa (só `AICHAT.md` untracked) — sem deleções pendentes contaminando o worktree.
