@@ -1,8 +1,10 @@
 import { redirect } from "next/navigation";
 
-import { Sidebar } from "@/components/app/sidebar";
 import { Topbar } from "@/components/app/topbar";
 import { WorkspaceShell } from "@/components/app/workspace-shell";
+import { WorkspaceSplit } from "@/components/app/workspace-split";
+import { TableGridPanel } from "@/features/unified-chat/components/table-grid-panel";
+import { SAMPLE_SPEC } from "@/features/unified-chat/lib/sample-spec";
 import { getCachedEntitlement, getCachedUser } from "@/server/request-cache";
 import { getSupportLinks } from "@/server/support/support-config";
 
@@ -25,10 +27,7 @@ export default async function WorkspaceLayout({
       <div className="workspace-page">
         <Topbar user={user} entitlement={entitlement} supportLinks={supportLinks} />
         <div className="workspace-body">
-          <Sidebar />
-          <main className="workspace-content">
-            <div className="workspace-center">{children}</div>
-          </main>
+          <WorkspaceSplit grid={<TableGridPanel spec={SAMPLE_SPEC} />} chat={children} />
         </div>
       </div>
     </WorkspaceShell>

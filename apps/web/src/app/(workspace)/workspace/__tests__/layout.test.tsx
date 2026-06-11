@@ -28,6 +28,17 @@ vi.mock("@/server/support/support-config", () => ({
   getSupportLinks: () => ({}),
 }));
 
+// react-datasheet-grid (TableGridPanel) usa ResizeObserver internamente
+// (react-resize-detector); jsdom não implementa — polyfill mínimo necessário
+// para permitir o render real do componente (mesmo padrão de table-grid-panel.test.tsx).
+if (typeof window !== "undefined" && !window.ResizeObserver) {
+  window.ResizeObserver = class {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  } as unknown as typeof ResizeObserver;
+}
+
 const user: SessionUser = {
   id: "user_1",
   email: "ana@empresa.com",
