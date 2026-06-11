@@ -49,14 +49,16 @@ Exceptions:
 
 ## Typography
 
-Reaproveita a escala global já declarada em `globals.css` (body `font-size: 14px`, `line-height: 1.5`). Nenhuma fonte/peso novo é introduzido nesta fase — apenas reorganização de layout.
+Reaproveita a escala global já declarada em `globals.css` (body `font-size: 14px`, `line-height: 1.5`). Nenhuma fonte/tamanho novo é introduzido nesta fase — apenas reorganização de layout.
+
+Apenas **2 pesos** são usados nesta fase: **400 (regular)** para texto de corpo, e **700 (strong)** para qualquer elemento que precise de ênfase (labels, marca/heading da topbar, item ativo do toggle mobile). Onde o CSS existente usa 600 ou 650, consolidar para **700**.
 
 | Role | Size | Weight | Line Height |
 |------|------|--------|-------------|
 | Body | 14px | 400 (regular) | 1.5 |
-| Label | 12px | 650 (semibold — valor já usado em `.field label`, `.attachment-chip-name`) | 1.4 |
-| Heading (topbar brand) | 15px | 700 (bold — já usado em `.topbar-brand`) | 1.2 |
-| Display (não usado nesta fase) | 20px | 700 | 1.2 |
+| Label | 12px | 700 (strong — consolidado; `.field label` e `.attachment-chip-name` passam de 650 para 700) | 1.4 |
+| Heading (topbar brand) | 15px | 700 (strong — já usado em `.topbar-brand`) | 1.2 |
+| Display (não usado nesta fase) | 20px | 700 (strong) | 1.2 |
 
 Marca "Tabelin.IA" na Topbar (D-12): manter `.topbar-brand` (15px / 700 / cor `var(--primary)`, `letter-spacing: -0.3px`) — o mesmo estilo já usado, apenas reposicionado/reaproveitado de `.sidebar-brand strong` se uma tagline for adicionada (12px / `var(--muted)`, igual `.sidebar-brand span`).
 
@@ -92,8 +94,8 @@ Accent reserved for: marca "Tabelin.IA" (topbar), botão de enviar mensagem ativ
 
 - Toggle/abas para alternar entre "Planilha" e "Chat" (D-03) — mostra um painel por vez, ocupando 100% da largura.
   - Toggle fica fixo no topo do `.workspace-body`, abaixo da Topbar: dois botões "Planilha" / "Chat", `display: flex`, `border-bottom: 1px solid var(--border)`, `background: var(--surface)`.
-  - Botão ativo: `color: var(--primary)`, `font-weight: 600`, `border-bottom: 2px solid var(--primary)` (reaproveita o padrão visual de `.chat-tab-active`/`.chat-tab-active-text` já definido em `:root`).
-  - Botão inativo: `color: var(--muted)`.
+  - Botão ativo: `color: var(--primary)`, `font-weight: 700` (consolidado — peso "strong" único da fase), `border-bottom: 2px solid var(--primary)` (reaproveita o padrão visual de `.chat-tab-active`/`.chat-tab-active-text` já definido em `:root`, ajustado para 700).
+  - Botão inativo: `color: var(--muted)`, `font-weight: 400`.
   - Altura mínima de cada botão do toggle: 44px (alvo de toque — exceção à escala de 8pt).
   - Painel oculto via `display: none` (não desmontar componentes — preserva estado do grid/chat ao alternar).
   - Breakpoint sugerido: `@media (max-width: 900px)` — novo breakpoint específico desta fase (o existente de 600px permanece para ajustes de padding/topbar já feitos).
