@@ -4,7 +4,7 @@ milestone: v3.0
 milestone_name: Planilha Viva + Chat de IA
 status: executing
 last_updated: "2026-06-11T20:22:11.014Z"
-last_activity: 2026-06-11 -- Phase 17 execution started
+last_activity: 2026-06-11 -- Quick task 260611-svu: corrigir WR-01 (fix UI clarificação)
 progress:
   total_phases: 11
   completed_phases: 1
@@ -67,6 +67,12 @@ None yet.
 - Phase 14: PT_BR_TO_EN mapping (~20 funções) deve ser validado empiricamente com `=PROCV()`, `=SOMASE()`, `=SE()` antes de conectar o grid ao gerador
 - Phase 12 → reescrito para o pivô v3.0: o classificador de 9 vias (`intent-classifier.ts`) é demolido na Phase 18 (ramos sql/regex/script/template/file_analysis/ocr saem do switch do `route.ts` e do `render-dispatcher.tsx`), então a antiga matriz de confusão evapora — NÃO re-validar o classificador velho. O risco migra para um eixo binário NOVO criado na Phase 20: *operação na planilha* (SC#2, ops estruturadas na grade) vs *pergunta analítica/Q&A* (SC#4, só texto). Falha assimétrica: Q&A lido como mutação altera a grade indevidamente (undo salva, mas surpreende); mutação lida como Q&A faz a proposta de valor falhar silenciosamente. **Validação:** definir ~20 prompts PT reais ambíguos ("some a coluna Valor" = fórmula na grade ou total no chat?) como critério de aceite/UAT da Phase 20. **Checkpoint:** na transição 17→18, confirmar que esse eval binário foi plantado no plano da Phase 18 (rótulos de intent) e Phase 20 (UAT). Não bloqueia a Phase 17.
 
+### Quick Tasks Completed
+
+| # | Description | Date | Commit | Directory |
+|---|-------------|------|--------|-----------|
+| 260611-svu | Corrigir WR-01 (clarificação chat→tabela não renderizava/arquivava resposta de "Gerar mesmo assim"/"Confirmar e Gerar") | 2026-06-11 | 318844b | [260611-svu](./quick/260611-svu-corrigir-wr-01-code-review-fase-17-handl/) |
+
 ## Deferred Items
 
 | Category | Item | Status | Deferred At |
@@ -88,8 +94,8 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-06-11T14:22:33.985Z
-Stopped at: Phase 16 completa (2/2) e verificada — sessão resumida, indo para Phase 17
+Last session: 2026-06-11T20:22:11.014Z
+Stopped at: Phase 17 completa (3/3) + code review (2 warnings, 0 críticos) — sessão resumida, transição 17→18
 Resume file: none
 
 ## Operator Next Steps
