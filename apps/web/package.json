@@ -23,7 +23,6 @@
     "fflate": "0.8.3",
     "file-type": "22.0.1",
     "lucide-react": "1.16.0",
-    "mercadopago": "^3.0.0",
     "next": "16.2.6",
     "node-cron": "^3.0.3",
     "openai": "6.39.0",
