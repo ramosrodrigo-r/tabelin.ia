@@ -29,12 +29,10 @@ import { createScriptEventStream, resolveScriptPayload } from "@/server/ai/scrip
 import { createSqlEventStream, resolveSqlPayload } from "@/server/ai/sql-stream";
 import { createTemplateEventStream, resolveTemplatePayload } from "@/server/ai/template-stream";
 import { getSessionFromCookieHeader } from "@/server/auth/session";
-import { getUserEntitlement } from "@/server/billing/entitlements";
 import { extractContent } from "@/server/extraction/dispatcher";
 import { recordFormulaToolRequest } from "@/server/tools/formula-repository";
 import { findConversationExchanges, saveConversationExchange } from "@/server/tools/conversation-repository";
 import { recordToolRequest } from "@/server/tools/tool-repository";
-import { confirmToolUse, releaseToolUse, reserveToolUse } from "@/server/usage/quota-service";
 
 const MAX_PROMPT_CHARS = 8_000;
 const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
@@ -251,11 +249,6 @@ function tableStubMessage() {
   );
 }
 
-async function ensureProUser(userId: string) {
-  const entitlement = await getUserEntitlement(userId);
-  return entitlement.plan === "pro" && entitlement.status === "active";
-}
-
 // ---------------------------------------------------------------------------
 // Helpers para o loop de clarificação (case unified_table)
 // ---------------------------------------------------------------------------
@@ -367,33 +360,16 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Intent anterior invalido.", issues: lastIntentResult.issues }, { status: 400 });
   }
 
-  if (file && !(await ensureProUser(user.id))) {
-    return NextResponse.json(
-      { code: "pro_required", feature: "attachment", cta: "pro_checkout" },
-      { status: 403 }
-    );
-  }
-
-  const quotaCheck = await reserveToolUse(user.id, "unified", "generate");
-  if (!quotaCheck.allowed) {
-    return NextResponse.json(
-      { code: "quota_exceeded", meterKind: quotaCheck.meterKind, cta: "pro_checkout" },
-      { status: 429 }
-    );
-  }
-
   try {
     let attachmentContext: string | undefined;
     if (file) {
       if (file.size > MAX_UPLOAD_BYTES) {
-        await releaseToolUse(quotaCheck.reservationKey);
         return NextResponse.json({ code: "FILE_TOO_LARGE", message: "Arquivo excede 5 MB." }, { status: 413 });
       }
 
       const buffer = Buffer.from(await file.arrayBuffer());
       const result = await extractContent(buffer, file.name);
       if (!result.ok) {
-        await releaseToolUse(quotaCheck.reservationKey);
         return NextResponse.json({ code: result.code, message: result.message }, { status: 422 });
       }
 
@@ -430,7 +406,6 @@ export async function POST(request: Request) {
     }
 
     if ((classification.intent === "file_analysis" || classification.intent === "ocr") && !file) {
-      await releaseToolUse(quotaCheck.reservationKey);
       return responseFromStream(needsFileStream(classification, classification.intent));
     }
 
@@ -450,7 +425,6 @@ export async function POST(request: Request) {
               metadata: { mode: GENERATE_MODE, providerModel: "extraction-dispatcher" },
             });
 
-      await confirmToolUse(quotaCheck.reservationKey);
       await recordToolRequest({
         userId: user.id,
         toolKind: resolvedToolKind,
@@ -471,11 +445,6 @@ export async function POST(request: Request) {
       );
     }
 
-    if (resolvedToolKind === "template" && !(await ensureProUser(user.id))) {
-      await releaseToolUse(quotaCheck.reservationKey);
-      return NextResponse.json({ code: "pro_required", cta: "pro_checkout" }, { status: 403 });
-    }
-
     switch (resolvedToolKind) {
       case "formula": {
         const requestPayload = formulaGenerateRequestSchema.parse({
@@ -491,7 +460,6 @@ export async function POST(request: Request) {
           attachmentContext,
         });
 
-        await confirmToolUse(quotaCheck.reservationKey);
         await recordFormulaToolRequest({
           userId: user.id,
           metadata: payload.metadata,
@@ -510,7 +478,7 @@ export async function POST(request: Request) {
         });
 
         return responseFromStream(
-          prefixIntentEvent(createFormulaEventStream(payload, quotaCheck.lastFreeUse, attachmentMeta), classification)
+          prefixIntentEvent(createFormulaEventStream(payload, undefined, attachmentMeta), classification)
         );
       }
 
@@ -522,7 +490,6 @@ export async function POST(request: Request) {
         const history = await findConversationExchanges(user.id, "sql");
         const payload = await resolveSqlPayload({ request: requestPayload, history, attachmentContext });
 
-        await confirmToolUse(quotaCheck.reservationKey);
         await recordToolRequest({
           userId: user.id,
           toolKind: "sql",
@@ -543,7 +510,7 @@ export async function POST(request: Request) {
         });
 
         return responseFromStream(
-          prefixIntentEvent(createSqlEventStream(payload, quotaCheck.lastFreeUse, attachmentMeta), classification)
+          prefixIntentEvent(createSqlEventStream(payload, undefined, attachmentMeta), classification)
         );
       }
 
@@ -557,7 +524,6 @@ export async function POST(request: Request) {
           attachmentContext,
         });
 
-        await confirmToolUse(quotaCheck.reservationKey);
         await recordToolRequest({
           userId: user.id,
           toolKind: "regex",
@@ -576,7 +542,7 @@ export async function POST(request: Request) {
         });
 
         return responseFromStream(
-          prefixIntentEvent(createRegexEventStream(payload, quotaCheck.lastFreeUse, attachmentMeta), classification)
+          prefixIntentEvent(createRegexEventStream(payload, undefined, attachmentMeta), classification)
         );
       }
 
@@ -588,7 +554,6 @@ export async function POST(request: Request) {
         const history = await findConversationExchanges(user.id, "script");
         const payload = await resolveScriptPayload({ request: requestPayload, history, attachmentContext });
 
-        await confirmToolUse(quotaCheck.reservationKey);
         await recordToolRequest({
           userId: user.id,
           toolKind: "script",
@@ -609,7 +574,7 @@ export async function POST(request: Request) {
         });
 
         return responseFromStream(
-          prefixIntentEvent(createScriptEventStream(payload, quotaCheck.lastFreeUse, attachmentMeta), classification)
+          prefixIntentEvent(createScriptEventStream(payload, undefined, attachmentMeta), classification)
         );
       }
 
@@ -618,7 +583,6 @@ export async function POST(request: Request) {
         const history = await findConversationExchanges(user.id, "template");
         const payload = await resolveTemplatePayload({ request: requestPayload, history, attachmentContext });
 
-        await confirmToolUse(quotaCheck.reservationKey);
         await recordToolRequest({
           userId: user.id,
           toolKind: "template",
@@ -637,7 +601,7 @@ export async function POST(request: Request) {
         });
 
         return responseFromStream(
-          prefixIntentEvent(createTemplateEventStream(payload, quotaCheck.lastFreeUse, attachmentMeta), classification)
+          prefixIntentEvent(createTemplateEventStream(payload, undefined, attachmentMeta), classification)
         );
       }
 
@@ -649,9 +613,7 @@ export async function POST(request: Request) {
           clarTurnCount >= MAX_CLAR_TURNS || fields.overrideGenerate === "true";
 
         if (!shouldGenerate) {
-          // CLARIFICATION PATH — NÃO debita cota (CLAR-05, T-13-09)
-          await releaseToolUse(quotaCheck.reservationKey);
-
+          // CLARIFICATION PATH — sem débito de cota (CLAR-05, T-13-09; cota removida na Phase 17)
           const question = await askClarificationQuestion({
             prompt: promptResult.prompt,
             turnIndex: clarTurnCount,
@@ -683,9 +645,7 @@ export async function POST(request: Request) {
           );
         }
 
-        // GENERATION PATH — debita cota
-        await confirmToolUse(quotaCheck.reservationKey);
-
+        // GENERATION PATH (cota removida na Phase 17)
         const overrideSpec = resolveOverrideSpec(fields.specOverride);
         // tableSpec.kind === "table_spec" — garantido por tableSpecPayloadSchema
         const tableSpec = overrideSpec ?? (await buildTableSpec({
@@ -720,7 +680,6 @@ export async function POST(request: Request) {
     }
   } catch (err) {
     console.error("unified chat failed", { err });
-    await releaseToolUse(quotaCheck.reservationKey);
     return NextResponse.json({ error: "Nao consegui validar a resposta." }, { status: 502 });
   }
 }

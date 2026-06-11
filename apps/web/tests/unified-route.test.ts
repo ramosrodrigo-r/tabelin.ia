@@ -113,7 +113,6 @@ const routeMocks = vi.hoisted(() => {
     askClarificationQuestion: vi.fn(),
     buildTableSpec: vi.fn(),
     classifyIntent: vi.fn(),
-    confirmToolUse: vi.fn(),
     createFormulaEventStream: vi.fn((payload) => streamForPayload(payload)),
     createRegexEventStream: vi.fn((payload) => streamForPayload(payload)),
     createScriptEventStream: vi.fn((payload) => streamForPayload(payload)),
@@ -122,12 +121,9 @@ const routeMocks = vi.hoisted(() => {
     extractContent: vi.fn(),
     findConversationExchanges: vi.fn(),
     formulaPayload,
-    getUserEntitlement: vi.fn(),
     recordFormulaToolRequest: vi.fn(),
     recordToolRequest: vi.fn(),
     regexPayload,
-    releaseToolUse: vi.fn(),
-    reserveToolUse: vi.fn(),
     resolveFormulaPayload: vi.fn(),
     resolveRegexPayload: vi.fn(),
     resolveScriptPayload: vi.fn(),
@@ -141,16 +137,6 @@ const routeMocks = vi.hoisted(() => {
     templatePayload,
   };
 });
-
-vi.mock("@/server/usage/quota-service", () => ({
-  reserveToolUse: routeMocks.reserveToolUse,
-  confirmToolUse: routeMocks.confirmToolUse,
-  releaseToolUse: routeMocks.releaseToolUse,
-}));
-
-vi.mock("@/server/billing/entitlements", () => ({
-  getUserEntitlement: routeMocks.getUserEntitlement,
-}));
 
 vi.mock("@/server/extraction/dispatcher", () => ({
   extractContent: routeMocks.extractContent,
@@ -243,10 +229,6 @@ describe("unified chat route", () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    routeMocks.reserveToolUse.mockResolvedValue({ allowed: true, reservationKey: "res_123" });
-    routeMocks.confirmToolUse.mockResolvedValue({ confirmed: true });
-    routeMocks.releaseToolUse.mockResolvedValue({ released: true });
-    routeMocks.getUserEntitlement.mockResolvedValue({ plan: "free", status: "active" });
     routeMocks.findConversationExchanges.mockResolvedValue([]);
     routeMocks.saveConversationExchange.mockResolvedValue(null);
     routeMocks.recordFormulaToolRequest.mockResolvedValue(null);
@@ -271,7 +253,6 @@ describe("unified chat route", () => {
     );
 
     expect(response.status).toBe(401);
-    expect(routeMocks.reserveToolUse).not.toHaveBeenCalled();
   });
 
   it("rejects invalid prompts before provider work", async () => {
@@ -279,39 +260,6 @@ describe("unified chat route", () => {
 
     expect(response.status).toBe(400);
     expect(routeMocks.classifyIntent).not.toHaveBeenCalled();
-    expect(routeMocks.reserveToolUse).not.toHaveBeenCalled();
-  });
-
-  it("returns quota 429 using the existing response shape", async () => {
-    routeMocks.reserveToolUse.mockResolvedValue({
-      allowed: false,
-      reason: "quota_exceeded",
-      meterKind: "tool_use",
-    });
-
-    const response = await POST(authedJson({ prompt: "Somar coluna A" }));
-    const body = await response.json();
-
-    expect(response.status).toBe(429);
-    expect(body).toMatchObject({
-      code: "quota_exceeded",
-      meterKind: "tool_use",
-      cta: "pro_checkout",
-    });
-    expect(routeMocks.classifyIntent).not.toHaveBeenCalled();
-  });
-
-  it("blocks free multipart attachments before reserving quota", async () => {
-    const formData = new FormData();
-    formData.set("prompt", "Analise este arquivo");
-    formData.set("file", new File(["a,b\n1,2"], "teste.csv", { type: "text/csv" }));
-
-    const response = await POST(authedMultipart(formData));
-    const body = await response.json();
-
-    expect(response.status).toBe(403);
-    expect(body).toMatchObject({ code: "pro_required", feature: "attachment", cta: "pro_checkout" });
-    expect(routeMocks.reserveToolUse).not.toHaveBeenCalled();
   });
 
   it("emits intent_detected as the first formula stream event and saves formula history", async () => {
@@ -327,7 +275,6 @@ describe("unified chat route", () => {
     expect(response.status).toBe(200);
     expect(events[0]).toMatchObject({ type: "intent_detected", intent: "formula", confidence: "high" });
     expect(events.at(-1)).toMatchObject({ type: "complete", payload: { kind: "formula" } });
-    expect(routeMocks.reserveToolUse).toHaveBeenCalledWith(expect.any(String), "unified", "generate");
     expect(routeMocks.findConversationExchanges).toHaveBeenCalledWith(expect.any(String), "formula");
     expect(routeMocks.resolveFormulaPayload).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -403,7 +350,7 @@ describe("unified chat route", () => {
     );
   });
 
-  it("returns needs_file without confirming quota or saving history", async () => {
+  it("returns needs_file without saving history", async () => {
     routeMocks.classifyIntent.mockResolvedValue({ intent: "ocr", confidence: "high" });
 
     const response = await POST(authedJson({ prompt: "Faça OCR desta imagem" }));
@@ -415,13 +362,10 @@ describe("unified chat route", () => {
       { type: "needs_file", intent: "ocr" },
       { type: "complete", payload: { kind: "needs_file", intent: "ocr" } },
     ]);
-    expect(routeMocks.releaseToolUse).toHaveBeenCalledWith("res_123");
-    expect(routeMocks.confirmToolUse).not.toHaveBeenCalled();
     expect(routeMocks.saveConversationExchange).not.toHaveBeenCalled();
   });
 
   it("returns an ephemeral file_analysis payload when a file is attached", async () => {
-    routeMocks.getUserEntitlement.mockResolvedValue({ plan: "pro", status: "active" });
     routeMocks.classifyIntent.mockResolvedValue({ intent: "file_analysis", confidence: "high" });
     routeMocks.extractContent.mockResolvedValue({ ok: true, text: "Arquivo com 2 colunas e 10 linhas." });
 
@@ -446,7 +390,6 @@ describe("unified chat route", () => {
         }),
       ])
     );
-    expect(routeMocks.confirmToolUse).toHaveBeenCalledWith("res_123");
     expect(routeMocks.findConversationExchanges).not.toHaveBeenCalled();
     expect(routeMocks.saveConversationExchange).not.toHaveBeenCalled();
   });
@@ -472,7 +415,6 @@ describe("unified chat route", () => {
       },
     });
     expect(routeMocks.findConversationExchanges).toHaveBeenCalledWith(expect.any(String), "unified_table");
-    expect(routeMocks.confirmToolUse).toHaveBeenCalledWith("res_123");
     expect(routeMocks.saveConversationExchange).toHaveBeenCalledWith(
       expect.objectContaining({
         toolKind: "unified_table",
@@ -487,10 +429,6 @@ describe("unified_table — clarification loop", () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    routeMocks.reserveToolUse.mockResolvedValue({ allowed: true, reservationKey: "res_123" });
-    routeMocks.confirmToolUse.mockResolvedValue({ confirmed: true });
-    routeMocks.releaseToolUse.mockResolvedValue({ released: true });
-    routeMocks.getUserEntitlement.mockResolvedValue({ plan: "free", status: "active" });
     routeMocks.findConversationExchanges.mockResolvedValue([]);
     routeMocks.saveConversationExchange.mockResolvedValue(null);
     routeMocks.recordFormulaToolRequest.mockResolvedValue(null);
@@ -502,7 +440,7 @@ describe("unified_table — clarification loop", () => {
   });
 
   // Cenário A: CLAR-01 + CLAR-05 — clarTurnCount=0 → clarification path
-  it("Cenário A (CLAR-01 + CLAR-05): clarTurnCount=0 emite table_clar_question e NÃO debita cota", async () => {
+  it("Cenário A (CLAR-01): clarTurnCount=0 emite table_clar_question", async () => {
     // clarTurnCount=0: histórico vazio, prompt parece novo pedido de tabela
     routeMocks.findConversationExchanges.mockResolvedValue([]);
 
@@ -515,15 +453,12 @@ describe("unified_table — clarification loop", () => {
       type: "complete",
       payload: { kind: "table_clar_question" },
     });
-    // CLAR-05: releaseToolUse chamado, confirmToolUse NÃO chamado
-    expect(routeMocks.releaseToolUse).toHaveBeenCalledOnce();
-    expect(routeMocks.confirmToolUse).not.toHaveBeenCalled();
     // CLAR-01: pergunta de clarificação chamada
     expect(routeMocks.askClarificationQuestion).toHaveBeenCalledOnce();
   });
 
-  // Cenário B: CLAR-02 + CLAR-05 — clarTurnCount=2 → generation path
-  it("Cenário B (CLAR-02 + CLAR-05): clarTurnCount=2 emite table_spec e debita cota", async () => {
+  // Cenário B: CLAR-02 — clarTurnCount=2 → generation path
+  it("Cenário B (CLAR-02): clarTurnCount=2 emite table_spec", async () => {
     routeMocks.findConversationExchanges.mockResolvedValue([
       { assistantPayload: { kind: "table_clar_question", question: "Q1", turnIndex: 0, totalTurns: 2, canSkip: true, spec: {} } },
       { assistantPayload: { kind: "table_clar_question", question: "Q2", turnIndex: 1, totalTurns: 2, canSkip: true, spec: {} } },
@@ -537,15 +472,12 @@ describe("unified_table — clarification loop", () => {
       type: "complete",
       payload: { kind: "table_spec" },
     });
-    // CLAR-05: confirmToolUse chamado (debita cota), releaseToolUse NÃO chamado neste path
-    expect(routeMocks.confirmToolUse).toHaveBeenCalledOnce();
-    expect(routeMocks.releaseToolUse).not.toHaveBeenCalled();
     // CLAR-02: buildTableSpec chamado
     expect(routeMocks.buildTableSpec).toHaveBeenCalledOnce();
   });
 
-  // Cenário C: CLAR-03 + CLAR-05 — clarTurnCount=0 + overrideGenerate="true" → generation path
-  it("Cenário C (CLAR-03 + CLAR-05): clarTurnCount=0 + overrideGenerate=true emite table_spec e debita cota", async () => {
+  // Cenário C: CLAR-03 — clarTurnCount=0 + overrideGenerate="true" → generation path
+  it("Cenário C (CLAR-03): clarTurnCount=0 + overrideGenerate=true emite table_spec", async () => {
     routeMocks.findConversationExchanges.mockResolvedValue([]);
 
     const response = await POST(authedJson({ prompt: "Quero uma tabela de vendas", overrideGenerate: "true" }));
@@ -556,9 +488,6 @@ describe("unified_table — clarification loop", () => {
       type: "complete",
       payload: { kind: "table_spec" },
     });
-    // CLAR-05 + CLAR-03: confirmToolUse chamado (debita cota)
-    expect(routeMocks.confirmToolUse).toHaveBeenCalledOnce();
-    expect(routeMocks.releaseToolUse).not.toHaveBeenCalled();
     // askClarificationQuestion NÃO deve ser chamado no generation path
     expect(routeMocks.askClarificationQuestion).not.toHaveBeenCalled();
   });
@@ -581,14 +510,10 @@ describe("unified_table — clarification loop", () => {
         totalTurns: 2,
       },
     });
-    // CLAR-05: confirmToolUse NÃO chamado em turn de clarificação
-    expect(routeMocks.confirmToolUse).not.toHaveBeenCalled();
-    expect(routeMocks.releaseToolUse).toHaveBeenCalledOnce();
   });
 
-  // Cenário E: CLAR-05 regressão — todos os cenários de clarificação devem ter confirmToolUse.not.toHaveBeenCalled()
-  // (verificado nos cenários A e D — este cenário verifica clarTurnCount=0 com prompt não-tabela via fallback)
-  it("Cenário E (CLAR-05 regressão): clarTurnCount=0 NÃO chama confirmToolUse em nenhum cenário de clarificação", async () => {
+  // Cenário E: clarTurnCount=0 com prompt não-tabela via fallback
+  it("Cenário E: clarTurnCount=0 emite table_clar_question via fallback de prompt não-tabela", async () => {
     routeMocks.findConversationExchanges.mockResolvedValue([]);
 
     const response = await POST(authedJson({ prompt: "Quero tabela de gastos mensais" }));
@@ -596,9 +521,6 @@ describe("unified_table — clarification loop", () => {
 
     expect(response.status).toBe(200);
     expect(events.at(-1)).toMatchObject({ type: "complete", payload: { kind: "table_clar_question" } });
-    // CLAR-05 assertions negativas
-    expect(routeMocks.confirmToolUse).not.toHaveBeenCalled();
-    expect(routeMocks.releaseToolUse).toHaveBeenCalledOnce();
   });
 
   // Cenário F: Armadilha 2 — fallback conservativo — histórico vazio + prompt sem "tabela" → generation path
@@ -615,13 +537,11 @@ describe("unified_table — clarification loop", () => {
       type: "complete",
       payload: { kind: "table_spec" },
     });
-    // confirmToolUse chamado (generation path)
-    expect(routeMocks.confirmToolUse).toHaveBeenCalledOnce();
     expect(routeMocks.buildTableSpec).toHaveBeenCalledOnce();
   });
 
-  // Cenário G: CLAR-05 — specOverride no body
-  it("Cenário G (CLAR-05): specOverride válida no body → generation path usa spec do client", async () => {
+  // Cenário G: specOverride no body
+  it("Cenário G: specOverride válida no body → generation path usa spec do client", async () => {
     routeMocks.findConversationExchanges.mockResolvedValue([
       { assistantPayload: { kind: "table_clar_question", question: "Q1", turnIndex: 0, totalTurns: 2, canSkip: true, spec: {} } },
       { assistantPayload: { kind: "table_clar_question", question: "Q2", turnIndex: 1, totalTurns: 2, canSkip: true, spec: {} } },
@@ -647,7 +567,6 @@ describe("unified_table — clarification loop", () => {
       type: "complete",
       payload: { kind: "table_spec", title: "Tabela Editada" },
     });
-    expect(routeMocks.confirmToolUse).toHaveBeenCalledOnce();
   });
 
   it("Cenário G variante: specOverride inválida → geração usa buildTableSpec (fallback)", async () => {
@@ -669,7 +588,6 @@ describe("unified_table — clarification loop", () => {
       type: "complete",
       payload: { kind: "table_spec" },
     });
-    expect(routeMocks.confirmToolUse).toHaveBeenCalledOnce();
   });
 });
 
@@ -687,10 +605,6 @@ describe("unified_table — regressão de misroute na clarificação", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    routeMocks.reserveToolUse.mockResolvedValue({ allowed: true, reservationKey: "res_123" });
-    routeMocks.confirmToolUse.mockResolvedValue({ confirmed: true });
-    routeMocks.releaseToolUse.mockResolvedValue({ released: true });
-    routeMocks.getUserEntitlement.mockResolvedValue({ plan: "free", status: "active" });
     routeMocks.saveConversationExchange.mockResolvedValue(null);
     routeMocks.recordToolRequest.mockResolvedValue(null);
     routeMocks.askClarificationQuestion.mockResolvedValue("Quantas colunas a tabela deve ter?");
