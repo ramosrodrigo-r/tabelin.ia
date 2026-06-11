@@ -70,7 +70,7 @@ Full details: ver seções abaixo (Phase 12-15) ou `.planning/milestones/v2.0-RO
 
 **Fonte da verdade:** `PRD-MILESTONE-PLANILHA-VIVA.md`
 
-- [ ] **Phase 16: Tela Única & Fim da Navegação Multi-Ferramenta** - Shell consolida planilha+chat numa rota única; sidebar/tool-nav e rotas órfãs de tool são removidas
+- [x] **Phase 16: Tela Única & Fim da Navegação Multi-Ferramenta** - Shell consolida planilha+chat numa rota única; sidebar/tool-nav e rotas órfãs de tool são removidas (completed 2026-06-11)
 - [ ] **Phase 17: Desligar Monetização & Cota** - Billing/Mercado Pago/Pro/cota saem por completo; rota de chat permanece funcional sem gate
 - [ ] **Phase 18: Remover Tools Avulsos, OCR, File Analysis & Reduzir Dispatcher** - Geradores de texto, OCR, Análise de Arquivos e geração de tabela do zero saem; classificador de intent e render-dispatcher reduzidos a planilha + Q&A
 - [ ] **Phase 19: Ingestão Tri-Estado da Planilha** - Usuário abre a planilha viva com seed, em branco, ou via upload CSV/XLSX (substitui a grade)
@@ -222,11 +222,11 @@ Full details: ver seções abaixo (Phase 12-15) ou `.planning/milestones/v2.0-RO
 
 **Wave 1** *(sem dependencias)*
 
-- [ ] 16-01-PLAN.md — Redirects 308 das rotas antigas de tool, Topbar enxuta (link /privacidade) e SAMPLE_SPEC
+- [x] 16-01-PLAN.md — Redirects 308 das rotas antigas de tool, Topbar enxuta (link /privacidade) e SAMPLE_SPEC
 
 **Wave 2** *(bloqueada pelo 16-01 — consome SAMPLE_SPEC)*
 
-- [ ] 16-02-PLAN.md — WorkspaceSplit + reescrita do WorkspaceLayout (split planilha/chat) + CSS + remoção Sidebar/ToolNav
+- [x] 16-02-PLAN.md — WorkspaceSplit + reescrita do WorkspaceLayout (split planilha/chat) + CSS + remoção Sidebar/ToolNav
 
 **UI hint**: yes
 
@@ -341,7 +341,7 @@ Full details: ver seções abaixo (Phase 12-15) ou `.planning/milestones/v2.0-RO
 | 13. Clarification Loop | v2.0 | 4/4 | Complete    | 2026-06-09 |
 | 14. Tabela Viva | v2.0 | 6/6 | Complete   | 2026-06-09 |
 | 15. Export, UX Migration & Hardening | v2.0 | 3/3 | Complete    | 2026-06-10 |
-| 16. Tela Única & Fim da Navegação Multi-Ferramenta | v3.0 | 0/TBD | Not started | - |
+| 16. Tela Única & Fim da Navegação Multi-Ferramenta | v3.0 | 2/2 | Complete    | 2026-06-11 |
 | 17. Desligar Monetização & Cota | v3.0 | 0/TBD | Not started | - |
 | 18. Remover Tools Avulsos, OCR, File Analysis & Reduzir Dispatcher | v3.0 | 0/TBD | Not started | - |
 | 19. Ingestão Tri-Estado da Planilha | v3.0 | 0/TBD | Not started | - |

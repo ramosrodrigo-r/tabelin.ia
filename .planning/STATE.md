@@ -2,15 +2,16 @@
 gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Planilha Viva + Chat de IA
-status: planning
-last_updated: "2026-06-10T22:22:37.058Z"
-last_activity: 2026-06-10 — ROADMAP.md v3.0 criado (Phases 16-22), 31/31 requisitos mapeados
+status: ready_to_plan
+last_updated: 2026-06-11T14:22:33.985Z
+last_activity: 2026-06-11 -- Phase 16 execution started
 progress:
   total_phases: 11
   completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
+  total_plans: 2
+  completed_plans: 2
   percent: 0
+stopped_at: Phase 16 complete (2/2) — ready to discuss Phase 17
 ---
 
 # Project State
@@ -20,20 +21,20 @@ progress:
 See: .planning/PROJECT.md (updated 2026-06-08)
 
 **Core value:** Usuários brasileiros trabalham numa planilha viva sempre na tela e pedem em português que a IA manipule os dados na própria grade — ou responda dúvidas sobre eles — sem escolher ferramentas nem navegar entre módulos.
-**Current focus:** Phase 16 — Tela Única & Fim da Navegação Multi-Ferramenta
+**Current focus:** Phase 17 — desligar monetização & cota
 
 ## Current Position
 
-Phase: 16 — Tela Única & Fim da Navegação Multi-Ferramenta
-Plan: —
-Status: Planning
-Last activity: 2026-06-10 — ROADMAP.md v3.0 criado (Phases 16-22), 31/31 requisitos mapeados
+Phase: 17
+Plan: Not started
+Status: Ready to plan
+Last activity: 2026-06-11
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 54 (v1.0–v1.2 acumulado)
+- Total plans completed: 56 (v1.0–v1.2 acumulado)
 - Average duration: ~10 min/plan
 - Total execution time: ~7.8 hours (histórico acumulado)
 
@@ -88,9 +89,9 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-06-10T22:22:37.041Z
-Stopped at: Phase 16 context gathered
-Resume file: .planning/phases/16-tela-nica-fim-da-navega-o-multi-ferramenta/16-CONTEXT.md
+Last session: 2026-06-11T13:19:59.931Z
+Stopped at: Phase 16 UI-SPEC approved
+Resume file: .planning/phases/16-tela-nica-fim-da-navega-o-multi-ferramenta/16-UI-SPEC.md
 
 ## Operator Next Steps
 
