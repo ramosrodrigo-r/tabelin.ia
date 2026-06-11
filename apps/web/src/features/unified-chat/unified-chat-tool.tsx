@@ -9,7 +9,6 @@ import type {
   TableSpecPayload,
   UnifiedCompletePayload,
   UnifiedIntent,
-  UserEntitlement,
 } from "@tabelin/shared";
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -108,10 +107,8 @@ function intentFromPayload(payload: unknown): UnifiedIntent | null {
 }
 
 export function UnifiedChatTool({
-  entitlement,
   initialExchanges = [],
 }: {
-  entitlement: UserEntitlement;
   initialExchanges?: PersistedExchange[];
 }) {
   const [context, setContext] = useState<UnifiedContext>(defaultContext);
@@ -150,7 +147,6 @@ export function UnifiedChatTool({
 
   const stream = useUnifiedChatStream();
   const pending = stream.status === "loading" || stream.status === "streaming";
-  const isPro = entitlement.plan === "pro" && entitlement.status === "active";
   const lastSubmitInputRef = useRef<Parameters<typeof stream.submit>[0] | null>(null);
 
   const handleNewConversation = useCallback(() => {
@@ -230,7 +226,7 @@ export function UnifiedChatTool({
       contextSnapshot?: UnifiedContext;
     } = {}
   ) {
-    if (pending || stream.quotaBlocked || stream.proBlocked) return;
+    if (pending) return;
 
     const trimmed = prompt.trim();
     if (!trimmed) {
@@ -333,7 +329,6 @@ export function UnifiedChatTool({
       onDrop={(e) => {
         e.preventDefault();
         setDragOver(false);
-        if (!isPro) return;
         const file = e.dataTransfer.files[0];
         if (file) handleFileSelect(file);
       }}
@@ -424,7 +419,6 @@ export function UnifiedChatTool({
           onSubmit={() => void submitPrompt(text)}
           placeholder="Descreva o que você precisa — fórmula, SQL, regex, script, análise ou tabela."
           pending={pending}
-          disabled={stream.quotaBlocked}
           submitLabel="Enviar"
           options={
             <SessionContextSelector
@@ -446,8 +440,8 @@ export function UnifiedChatTool({
           }
           leftAction={
             <AttachmentButton
-              isPro={isPro}
-              disabled={pending || stream.quotaBlocked}
+              isPro={true}
+              disabled={pending}
               onFileSelect={handleFileSelect}
             />
           }
@@ -462,27 +456,6 @@ export function UnifiedChatTool({
 
         {fileError ? <div className="form-error mt-2">{fileError}</div> : null}
         {validationError ? <div className="form-error mt-2">{validationError}</div> : null}
-
-        {!isPro && stream.lastFreeUse && !stream.quotaBlocked ? (
-          <div className="quota-warning mt-2">
-            Este é seu último uso gratuito. Assine Pro para acesso ilimitado.
-          </div>
-        ) : null}
-
-        {!isPro && stream.quotaBlocked ? (
-          <div className="quota-blocked mt-2">
-            <p>
-              Você atingiu o limite de 4 usos gratuitos. Experimente novamente mais tarde ou assine
-              Pro para acesso ilimitado.
-            </p>
-          </div>
-        ) : null}
-
-        {!isPro && stream.proBlocked ? (
-          <div className="quota-blocked mt-2">
-            <p>Este tipo de resposta exige o plano Pro.</p>
-          </div>
-        ) : null}
       </section>
     </div>
   );

@@ -202,31 +202,6 @@ a {
   padding: 10px 12px;
 }
 
-.quota-warning {
-  border: 1px solid rgb(181 71 8 / 35%);
-  border-radius: 6px;
-  background: rgb(181 71 8 / 8%);
-  color: var(--warning);
-  font-size: 13px;
-  padding: 10px 12px;
-}
-
-.quota-blocked {
-  display: grid;
-  gap: 12px;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  background: var(--background);
-  padding: 16px;
-}
-
-.quota-blocked p {
-  margin: 0;
-  color: var(--text);
-  font-size: 13px;
-  line-height: 1.5;
-}
-
 .revoked-notice {
   display: flex;
   align-items: center;
@@ -303,19 +278,6 @@ a {
   display: flex;
   align-items: center;
   gap: 12px;
-}
-
-.pro-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  border: 1px solid rgb(11 107 87 / 24%);
-  border-radius: 12px;
-  background: rgb(11 107 87 / 8%);
-  color: var(--primary);
-  font-size: 12px;
-  font-weight: 650;
-  padding: 4px 10px;
 }
 
 .account-menu-container {
