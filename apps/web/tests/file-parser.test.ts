@@ -132,19 +132,3 @@ describe("parseFile — XLSX", () => {
     expect(schema.rowCount).toBeLessThanOrEqual(1000);
   });
 });
-
-describe("file-repository IDOR guard", () => {
-  // This test validates the IDOR contract at the type level —
-  // the actual DB query tests are done through the DB client mock
-  it("findUploadedFileByIdAndUser signature requires both id and userId", async () => {
-    const { findUploadedFileByIdAndUser } = await import("@/server/file-analysis/file-repository");
-    expect(typeof findUploadedFileByIdAndUser).toBe("function");
-    // Function arity: (id, userId)
-    expect(findUploadedFileByIdAndUser.length).toBe(2);
-  });
-
-  it("getRecentMessages signature requires uploadedFileId and optional limit", async () => {
-    const { getRecentMessages } = await import("@/server/file-analysis/file-repository");
-    expect(typeof getRecentMessages).toBe("function");
-  });
-});

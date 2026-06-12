@@ -4,7 +4,6 @@ import * as XLSX from "xlsx";
 
 import type { FileSchema } from "@tabelin/shared";
 
-import { formatSchemaForPrompt } from "../ai/file-chat-stream";
 import { parseFile } from "../file-analysis/file-parser";
 import type { ExtractionResult } from "./types";
 
@@ -14,6 +13,24 @@ import type { ExtractionResult } from "./types";
  * quando XLSX tem muitas abas (D-05) com muitas linhas cada.
  */
 export const MAX_ROWS_PER_SHEET = 200;
+
+function formatSchemaForPrompt(schema: FileSchema): string {
+  const colLines = schema.columns
+    .map((c) => {
+      const examples = (c.sampleValues as unknown[])
+        .slice(0, 3)
+        .map((v) => (v instanceof Date ? v.toISOString() : String(v ?? "")))
+        .join(", ");
+      return `  - ${c.name} (${c.type}): exemplos: ${examples}`;
+    })
+    .join("\n");
+
+  return `Arquivo: ${schema.fileName}
+Aba: ${schema.sheetName ?? "N/A"}
+Total de linhas: ${schema.rowCount}
+Colunas (${schema.columns.length}):
+${colLines}`;
+}
 
 /**
  * Serializa as sampleRows do schema como bloco Markdown legível (D-02).
