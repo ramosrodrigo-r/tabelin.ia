@@ -20,14 +20,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-06-08)
 
 **Core value:** Usuários brasileiros trabalham numa planilha viva sempre na tela e pedem em português que a IA manipule os dados na própria grade — ou responda dúvidas sobre eles — sem escolher ferramentas nem navegar entre módulos.
-**Current focus:** Phase 17 — desligar-monetiza-o-cota
+**Current focus:** Phase 18 — remover-tools-avulsos-ocr-file-analysis-reduzir-dispatcher
 
 ## Current Position
 
-Phase: 17 (desligar-monetiza-o-cota) — EXECUTING
-Plan: 1 of 3
+Phase: 18 (remover-tools-avulsos-ocr-file-analysis-reduzir-dispatcher) — PLANNED (8 planos / 6 waves)
+Plan: 0 of 8 executados
 Status: Ready to execute
-Last activity: 2026-06-12 -- Phase 18 planning complete
+Last activity: 2026-06-12 -- Phase 18 planning complete (research + 8 plans + checker PASSED)
 
 ## Performance Metrics
 
@@ -100,6 +100,7 @@ Resume file: none
 
 ## Operator Next Steps
 
-- Phase 17 (Desligar Monetização & Cota) ainda não tem diretório nem CONTEXT.md. Rodar `/gsd-plan-phase 17` para planejar direto (ou `/gsd-discuss-phase 17` para levantar contexto antes).
-- ⚠️ Checkpoint na transição 17→18: confirmar que o eval binário "mutação na grade vs Q&A" (~20 prompts PT reais) foi plantado no plano da Phase 18 (rótulos de intent corretos) e da Phase 20 (UAT/aceite). Ver concern reescrito da Phase 12 em Blockers/Concerns.
-- Árvore git limpa (só `AICHAT.md` untracked) — sem deleções pendentes contaminando o worktree.
+- Phase 18 planejada: 8 planos em 6 waves (research HIGH confidence + plan-checker PASSED). Executar com `/gsd-execute-phase 18` — recomendado `/clear` antes (execução destrutiva grande, contexto fresco).
+- ✅ Checkpoint 17→18 cumprido: o eval binário "operação na planilha vs Q&A" foi plantado no Plan 18-05 (6-8 prompts PT representativos como testes automatizados em intent-classifier.test.ts); o eval completo (~20 prompts) permanece como UAT formal da Phase 20.
+- Limite com Phase 22: esta fase remove código/rotas/UI/testes; migrations/deps Prisma destrutivas finais ficam na Phase 22 (nenhum plano da 18 roda migration destrutiva).
+- Pendência da Phase 17 (code review): WR-02 (smoke.spec.ts obsoleto) é resolvido dentro do Plan 18-08 (reescrita dos smokes para a tela unificada). WR-01 já corrigido (quick task 260611-svu).
