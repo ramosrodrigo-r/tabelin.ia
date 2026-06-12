@@ -1,4 +1,4 @@
-import type { UploadResponse } from "./schema";
+import type { ChartData, UploadResponse } from "./schema";
 
 export const FILE_ANALYSIS_FIXTURES: UploadResponse[] = [
   {
@@ -41,3 +41,15 @@ export const FILE_ANALYSIS_FIXTURES: UploadResponse[] = [
     }
   }
 ];
+
+export const chartDataFixture: ChartData = {
+  chartType: "bar",
+  title: "Vendas por Produto",
+  xKey: "Produto",
+  yKey: "Vendas",
+  rows: [
+    { Produto: "Widget A", Vendas: 120 },
+    { Produto: "Widget B", Vendas: 85 },
+    { Produto: "Widget C", Vendas: 200 }
+  ]
+};

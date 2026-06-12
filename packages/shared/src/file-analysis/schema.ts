@@ -46,8 +46,17 @@ export const chatStreamEventSchema = z.discriminatedUnion("type", [
   })
 ]);
 
+export const chartDataSchema = z.object({
+  chartType: z.enum(["bar", "line", "pie"]),
+  title: z.string(),
+  xKey: z.string(),
+  yKey: z.string(),
+  rows: z.array(z.record(z.string(), z.union([z.string(), z.number()])))
+});
+
 export type FileSchemaColumn = z.infer<typeof fileSchemaColumnSchema>;
 export type FileSchema = z.infer<typeof fileSchemaSchema>;
 export type UploadResponse = z.infer<typeof uploadResponseSchema>;
 export type ChatRequest = z.infer<typeof chatRequestSchema>;
 export type ChatStreamEvent = z.infer<typeof chatStreamEventSchema>;
+export type ChartData = z.infer<typeof chartDataSchema>;
