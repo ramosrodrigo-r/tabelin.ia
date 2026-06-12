@@ -269,7 +269,7 @@ Full details: ver seções abaixo (Phase 12-15) ou `.planning/milestones/v2.0-RO
 **Wave 1**
 
 - [x] 18-01: Remover rotas/páginas/features dos 5 geradores avulsos (Fórmula/SQL/Regex/Scripts/Template) — CLEAN-01
-- [ ] 18-02: Remover OCR como tool dedicado, preservando extração genérica de imagem — CLEAN-02
+- [x] 18-02: Remover OCR como tool dedicado, preservando extração genérica de imagem — CLEAN-02
 - [ ] 18-03: Remover File Analysis como tool dedicado, preservando file-parser.ts (CSV/XLSX) — CLEAN-03
 
 **Wave 2** *(depende da Wave 1)*
@@ -375,7 +375,7 @@ Full details: ver seções abaixo (Phase 12-15) ou `.planning/milestones/v2.0-RO
 | 15. Export, UX Migration & Hardening | v2.0 | 3/3 | Complete    | 2026-06-10 |
 | 16. Tela Única & Fim da Navegação Multi-Ferramenta | v3.0 | 2/2 | Complete    | 2026-06-11 |
 | 17. Desligar Monetização & Cota | v3.0 | 3/3 | Complete   | 2026-06-11 |
-| 18. Remover Tools Avulsos, OCR, File Analysis & Reduzir Dispatcher | v3.0 | 1/8 | In Progress|  |
+| 18. Remover Tools Avulsos, OCR, File Analysis & Reduzir Dispatcher | v3.0 | 2/8 | In Progress|  |
 | 19. Ingestão Tri-Estado da Planilha | v3.0 | 0/TBD | Not started | - |
 | 20. Protocolo de Mutação Chat→Grade & Q&A | v3.0 | 0/TBD | Not started | - |
 | 21. Export & Persistência da Planilha+Conversa | v3.0 | 0/TBD | Not started | - |
