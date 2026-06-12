@@ -20,8 +20,8 @@ import type {
 } from "@tabelin/shared";
 
 import { AttachmentPanel } from "@/components/app/attachment-panel";
+import { CopyButton } from "@/components/app/copy-button";
 import { FormulaOutputPanel } from "@/features/formula/components/formula-output-panel";
-import { CopyButton } from "@/features/formula/components/copy-button";
 import { RegexOutputPanel } from "@/features/regex/components/regex-output-panel";
 import { ScriptsOutputPanel } from "@/features/scripts/components/scripts-output-panel";
 import { SqlOutputPanel } from "@/features/sql/components/sql-output-panel";
