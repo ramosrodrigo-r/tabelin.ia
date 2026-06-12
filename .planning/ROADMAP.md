@@ -264,7 +264,33 @@ Full details: ver seções abaixo (Phase 12-15) ou `.planning/milestones/v2.0-RO
   4. O render-dispatcher não possui mais branches para stub/clarificação/confirmação de spec de tabela nova, nem para outputs de tools removidos (código/SQL/regex/script avulsos)
   5. `pnpm -r typecheck` e `pnpm -r test` verdes após cada bloco de remoção (commits atômicos por capacidade)
 
-**Plans**: TBD
+**Plans**: 8 plans
+
+**Wave 1**
+
+- [ ] 18-01: Remover rotas/páginas/features dos 5 geradores avulsos (Fórmula/SQL/Regex/Scripts/Template) — CLEAN-01
+- [ ] 18-02: Remover OCR como tool dedicado, preservando extração genérica de imagem — CLEAN-02
+- [ ] 18-03: Remover File Analysis como tool dedicado, preservando file-parser.ts (CSV/XLSX) — CLEAN-03
+
+**Wave 2** *(depende da Wave 1)*
+
+- [ ] 18-04: Remover curto-circuito de clarificação/case unified_table e os 5 branches de tools avulsos em route.ts — CLEAN-07/CLEAN-01
+
+**Wave 3** *(depende da Wave 2)*
+
+- [ ] 18-05: Reduzir intent-classifier.ts/schema ao eixo binário sheet_operation/qa; plantar eval de 6-8 prompts — CLEAN-06
+
+**Wave 4** *(depende da Wave 3)*
+
+- [ ] 18-06: Reduzir unifiedCompletePayloadSchema e render-dispatcher.tsx; deletar ClarificationCard/ConfirmationCard/TableIntentStub — CLEAN-06/CLEAN-07
+
+**Wave 5** *(depende da Wave 4)*
+
+- [ ] 18-07: Reduzir unified-chat-tool.tsx/use-unified-chat-stream.ts/context-messages.ts ao eixo binário; deletar session-context-selector.tsx — CLEAN-06/CLEAN-07
+
+**Wave 6** *(depende da Wave 5)*
+
+- [ ] 18-08: Remover entitlements/quota-service órfãos e schemas/fixtures de tools em packages/shared; reescrever testes finais (unified-schema, smoke e2e) — CLEAN-01/02/03/06/07
 
 ### Phase 19: Ingestão Tri-Estado da Planilha
 
