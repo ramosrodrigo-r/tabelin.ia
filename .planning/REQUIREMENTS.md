@@ -46,7 +46,7 @@
 
 ### Remoção Comprovada de Capacidades OUT (CLEAN)
 
-- [ ] **CLEAN-01**: A cadeia completa dos geradores de texto avulsos (Fórmula, Scripts, SQL, Regex, Template como tools/páginas/rotas) é removida — sem entrada pela UI nem por rota (§5.1). A *avaliação* de fórmula dentro da planilha viva permanece (§4.2)
+- [x] **CLEAN-01**: A cadeia completa dos geradores de texto avulsos (Fórmula, Scripts, SQL, Regex, Template como tools/páginas/rotas) é removida — sem entrada pela UI nem por rota (§5.1). A *avaliação* de fórmula dentro da planilha viva permanece (§4.2)
 - [ ] **CLEAN-02**: A cadeia completa do OCR (imagem→tabela) é removida — página, rota, módulo de Vision, fixtures e assets de imagem (§5.2)
 - [ ] **CLEAN-03**: A Análise de Arquivos como ferramenta separada (página/rota/chat próprios) é removida; sobra apenas o caminho de ingestão CSV/XLSX da DATA-03 (§5.3)
 - [ ] **CLEAN-04**: Toda a monetização/cota é removida — checkout, provedor de pagamento (Mercado Pago), webhooks, plano Pro, entitlement gates, sistema de cota/usage ledger e UI de upsell/limite (§5.4)
@@ -115,7 +115,7 @@ Preenchida na criação do roadmap (cada requisito mapeia para exatamente uma fa
 | PERS-03 | Phase 21 | Pending |
 | PERS-04 | Phase 21 | Pending |
 | LOC-01 | Phase 20 | Pending |
-| CLEAN-01 | Phase 18 | Pending |
+| CLEAN-01 | Phase 18 | Complete |
 | CLEAN-02 | Phase 18 | Pending |
 | CLEAN-03 | Phase 18 | Pending |
 | CLEAN-04 | Phase 17 | Pending |
@@ -131,6 +131,7 @@ Preenchida na criação do roadmap (cada requisito mapeia para exatamente uma fa
 | QA-02 | Phase 22 | Pending |
 
 **Coverage:**
+
 - v1 requirements (v3.0): 32 total (nota: PRD/seção inicial citam 31; a lista detalhada acima contém 32 itens — todos mapeados)
 - Mapped to phases: 32 (100%)
 - Unmapped: 0 ✓
