@@ -25,9 +25,9 @@ See: .planning/PROJECT.md (updated 2026-06-08)
 
 ## Current Position
 
-Phase: 21 (export-persistencia-da-planilha-conversa) — EXECUTING
-Plan: 2 of 2
-Status: Phase complete — ready for verification
+Phase: 21 (export-persistencia-da-planilha-conversa) — GAPS FOUND
+Plan: 2 of 2 executed
+Status: Verification gaps_found (2/5 must-haves) — needs gap closure via /gsd-plan-phase 21 --gaps
 Last activity: 2026-06-14 -- Phase 21 execution started
 
 ## Performance Metrics
