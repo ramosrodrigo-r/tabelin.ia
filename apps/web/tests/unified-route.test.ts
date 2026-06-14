@@ -105,7 +105,7 @@ describe("unified chat route", () => {
         expect.objectContaining({ type: "delta", text: expect.stringContaining("operacao na planilha") }),
         expect.objectContaining({
           type: "complete",
-          payload: expect.objectContaining({ kind: "table_stub" }),
+          payload: expect.objectContaining({ kind: "qa_response" }),
         }),
       ])
     );
@@ -139,7 +139,7 @@ describe("unified chat route", () => {
         }),
         expect.objectContaining({
           type: "complete",
-          payload: expect.objectContaining({ kind: "table_stub" }),
+          payload: expect.objectContaining({ kind: "qa_response" }),
         }),
       ])
     );

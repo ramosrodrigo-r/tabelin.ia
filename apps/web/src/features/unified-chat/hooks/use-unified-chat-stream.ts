@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  type FileDependentIntent,
   type FormulaLanguage,
   type FormulaPlatform,
   type OverrideIntent,
@@ -44,7 +43,6 @@ export function useUnifiedChatStream() {
   const [metadata, setMetadata] = useState<unknown | null>(null);
   const [warnings, setWarnings] = useState<string[]>([]);
   const [error, setError] = useState("");
-  const [needsFile, setNeedsFile] = useState<FileDependentIntent | null>(null);
   const [attachmentStatus, setAttachmentStatus] = useState<"uploading" | "extracting" | null>(null);
   const [attachmentMeta, setAttachmentMeta] = useState<UnifiedAttachmentMeta | null>(null);
 
@@ -57,7 +55,6 @@ export function useUnifiedChatStream() {
     setMetadata(null);
     setWarnings([]);
     setError("");
-    setNeedsFile(null);
     setAttachmentStatus(null);
     setAttachmentMeta(null);
   }, []);
@@ -71,7 +68,6 @@ export function useUnifiedChatStream() {
     setMetadata(null);
     setWarnings([]);
     setError("");
-    setNeedsFile(null);
     setAttachmentStatus(null);
     setAttachmentMeta(null);
 
@@ -164,10 +160,6 @@ export function useUnifiedChatStream() {
         setConfidence(event.confidence);
       }
 
-      if (event.type === "needs_file") {
-        setNeedsFile(event.intent);
-      }
-
       if (event.type === "attachment_grounded") {
         setAttachmentMeta({
           charCount: event.charCount,
@@ -194,12 +186,6 @@ export function useUnifiedChatStream() {
         setResult(event.payload);
         if ("metadata" in event.payload) {
           setMetadata(event.payload.metadata);
-        }
-        if ("warnings" in event.payload) {
-          setWarnings(event.payload.warnings);
-        }
-        if (event.payload.kind === "needs_file") {
-          setNeedsFile(event.payload.intent);
         }
         setAttachmentStatus(null);
         setStatus("complete");
@@ -238,7 +224,6 @@ export function useUnifiedChatStream() {
     metadata,
     warnings,
     error,
-    needsFile,
     attachmentStatus,
     attachmentMeta,
     submit,

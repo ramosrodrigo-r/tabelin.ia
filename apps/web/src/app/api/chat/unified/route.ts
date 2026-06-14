@@ -4,7 +4,7 @@ import {
   type IntentClassification,
   type OverrideIntent,
   overrideIntentSchema,
-  tableStubPayloadSchema,
+  qaResponsePayloadSchema,
   unifiedIntentSchema,
 } from "@tabelin/shared";
 
@@ -183,14 +183,12 @@ function temporaryMessageFor(toolKind: OverrideIntent, classification: IntentCla
 
 function binaryIntentStream(
   classification: IntentClassification,
-  prompt: string,
   attachmentMeta?: AttachmentMeta
 ) {
   const toolKind = toolKindFromIntent(classification);
-  const payload = tableStubPayloadSchema.parse({
-    kind: "table_stub",
-    originalPrompt: prompt,
-    message: temporaryMessageFor(toolKind, classification),
+  const payload = qaResponsePayloadSchema.parse({
+    kind: "qa_response",
+    content: temporaryMessageFor(toolKind, classification),
   });
 
   return {
@@ -200,7 +198,7 @@ function binaryIntentStream(
       intentEvent(classification),
       ...(attachmentMeta ? [{ type: "attachment_grounded", ...attachmentMeta }] : []),
       { type: "metadata", metadata: { mode: GENERATE_MODE, providerModel: `binary-${toolKind}` } },
-      { type: "delta", text: payload.message },
+      { type: "delta", text: payload.content },
       { type: "complete", payload },
     ]),
   };
@@ -253,7 +251,7 @@ export async function POST(request: Request) {
     });
 
     const attachmentMeta = attachmentMetaFromContext(attachmentContext);
-    const result = binaryIntentStream(classification, promptResult.prompt, attachmentMeta);
+    const result = binaryIntentStream(classification, attachmentMeta);
 
     await saveConversationExchange({
       userId: user.id,

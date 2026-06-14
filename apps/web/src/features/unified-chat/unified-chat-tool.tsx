@@ -6,10 +6,8 @@ import type {
   OverrideIntent,
   ScriptType,
   SqlDialect,
-  TableSpecPayload,
   UnifiedCompletePayload,
   UnifiedIntent,
-  FileDependentIntent,
 } from "@tabelin/shared";
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -46,7 +44,6 @@ type UnifiedExchange = {
   error: string;
   metadata: unknown | null;
   attachmentMeta: UnifiedAttachmentMeta | null;
-  needsFile: FileDependentIntent | null;
   corrected: boolean;
   context: UnifiedContext;
 };
@@ -84,6 +81,8 @@ function intentFromPayload(payload: unknown): UnifiedIntent | null {
     case "table_clar_question":
     case "table_spec":
       return "sheet_operation";
+    case "qa_response":
+      return "qa";
     case "needs_file":
       return ((payload as { intent?: UnifiedIntent }).intent ?? null) as UnifiedIntent | null;
     default:
@@ -119,7 +118,6 @@ export function UnifiedChatTool({
         error: "",
         metadata: null,
         attachmentMeta: null,
-        needsFile: payload?.kind === "needs_file" ? payload.intent : null,
         corrected: false,
         context: {
           ...defaultContext(),
@@ -168,7 +166,6 @@ export function UnifiedChatTool({
           error: stream.error,
           metadata: stream.metadata,
           attachmentMeta: stream.attachmentMeta,
-          needsFile: stream.needsFile,
           corrected: submittedCorrected,
           context: submittedContext,
         },
@@ -183,7 +180,6 @@ export function UnifiedChatTool({
     stream.error,
     stream.intent,
     stream.metadata,
-    stream.needsFile,
     stream.result,
     stream.status,
     stream.warnings,
@@ -245,60 +241,6 @@ export function UnifiedChatTool({
 
     lastSubmitInputRef.current = submitInput;
     await stream.submit(submitInput);
-  }
-
-  function handleAnswerClarification(answer: string) {
-    const last = lastSubmitInputRef.current;
-    if (!last) return;
-    void submitPrompt(answer, {
-      contextSnapshot: {
-        platform: last.platform,
-        formulaLanguage: last.formulaLanguage,
-        separator: last.separator,
-        sqlDialect: last.sqlDialect,
-        scriptType: last.scriptType,
-      },
-    });
-  }
-
-  function handleSkipClarification() {
-    const last = lastSubmitInputRef.current;
-    if (!last) return;
-    const contextSnapshot: UnifiedContext = {
-      platform: last.platform,
-      formulaLanguage: last.formulaLanguage,
-      separator: last.separator,
-      sqlDialect: last.sqlDialect,
-      scriptType: last.scriptType,
-    };
-    setSubmittedText(last.prompt);
-    setSubmittedContext(contextSnapshot);
-    setSubmittedCorrected(false);
-    const submitInput = { ...last, overrideGenerate: true };
-    lastSubmitInputRef.current = submitInput;
-    void stream.submit(submitInput);
-  }
-
-  function handleConfirmSpec(spec: TableSpecPayload) {
-    const last = lastSubmitInputRef.current;
-    if (!last) return;
-    const contextSnapshot: UnifiedContext = {
-      platform: last.platform,
-      formulaLanguage: last.formulaLanguage,
-      separator: last.separator,
-      sqlDialect: last.sqlDialect,
-      scriptType: last.scriptType,
-    };
-    setSubmittedText(last.prompt);
-    setSubmittedContext(contextSnapshot);
-    setSubmittedCorrected(false);
-    const submitInput = {
-      ...last,
-      overrideGenerate: true,
-      specOverride: JSON.stringify(spec),
-    };
-    lastSubmitInputRef.current = submitInput;
-    void stream.submit(submitInput);
   }
 
   function handleOverride(exchange: UnifiedExchange, overrideIntent: OverrideIntent) {
@@ -373,12 +315,7 @@ export function UnifiedChatTool({
                 metadata={exchange.metadata}
                 warnings={exchange.warnings}
                 error={exchange.error}
-                attachmentMeta={exchange.attachmentMeta}
-                needsFile={exchange.needsFile}
                 onRetry={() => handleRetry(exchange)}
-                onAnswer={handleAnswerClarification}
-                onSkip={handleSkipClarification}
-                onConfirm={handleConfirmSpec}
               />
             </div>
           ))}
@@ -400,12 +337,7 @@ export function UnifiedChatTool({
                 metadata={stream.metadata}
                 warnings={stream.warnings}
                 error={stream.error}
-                attachmentMeta={stream.attachmentMeta}
-                needsFile={stream.needsFile}
                 onRetry={() => void submitPrompt(submittedText, { contextSnapshot: submittedContext ?? context })}
-                onAnswer={handleAnswerClarification}
-                onSkip={handleSkipClarification}
-                onConfirm={handleConfirmSpec}
               />
             </div>
           ) : null}
