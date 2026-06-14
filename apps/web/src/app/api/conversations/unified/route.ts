@@ -3,7 +3,16 @@ import { NextResponse } from "next/server";
 import { getSessionFromCookieHeader } from "@/server/auth/session";
 import { deleteConversationExchanges } from "@/server/tools/conversation-repository";
 
-export const ALL_UNIFIED_TOOL_KINDS = ["formula", "sql", "regex", "script", "template", "unified_table"] as const;
+export const ALL_UNIFIED_TOOL_KINDS = [
+  "sheet_operation",
+  "qa",
+  "formula",
+  "sql",
+  "regex",
+  "script",
+  "template",
+  "unified_table",
+] as const;
 
 export async function DELETE(request: Request) {
   try {

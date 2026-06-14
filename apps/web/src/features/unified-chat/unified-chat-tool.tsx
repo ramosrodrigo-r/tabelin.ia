@@ -9,6 +9,7 @@ import type {
   TableSpecPayload,
   UnifiedCompletePayload,
   UnifiedIntent,
+  FileDependentIntent,
 } from "@tabelin/shared";
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -45,7 +46,7 @@ type UnifiedExchange = {
   error: string;
   metadata: unknown | null;
   attachmentMeta: UnifiedAttachmentMeta | null;
-  needsFile: "file_analysis" | "ocr" | null;
+  needsFile: FileDependentIntent | null;
   corrected: boolean;
   context: UnifiedContext;
 };
@@ -79,26 +80,10 @@ function intentFromPayload(payload: unknown): UnifiedIntent | null {
   const kind = (payload as Record<string, unknown>).kind;
 
   switch (kind) {
-    case "formula":
-    case "explanation":
-      return "formula";
-    case "sql":
-      return "sql";
-    case "regex_generate":
-    case "regex_explain":
-      return "regex";
-    case "script":
-      return "script";
-    case "template":
-      return "template";
-    case "file_analysis":
-      return "file_analysis";
-    case "ocr":
-      return "ocr";
     case "table_stub":
     case "table_clar_question":
     case "table_spec":
-      return "tabela";
+      return "sheet_operation";
     case "needs_file":
       return ((payload as { intent?: UnifiedIntent }).intent ?? null) as UnifiedIntent | null;
     default:

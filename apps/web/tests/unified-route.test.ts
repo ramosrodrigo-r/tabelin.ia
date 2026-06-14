@@ -14,6 +14,7 @@ type StreamEvent = {
 const routeMocks = vi.hoisted(() => ({
   classifyIntent: vi.fn(),
   extractContent: vi.fn(),
+  saveConversationExchange: vi.fn(),
 }));
 
 vi.mock("@/server/ai/intent-classifier", () => ({
@@ -22,6 +23,10 @@ vi.mock("@/server/ai/intent-classifier", () => ({
 
 vi.mock("@/server/extraction/dispatcher", () => ({
   extractContent: routeMocks.extractContent,
+}));
+
+vi.mock("@/server/tools/conversation-repository", () => ({
+  saveConversationExchange: routeMocks.saveConversationExchange,
 }));
 
 async function readEvents(response: Response) {
@@ -64,8 +69,9 @@ describe("unified chat route", () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    routeMocks.classifyIntent.mockResolvedValue({ intent: "formula", confidence: "high" });
+    routeMocks.classifyIntent.mockResolvedValue({ intent: "qa", confidence: "high" });
     routeMocks.extractContent.mockResolvedValue({ ok: true, text: "conteudo extraido" });
+    routeMocks.saveConversationExchange.mockResolvedValue(null);
   });
 
   it("rejects unauthenticated requests", async () => {
@@ -86,25 +92,34 @@ describe("unified chat route", () => {
     expect(routeMocks.classifyIntent).not.toHaveBeenCalled();
   });
 
-  it("returns a temporary unsupported payload for removed tool intents", async () => {
+  it("routes sheet_operation with the binary intent label and persists it", async () => {
+    routeMocks.classifyIntent.mockResolvedValue({ intent: "sheet_operation", confidence: "high" });
+
     const response = await POST(authedJson({ prompt: "Quero somar a coluna B" }));
     const events = await readEvents(response);
 
     expect(response.status).toBe(200);
-    expect(events[0]).toMatchObject({ type: "intent_detected", intent: "formula", confidence: "high" });
+    expect(events[0]).toMatchObject({ type: "intent_detected", intent: "sheet_operation", confidence: "high" });
     expect(events).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ type: "delta", text: expect.stringContaining("modo antigo") }),
+        expect.objectContaining({ type: "delta", text: expect.stringContaining("operacao na planilha") }),
         expect.objectContaining({
           type: "complete",
           payload: expect.objectContaining({ kind: "table_stub" }),
         }),
       ])
     );
+    expect(routeMocks.saveConversationExchange).toHaveBeenCalledWith(
+      expect.objectContaining({
+        toolKind: "sheet_operation",
+        mode: "generate",
+        userPrompt: "Quero somar a coluna B",
+      })
+    );
   });
 
-  it("grounds an attached file without using file_analysis or ocr payloads", async () => {
-    routeMocks.classifyIntent.mockResolvedValue({ intent: "file_analysis", confidence: "high" });
+  it("routes qa and grounds an attached file without file-specific intents", async () => {
+    routeMocks.classifyIntent.mockResolvedValue({ intent: "qa", confidence: "high" });
     routeMocks.extractContent.mockResolvedValue({ ok: true, text: "Arquivo com 2 colunas e 10 linhas." });
 
     const formData = new FormData();
@@ -115,6 +130,7 @@ describe("unified chat route", () => {
     const events = await readEvents(response);
 
     expect(response.status).toBe(200);
+    expect(events[0]).toMatchObject({ type: "intent_detected", intent: "qa", confidence: "high" });
     expect(events).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -127,5 +143,18 @@ describe("unified chat route", () => {
         }),
       ])
     );
+    expect(routeMocks.saveConversationExchange).toHaveBeenCalledWith(
+      expect.objectContaining({
+        toolKind: "qa",
+        attachmentContext: "Arquivo com 2 colunas e 10 linhas.",
+      })
+    );
+  });
+
+  it("rejects legacy override intents before provider work", async () => {
+    const response = await POST(authedJson({ prompt: "Quero SQL", overrideIntent: "sql" }));
+
+    expect(response.status).toBe(400);
+    expect(routeMocks.classifyIntent).not.toHaveBeenCalled();
   });
 });

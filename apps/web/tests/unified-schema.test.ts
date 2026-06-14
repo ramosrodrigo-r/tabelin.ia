@@ -39,8 +39,8 @@ describe("unified chat schemas", () => {
 
   it("parses valid intent classifications", () => {
     expect(
-      intentClassificationSchema.parse({ intent: "formula", confidence: "high" })
-    ).toEqual({ intent: "formula", confidence: "high" });
+      intentClassificationSchema.parse({ intent: "sheet_operation", confidence: "high" })
+    ).toEqual({ intent: "sheet_operation", confidence: "high" });
   });
 
   it("rejects invalid intent classifications", () => {
@@ -53,14 +53,19 @@ describe("unified chat schemas", () => {
     expect(() => overrideIntentSchema.parse("unknown")).toThrow();
   });
 
+  it("rejects legacy override intents", () => {
+    expect(() => overrideIntentSchema.parse("sql")).toThrow();
+    expect(() => overrideIntentSchema.parse("ocr")).toThrow();
+  });
+
   it("parses intent_detected events", () => {
     expect(
       unifiedStreamEventSchema.parse({
         type: "intent_detected",
-        intent: "sql",
+        intent: "qa",
         confidence: "low",
       })
-    ).toEqual({ type: "intent_detected", intent: "sql", confidence: "low" });
+    ).toEqual({ type: "intent_detected", intent: "qa", confidence: "low" });
   });
 
   it("parses table stub payloads and complete events", () => {

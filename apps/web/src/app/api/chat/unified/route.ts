@@ -3,29 +3,19 @@ import { NextResponse } from "next/server";
 import {
   type IntentClassification,
   type OverrideIntent,
-  type UnifiedIntent,
   overrideIntentSchema,
   tableStubPayloadSchema,
   unifiedIntentSchema,
 } from "@tabelin/shared";
 
-import { MAX_EXTRACTED_CHARS } from "@/server/ai/context-messages";
+import { GENERATE_MODE, MAX_EXTRACTED_CHARS } from "@/server/ai/context-messages";
 import { classifyIntent } from "@/server/ai/intent-classifier";
 import { getSessionFromCookieHeader } from "@/server/auth/session";
 import { extractContent } from "@/server/extraction/dispatcher";
+import { saveConversationExchange } from "@/server/tools/conversation-repository";
 
 const MAX_PROMPT_CHARS = 8_000;
 const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
-
-type ResolvedToolKind =
-  | "formula"
-  | "sql"
-  | "regex"
-  | "script"
-  | "template"
-  | "file_analysis"
-  | "ocr"
-  | "unified_table";
 
 type UnifiedFields = {
   prompt: string;
@@ -53,18 +43,6 @@ const DEFAULT_FIELDS: UnifiedFields = {
   separator: ";",
   sqlDialect: "postgresql",
   scriptType: "apps_script",
-};
-
-const INTENT_TO_TOOL_KIND: Record<UnifiedIntent, ResolvedToolKind> = {
-  formula: "formula",
-  sql: "sql",
-  regex: "regex",
-  script: "script",
-  template: "template",
-  file_analysis: "file_analysis",
-  ocr: "ocr",
-  tabela: "unified_table",
-  unknown: "formula",
 };
 
 function asString(value: unknown) {
@@ -182,31 +160,50 @@ function responseFromStream(stream: ReadableStream<Uint8Array>) {
 function intentEvent(classification: IntentClassification) {
   return {
     type: "intent_detected" as const,
-    intent: classification.intent === "unknown" ? ("formula" as const) : classification.intent,
+    intent: classification.intent,
     confidence: classification.confidence,
   };
 }
 
-function unsupportedLegacyIntentStream(
+function toolKindFromIntent(classification: IntentClassification): OverrideIntent {
+  return classification.intent === "sheet_operation" ? "sheet_operation" : "qa";
+}
+
+function temporaryMessageFor(toolKind: OverrideIntent, classification: IntentClassification) {
+  if (classification.intent === "unknown") {
+    return "Nao consegui identificar o pedido com seguranca. Reescreva como uma operacao na planilha aberta ou uma pergunta sobre os dados.";
+  }
+
+  if (toolKind === "sheet_operation") {
+    return "Recebi seu pedido de operacao na planilha. A execucao estruturada sera conectada no fluxo de planilha viva.";
+  }
+
+  return "Recebi sua pergunta sobre os dados. A resposta analitica completa sera conectada no fluxo de planilha viva.";
+}
+
+function binaryIntentStream(
   classification: IntentClassification,
   prompt: string,
-  resolvedToolKind: ResolvedToolKind,
   attachmentMeta?: AttachmentMeta
 ) {
+  const toolKind = toolKindFromIntent(classification);
   const payload = tableStubPayloadSchema.parse({
     kind: "table_stub",
     originalPrompt: prompt,
-    message:
-      "Este modo antigo nao esta mais disponivel. Descreva uma operacao na planilha aberta ou uma pergunta sobre os dados.",
+    message: temporaryMessageFor(toolKind, classification),
   });
 
-  return createEventStream([
-    intentEvent(classification),
-    ...(attachmentMeta ? [{ type: "attachment_grounded", ...attachmentMeta }] : []),
-    { type: "metadata", metadata: { mode: "generate", providerModel: `removed-${resolvedToolKind}` } },
-    { type: "delta", text: payload.message },
-    { type: "complete", payload },
-  ]);
+  return {
+    payload,
+    toolKind,
+    stream: createEventStream([
+      intentEvent(classification),
+      ...(attachmentMeta ? [{ type: "attachment_grounded", ...attachmentMeta }] : []),
+      { type: "metadata", metadata: { mode: GENERATE_MODE, providerModel: `binary-${toolKind}` } },
+      { type: "delta", text: payload.message },
+      { type: "complete", payload },
+    ]),
+  };
 }
 
 export async function POST(request: Request) {
@@ -254,13 +251,22 @@ export async function POST(request: Request) {
       lastIntent: lastIntentResult.value,
       overrideIntent: overrideResult.value as OverrideIntent | undefined,
     });
-    const resolvedToolKind = INTENT_TO_TOOL_KIND[classification.intent];
 
     const attachmentMeta = attachmentMetaFromContext(attachmentContext);
+    const result = binaryIntentStream(classification, promptResult.prompt, attachmentMeta);
 
-    return responseFromStream(
-      unsupportedLegacyIntentStream(classification, promptResult.prompt, resolvedToolKind, attachmentMeta)
-    );
+    await saveConversationExchange({
+      userId: user.id,
+      toolKind: result.toolKind,
+      mode: GENERATE_MODE,
+      platform: fields.platform,
+      dialect: fields.formulaLanguage,
+      userPrompt: promptResult.prompt,
+      assistantPayload: result.payload,
+      attachmentContext,
+    });
+
+    return responseFromStream(result.stream);
   } catch (err) {
     console.error("unified chat failed", { err });
     return NextResponse.json({ error: "Nao consegui validar a resposta." }, { status: 502 });

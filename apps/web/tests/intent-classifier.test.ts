@@ -6,26 +6,14 @@ import { intentClassificationSchema } from "@tabelin/shared";
 const REAL_OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
 export const ACCURACY_PROMPTS: Array<[string, string, boolean?]> = [
-  ["quero uma fórmula SOMASE para somar por categoria", "formula"],
-  ["PROCV para buscar valor na tabela de preços", "formula"],
-  ["SELECT total_vendas FROM pedidos WHERE mes = 3", "sql"],
-  ["JOIN entre clientes e pedidos pelo ID", "sql"],
-  ["expressão regular para validar CPF", "regex"],
-  ["regex para extrair e-mails do texto", "regex"],
-  ["macro VBA para formatar células verdes", "script"],
-  ["script Apps Script para enviar email automático", "script"],
-  ["template de relatório semanal em markdown", "template"],
-  ["modelo de proposta comercial", "template"],
-  ["analisa essa planilha e me diz os totais", "file_analysis", true],
-  ["extrai o texto da imagem do contrato", "ocr", true],
-  ["cria uma tabela com produtos e preços", "tabela"],
-  ["preciso de uma planilha de controle de gastos", "tabela"],
-  ["fórmula SE para verificar se é maior que zero", "formula"],
-  ["query para agregar vendas por região no PostgreSQL", "sql"],
-  ["CONT.SE para contar células não vazias", "formula"],
-  ["UPDATE status WHERE cliente = 'inativo'", "sql"],
-  ["script para deletar linhas duplicadas no Sheets", "script"],
-  ["planilha com colunas de data, valor e categoria", "tabela"],
+  ["ordena por data", "sheet_operation"],
+  ["cria uma coluna de total", "sheet_operation"],
+  ["preencha os valores faltantes", "sheet_operation"],
+  ["filtre as linhas com status pago", "sheet_operation"],
+  ["qual a média da coluna Valor?", "qa"],
+  ["quantas linhas têm valor acima de 1000?", "qa"],
+  ["analise essa planilha e me diga os totais", "qa", true],
+  ["some a coluna Valor", "qa"],
 ];
 
 describe("intent classifier", () => {
@@ -45,7 +33,7 @@ describe("intent classifier", () => {
     expect(Object.keys(intentClassificationSchema.shape)[0]).toBe("intent");
   });
 
-  it("classifies at least 17 of 20 Portuguese prompts in fixture mode", async () => {
+  it("classifies the binary Portuguese prompt set in fixture mode", async () => {
     const results = await Promise.all(
       ACCURACY_PROMPTS.map(async ([prompt, expectedIntent, hasFile]) => {
         const result = await classifyIntent({ prompt, hasFile: Boolean(hasFile) });
@@ -54,7 +42,13 @@ describe("intent classifier", () => {
     );
 
     const correct = results.filter(Boolean).length;
-    expect(correct).toBeGreaterThanOrEqual(17);
+    expect(correct).toBe(ACCURACY_PROMPTS.length);
+  });
+
+  it("treats ambiguous sum requests as non-mutating Q&A", async () => {
+    await expect(
+      classifyIntent({ prompt: "some a coluna Valor", hasFile: false })
+    ).resolves.toEqual({ intent: "qa", confidence: "low" });
   });
 
   it("short-circuits valid override intents", async () => {
@@ -62,9 +56,9 @@ describe("intent classifier", () => {
       classifyIntent({
         prompt: "me dá uma fórmula PROCV",
         hasFile: false,
-        overrideIntent: "sql",
+        overrideIntent: "sheet_operation",
       })
-    ).resolves.toEqual({ intent: "sql", confidence: "high" });
+    ).resolves.toEqual({ intent: "sheet_operation", confidence: "high" });
   });
 
   it("rejects invalid override intents", async () => {
@@ -72,19 +66,15 @@ describe("intent classifier", () => {
       classifyIntent({
         prompt: "me dá uma fórmula PROCV",
         hasFile: false,
-        overrideIntent: "unknown",
+        overrideIntent: "sql",
       })
     ).rejects.toThrow();
   });
 
-  it("classifies file prompts as analysis or OCR in fixture mode", async () => {
+  it("does not create file-specific intents when a file is attached", async () => {
     await expect(
       classifyIntent({ prompt: "analisa essa planilha", hasFile: true })
-    ).resolves.toMatchObject({ intent: "file_analysis" });
-
-    await expect(
-      classifyIntent({ prompt: "extrai o texto da imagem", hasFile: true })
-    ).resolves.toMatchObject({ intent: "ocr" });
+    ).resolves.toMatchObject({ intent: "qa" });
   });
 });
 
@@ -95,7 +85,7 @@ describe("intent classifier real provider smoke", () => {
     }
   });
 
-  it.runIf(Boolean(REAL_OPENAI_API_KEY))("classifies at least 19 of 20 prompts with OpenAI", async () => {
+  it.runIf(Boolean(REAL_OPENAI_API_KEY))("classifies the binary prompt set with OpenAI", async () => {
     const results = await Promise.all(
       ACCURACY_PROMPTS.map(async ([prompt, expectedIntent, hasFile]) => {
         const result = await classifyIntent({ prompt, hasFile: Boolean(hasFile) });
@@ -104,6 +94,6 @@ describe("intent classifier real provider smoke", () => {
     );
 
     const correct = results.filter(Boolean).length;
-    expect(correct).toBeGreaterThanOrEqual(19);
+    expect(correct).toBeGreaterThanOrEqual(ACCURACY_PROMPTS.length - 1);
   });
 });

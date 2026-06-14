@@ -1,15 +1,6 @@
 "use client";
 
-import {
-  Braces,
-  ChevronDown,
-  FileSpreadsheet,
-  FileText,
-  Image,
-  LayoutTemplate,
-  Regex,
-  ScrollText,
-} from "lucide-react";
+import { ChevronDown, FileQuestion, FileSpreadsheet } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import type { OverrideIntent, UnifiedIntent } from "@tabelin/shared";
 
@@ -20,37 +11,20 @@ type IntentOption = {
 };
 
 const INTENT_LABELS: Record<UnifiedIntent, string> = {
-  formula: "Fórmula",
-  sql: "SQL",
-  regex: "Regex",
-  script: "Script",
-  template: "Template",
-  file_analysis: "Análise",
-  ocr: "OCR",
-  tabela: "Tabela",
-  unknown: "Fórmula",
+  sheet_operation: "Operação",
+  qa: "Pergunta",
+  unknown: "Pergunta",
 };
 
 const INTENT_ICONS: Record<UnifiedIntent, React.ComponentType<{ size?: number; "aria-hidden"?: boolean }>> = {
-  formula: FileSpreadsheet,
-  sql: ScrollText,
-  regex: Regex,
-  script: Braces,
-  template: LayoutTemplate,
-  file_analysis: FileText,
-  ocr: Image,
-  tabela: LayoutTemplate,
-  unknown: FileSpreadsheet,
+  sheet_operation: FileSpreadsheet,
+  qa: FileQuestion,
+  unknown: FileQuestion,
 };
 
 const OVERRIDE_OPTIONS: IntentOption[] = [
-  { intent: "formula", label: "Fórmula", Icon: FileSpreadsheet },
-  { intent: "sql", label: "SQL", Icon: ScrollText },
-  { intent: "regex", label: "Regex", Icon: Regex },
-  { intent: "script", label: "Script", Icon: Braces },
-  { intent: "file_analysis", label: "Análise", Icon: FileText },
-  { intent: "ocr", label: "OCR", Icon: Image },
-  { intent: "tabela", label: "Tabela", Icon: LayoutTemplate },
+  { intent: "sheet_operation", label: "Operação", Icon: FileSpreadsheet },
+  { intent: "qa", label: "Pergunta", Icon: FileQuestion },
 ];
 
 export function getIntentLabel(intent: UnifiedIntent | null) {

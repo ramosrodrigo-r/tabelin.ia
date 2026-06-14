@@ -51,7 +51,7 @@ function FileBackedOutput({
 }
 
 function NeedsFileCard({ intent }: { intent: FileDependentIntent }) {
-  const typeLabel = intent === "ocr" ? "leitura de imagem (OCR)" : "análise de planilha";
+  const typeLabel = intent === "sheet_operation" ? "operação na planilha" : "pergunta sobre os dados";
 
   return (
     <div className="assistant-card" aria-label="Pedido precisa de arquivo">

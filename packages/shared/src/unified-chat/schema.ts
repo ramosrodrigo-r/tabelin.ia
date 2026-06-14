@@ -7,33 +7,18 @@ import { sqlGenerateResponseSchema } from "../sql/schema";
 import { templateGenerateResponseSchema } from "../template/schema";
 
 export const UNIFIED_INTENTS = [
-  "formula",
-  "sql",
-  "regex",
-  "script",
-  "template",
-  "file_analysis",
-  "ocr",
-  "tabela",
+  "sheet_operation",
+  "qa",
   "unknown",
 ] as const;
 
 export const OVERRIDE_INTENTS = [
-  "formula",
-  "sql",
-  "regex",
-  "script",
-  "template",
-  "file_analysis",
-  "ocr",
-  "tabela",
+  "sheet_operation",
+  "qa",
 ] as const;
-
-export const FILE_DEPENDENT_INTENTS = ["file_analysis", "ocr"] as const;
 
 export const unifiedIntentSchema = z.enum(UNIFIED_INTENTS);
 export const overrideIntentSchema = z.enum(OVERRIDE_INTENTS);
-export const fileDependentIntentSchema = z.enum(FILE_DEPENDENT_INTENTS);
 
 export const intentClassificationSchema = z.object({
   intent: unifiedIntentSchema,
@@ -48,7 +33,7 @@ export const tableStubPayloadSchema = z.object({
 
 export const needsFilePayloadSchema = z.object({
   kind: z.literal("needs_file"),
-  intent: fileDependentIntentSchema,
+  intent: overrideIntentSchema,
 });
 
 export const tableClarQuestionPayloadSchema = z.object({
@@ -121,7 +106,7 @@ export const unifiedStreamEventSchema = z.discriminatedUnion("type", [
   }),
   z.object({
     type: z.literal("needs_file"),
-    intent: fileDependentIntentSchema,
+    intent: overrideIntentSchema,
   }),
   z.object({ type: z.literal("metadata"), metadata: z.unknown() }),
   z.object({
@@ -139,7 +124,7 @@ export const unifiedStreamEventSchema = z.discriminatedUnion("type", [
 
 export type UnifiedIntent = z.infer<typeof unifiedIntentSchema>;
 export type OverrideIntent = z.infer<typeof overrideIntentSchema>;
-export type FileDependentIntent = z.infer<typeof fileDependentIntentSchema>;
+export type FileDependentIntent = OverrideIntent;
 export type IntentClassification = z.infer<typeof intentClassificationSchema>;
 export type TableStubPayload = z.infer<typeof tableStubPayloadSchema>;
 export type NeedsFilePayload = z.infer<typeof needsFilePayloadSchema>;

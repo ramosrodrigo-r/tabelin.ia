@@ -114,7 +114,7 @@ function rawStreamResponse(lines: string[]) {
 
 function formulaStream() {
   return streamResponse([
-    { type: "intent_detected", intent: "formula", confidence: "high" },
+    { type: "intent_detected", intent: "qa", confidence: "high" },
     { type: "metadata", metadata: formulaPayload.metadata },
     { type: "delta", text: formulaPayload.formula },
     { type: "complete", payload: formulaPayload },
@@ -123,7 +123,7 @@ function formulaStream() {
 
 function sqlStream() {
   return streamResponse([
-    { type: "intent_detected", intent: "sql", confidence: "high" },
+    { type: "intent_detected", intent: "sheet_operation", confidence: "high" },
     { type: "metadata", metadata: sqlPayload.metadata },
     { type: "delta", text: sqlPayload.query },
     { type: "complete", payload: sqlPayload },
@@ -138,28 +138,28 @@ function parseJsonRequestBody(fetchMock: ReturnType<typeof vi.spyOn>, index = 0)
 describe("IntentPill", () => {
   it("renders detected state and closes the override dropdown with Escape", async () => {
     const user = userEvent.setup();
-    render(<IntentPill intent="formula" onOverride={vi.fn()} />);
+    render(<IntentPill intent="qa" onOverride={vi.fn()} />);
 
-    expect(screen.getByText("Fórmula · detectado")).toBeInTheDocument();
+    expect(screen.getByText("Pergunta · detectado")).toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: /Tipo detectado: Fórmula/ }));
-    expect(screen.getAllByRole("option")).toHaveLength(7);
+    await user.click(screen.getByRole("button", { name: /Tipo detectado: Pergunta/ }));
+    expect(screen.getAllByRole("option")).toHaveLength(2);
     expect(screen.getByText("Mudar o tipo de resposta")).toBeInTheDocument();
 
     await user.keyboard("{Escape}");
     expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Tipo detectado: Fórmula/ })).toHaveFocus();
+    expect(screen.getByRole("button", { name: /Tipo detectado: Pergunta/ })).toHaveFocus();
   });
 
-  it("selecting SQL calls onOverride", async () => {
+  it("selecting Operação calls onOverride", async () => {
     const user = userEvent.setup();
     const onOverride = vi.fn();
-    render(<IntentPill intent="formula" onOverride={onOverride} />);
+    render(<IntentPill intent="qa" onOverride={onOverride} />);
 
-    await user.click(screen.getByRole("button", { name: /Tipo detectado: Fórmula/ }));
-    await user.click(screen.getByRole("option", { name: "SQL" }));
+    await user.click(screen.getByRole("button", { name: /Tipo detectado: Pergunta/ }));
+    await user.click(screen.getByRole("option", { name: "Operação" }));
 
-    expect(onOverride).toHaveBeenCalledWith("sql");
+    expect(onOverride).toHaveBeenCalledWith("sheet_operation");
   });
 });
 
@@ -230,8 +230,8 @@ describe("RenderDispatcher", () => {
     rerender(
       <RenderDispatcher
         {...baseProps}
-        payload={{ kind: "needs_file", intent: "ocr" }}
-        needsFile="ocr"
+        payload={{ kind: "needs_file", intent: "qa" }}
+        needsFile="qa"
       />
     );
     expect(screen.getByText("Esse pedido precisa de um arquivo.")).toBeInTheDocument();
@@ -285,10 +285,10 @@ describe("UnifiedChatTool", () => {
     await user.click(screen.getByRole("button", { name: "Enviar" }));
 
     await act(async () => {
-      controller.enqueue(encodeLine({ type: "intent_detected", intent: "formula", confidence: "high" }));
+      controller.enqueue(encodeLine({ type: "intent_detected", intent: "qa", confidence: "high" }));
     });
 
-    expect(await screen.findByText("Fórmula · detectado")).toBeInTheDocument();
+    expect(await screen.findByText("Pergunta · detectado")).toBeInTheDocument();
     expect(screen.queryByText("=SOMA(A:A)")).not.toBeInTheDocument();
 
     await act(async () => {
@@ -339,9 +339,9 @@ describe("UnifiedChatTool", () => {
     const user = userEvent.setup();
     const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(
       streamResponse([
-        { type: "intent_detected", intent: "ocr", confidence: "high" },
-        { type: "needs_file", intent: "ocr" },
-        { type: "complete", payload: { kind: "needs_file", intent: "ocr" } },
+        { type: "intent_detected", intent: "qa", confidence: "high" },
+        { type: "needs_file", intent: "qa" },
+        { type: "complete", payload: { kind: "needs_file", intent: "qa" } },
       ])
     );
 
@@ -371,18 +371,18 @@ describe("UnifiedChatTool", () => {
     await user.click(screen.getByRole("button", { name: "Enviar" }));
     await waitFor(() => expect(screen.getByText(archivedMessage)).toBeInTheDocument());
 
-    await user.click(screen.getByRole("button", { name: /Tipo detectado: Fórmula/ }));
-    await user.click(screen.getByRole("option", { name: "SQL" }));
+    await user.click(screen.getByRole("button", { name: /Tipo detectado: Pergunta/ }));
+    await user.click(screen.getByRole("option", { name: "Operação" }));
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
     const secondBody = parseJsonRequestBody(fetchMock, 1);
 
     expect(secondBody).toMatchObject({
       prompt: "Tenho PROCV, mas quero SQL",
-      overrideIntent: "sql",
+      overrideIntent: "sheet_operation",
     });
     await waitFor(() => expect(screen.getByText(archivedMessage)).toBeInTheDocument());
-    expect(screen.getByText("SQL · corrigido")).toBeInTheDocument();
+    expect(screen.getByText("Operação · corrigido")).toBeInTheDocument();
   });
 
   it("new conversation clears archived exchanges", async () => {
@@ -483,7 +483,7 @@ describe("UnifiedChatTool", () => {
 
     function clarStream(payload: UnifiedCompletePayload) {
       return streamResponse([
-        { type: "intent_detected", intent: "tabela", confidence: "high" },
+        { type: "intent_detected", intent: "sheet_operation", confidence: "high" },
         { type: "complete", payload },
       ]);
     }

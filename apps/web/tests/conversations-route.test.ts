@@ -53,8 +53,17 @@ describe("conversation delete routes", () => {
 
     expect(response.status).toBe(200);
     expect(body).toEqual({ ok: true });
-    expect(ALL_UNIFIED_TOOL_KINDS).toEqual(["formula", "sql", "regex", "script", "template", "unified_table"]);
-    expect(conversationMocks.deleteConversationExchanges).toHaveBeenCalledTimes(6);
+    expect(ALL_UNIFIED_TOOL_KINDS).toEqual([
+      "sheet_operation",
+      "qa",
+      "formula",
+      "sql",
+      "regex",
+      "script",
+      "template",
+      "unified_table",
+    ]);
+    expect(conversationMocks.deleteConversationExchanges).toHaveBeenCalledTimes(8);
 
     for (const kind of ALL_UNIFIED_TOOL_KINDS) {
       expect(conversationMocks.deleteConversationExchanges).toHaveBeenCalledWith(expect.any(String), kind);
@@ -70,6 +79,20 @@ describe("conversation delete routes", () => {
     expect(response.status).toBe(200);
     expect(body).toEqual({ ok: true });
     expect(conversationMocks.deleteConversationExchanges).toHaveBeenCalledWith(expect.any(String), "formula");
+  });
+
+  it("deletes new binary tool histories directly", async () => {
+    const response = await deleteToolConversation(authedRequest(), {
+      params: Promise.resolve({ tool: "sheet_operation" }),
+    });
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body).toEqual({ ok: true });
+    expect(conversationMocks.deleteConversationExchanges).toHaveBeenCalledWith(
+      expect.any(String),
+      "sheet_operation"
+    );
   });
 
   it("rejects invalid existing tool kinds", async () => {

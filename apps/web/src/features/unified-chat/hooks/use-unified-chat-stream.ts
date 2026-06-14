@@ -4,6 +4,7 @@ import {
   type FileDependentIntent,
   type FormulaLanguage,
   type FormulaPlatform,
+  type OverrideIntent,
   type ScriptType,
   type SqlDialect,
   type UnifiedCompletePayload,
@@ -23,7 +24,7 @@ export type UnifiedAttachmentMeta = {
 export type SubmitUnifiedChatInput = {
   prompt: string;
   file?: File;
-  overrideIntent?: Exclude<UnifiedIntent, "unknown">;
+  overrideIntent?: OverrideIntent;
   platform: FormulaPlatform;
   formulaLanguage: FormulaLanguage;
   separator: ";" | ",";
