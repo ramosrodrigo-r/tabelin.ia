@@ -74,7 +74,7 @@ Full details: ver seções abaixo (Phase 12-15) ou `.planning/milestones/v2.0-RO
 - [x] **Phase 17: Desligar Monetização & Cota** - Billing/Mercado Pago/Pro/cota saem por completo; rota de chat permanece funcional sem gate (completed 2026-06-11)
 - [x] **Phase 18: Remover Tools Avulsos, OCR, File Analysis & Reduzir Dispatcher** - Geradores de texto, OCR, Análise de Arquivos e geração de tabela do zero saem; classificador de intent e render-dispatcher reduzidos a planilha + Q&A (completed 2026-06-14)
 - [x] **Phase 19: Ingestão Tri-Estado da Planilha** - Usuário abre a planilha viva com seed, em branco, ou via upload CSV/XLSX (substitui a grade) (completed 2026-06-14)
-- [ ] **Phase 20: Protocolo de Mutação Chat→Grade & Q&A** - Chat aplica operações estruturadas à grade aberta com undo, responde dúvidas analíticas em texto, com streaming e fixture sem chave
+- [x] **Phase 20: Protocolo de Mutação Chat→Grade & Q&A** - Chat aplica operações estruturadas à grade aberta com undo, responde dúvidas analíticas em texto, com streaming e fixture sem chave (completed 2026-06-14)
 - [ ] **Phase 21: Export & Persistência da Planilha+Conversa** - Export CSV/XLSX com fórmulas calculadas; planilha e conversa do usuário persistem entre sessões
 - [ ] **Phase 22: Limpeza Final — Prisma, Dependências, Config, Testes & QA Verde** - Migrations destrutivas (preservando dados), deps órfãs, config/docs/env órfãos, testes/fixtures/assets de capacidades OUT removidos; suíte completa verde
 
@@ -325,10 +325,10 @@ Full details: ver seções abaixo (Phase 12-15) ou `.planning/milestones/v2.0-RO
   4. Uma pergunta analítica ("qual a média da coluna Valor?", "quantas linhas acima de 1000?") retorna resposta em texto no chat sem alterar nenhuma célula da grade
   5. A resposta do chat (mutação ou Q&A) faz streaming visível ao usuário; sem `OPENAI_API_KEY`, o chat responde via fixture determinístico (dev/test sem custo) e a localização pt-BR (nomes de função, separador `;`, formatação R$/DD-MM-AAAA, cópia de UI) permanece sem regressão em ambos os caminhos
 
-**Plans**: 1/2 plans executed
+**Plans**: 2/2 plans complete
 
 - [x] 20-01-PLAN.md
-- [ ] 20-02-PLAN.md
+- [x] 20-02-PLAN.md
 
 **UI hint**: yes
 
@@ -385,6 +385,6 @@ Full details: ver seções abaixo (Phase 12-15) ou `.planning/milestones/v2.0-RO
 | 17. Desligar Monetização & Cota | v3.0 | 3/3 | Complete   | 2026-06-11 |
 | 18. Remover Tools Avulsos, OCR, File Analysis & Reduzir Dispatcher | v3.0 | 8/8 | Complete | 2026-06-14 |
 | 19. Ingestão Tri-Estado da Planilha | v3.0 | 2/2 | Complete    | 2026-06-14 |
-| 20. Protocolo de Mutação Chat→Grade & Q&A | v3.0 | 1/2 | In Progress|  |
+| 20. Protocolo de Mutação Chat→Grade & Q&A | v3.0 | 2/2 | Complete   | 2026-06-14 |
 | 21. Export & Persistência da Planilha+Conversa | v3.0 | 0/TBD | Not started | - |
 | 22. Limpeza Final — Prisma, Dependências, Config, Testes & QA Verde | v3.0 | 0/TBD | Not started | - |

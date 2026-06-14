@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Planilha Viva + Chat de IA
-status: executing
+status: verifying
 stopped_at: Phase 20 context gathered
-last_updated: "2026-06-14T20:08:36.219Z"
+last_updated: "2026-06-14T20:15:40.408Z"
 last_activity: 2026-06-14 -- Phase 20 execution started
 progress:
   total_phases: 11
-  completed_phases: 4
+  completed_phases: 5
   total_plans: 17
-  completed_plans: 17
-  percent: 36
+  completed_plans: 18
+  percent: 45
 ---
 
 # Project State
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-06-08)
 
 Phase: 20 (protocolo-de-muta-o-chat-grade-q-a) — EXECUTING
 Plan: 2 of 2
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-06-14 -- Phase 20 execution started
 
 ## Performance Metrics
@@ -60,6 +60,7 @@ Recent decisions affecting current work:
 - [Phase ?]: Wiring final Phase 14-06
 - [Phase ?]: Phase 19-02: controles de ingestao (Nova em Branco/Carregar Exemplo/Importar) so no grid principal; importacao aciona setSpec e entra no historico de undo; falha preserva o estado anterior.
 - [Phase 20]: Phase 20-01: tradução de fórmulas EN<->pt-BR no BFF (translateEnToPtBr) antes de devolver o table_spec à grade; provider unificado com ramo fixture vs OpenAI por hasOpenAiKey()
+- [Phase ?]: Phase 20-02: frontend transmite o estado vivo da grade como specOverride e aplica o table_spec via setSpec (efeito dedicado + dedupe por ref), preservando o undo Ctrl+Z
 
 ### Pending Todos
 
@@ -82,6 +83,7 @@ None yet.
 | Phase 18 P05 | 13 min | 2 tasks | 14 files |
 | Phase 19 P02 | 5 min | 2 tasks | 2 files |
 | Phase 20 P01 | 12 | 3 tasks | 5 files |
+| Phase 20 P02 | 3 | 3 tasks | 3 files |
 
 ## Deferred Items
 
@@ -104,7 +106,7 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-06-14T20:08:07.172Z
+Last session: 2026-06-14T20:15:31.896Z
 Stopped at: Phase 20 context gathered
 Resume file: .planning/phases/20-protocolo-de-muta-o-chat-grade-q-a/20-CONTEXT.md
 

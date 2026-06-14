@@ -28,7 +28,7 @@
 
 - [x] **CHAT-01**: O pedido do usuário é enviado ao modelo junto com o estado atual da planilha (colunas, tipos, amostra de linhas) (RF-03)
 - [x] **CHAT-02**: A IA retorna operações estruturadas (sobre células/colunas/linhas/fórmulas) que são aplicadas à grade aberta — contrato de saída do protocolo de mutação chat→grade (RF-03, §7)
-- [ ] **CHAT-03**: As mudanças que a IA aplica à grade podem ser desfeitas pelo usuário (undo) (RF-03)
+- [x] **CHAT-03**: As mudanças que a IA aplica à grade podem ser desfeitas pelo usuário (undo) (RF-03)
 - [x] **CHAT-04**: Perguntas analíticas sobre os dados ("qual a média da coluna Valor?", "quantas linhas acima de 1000?") retornam resposta em texto no chat, sem alterar a grade (RF-04)
 - [x] **CHAT-05**: A resposta do chat faz streaming ao usuário (§4.5)
 - [x] **CHAT-06**: Com `OPENAI_API_KEY` ausente, o chat responde por fixture (dev/test sem custo) (RNF-03)
@@ -106,7 +106,7 @@ Preenchida na criação do roadmap (cada requisito mapeia para exatamente uma fa
 | DATA-04 | Phase 19 | Complete |
 | CHAT-01 | Phase 20 | Complete |
 | CHAT-02 | Phase 20 | Complete |
-| CHAT-03 | Phase 20 | Pending |
+| CHAT-03 | Phase 20 | Complete |
 | CHAT-04 | Phase 20 | Complete |
 | CHAT-05 | Phase 20 | Complete |
 | CHAT-06 | Phase 20 | Complete |
