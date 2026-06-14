@@ -325,7 +325,11 @@ Full details: ver seções abaixo (Phase 12-15) ou `.planning/milestones/v2.0-RO
   4. Uma pergunta analítica ("qual a média da coluna Valor?", "quantas linhas acima de 1000?") retorna resposta em texto no chat sem alterar nenhuma célula da grade
   5. A resposta do chat (mutação ou Q&A) faz streaming visível ao usuário; sem `OPENAI_API_KEY`, o chat responde via fixture determinístico (dev/test sem custo) e a localização pt-BR (nomes de função, separador `;`, formatação R$/DD-MM-AAAA, cópia de UI) permanece sem regressão em ambos os caminhos
 
-**Plans**: TBD
+**Plans**: 1/2 plans executed
+
+- [x] 20-01-PLAN.md
+- [ ] 20-02-PLAN.md
+
 **UI hint**: yes
 
 ### Phase 21: Export & Persistência da Planilha+Conversa
@@ -381,6 +385,6 @@ Full details: ver seções abaixo (Phase 12-15) ou `.planning/milestones/v2.0-RO
 | 17. Desligar Monetização & Cota | v3.0 | 3/3 | Complete   | 2026-06-11 |
 | 18. Remover Tools Avulsos, OCR, File Analysis & Reduzir Dispatcher | v3.0 | 8/8 | Complete | 2026-06-14 |
 | 19. Ingestão Tri-Estado da Planilha | v3.0 | 2/2 | Complete    | 2026-06-14 |
-| 20. Protocolo de Mutação Chat→Grade & Q&A | v3.0 | 0/TBD | Not started | - |
+| 20. Protocolo de Mutação Chat→Grade & Q&A | v3.0 | 1/2 | In Progress|  |
 | 21. Export & Persistência da Planilha+Conversa | v3.0 | 0/TBD | Not started | - |
 | 22. Limpeza Final — Prisma, Dependências, Config, Testes & QA Verde | v3.0 | 0/TBD | Not started | - |

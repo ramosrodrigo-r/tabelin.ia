@@ -4,13 +4,13 @@ milestone: v3.0
 milestone_name: Planilha Viva + Chat de IA
 status: executing
 stopped_at: Phase 20 context gathered
-last_updated: "2026-06-14T20:00:28.886Z"
+last_updated: "2026-06-14T20:08:36.219Z"
 last_activity: 2026-06-14 -- Phase 20 execution started
 progress:
   total_phases: 11
   completed_phases: 4
   total_plans: 17
-  completed_plans: 16
+  completed_plans: 17
   percent: 36
 ---
 
@@ -26,8 +26,8 @@ See: .planning/PROJECT.md (updated 2026-06-08)
 ## Current Position
 
 Phase: 20 (protocolo-de-muta-o-chat-grade-q-a) — EXECUTING
-Plan: 1 of 2
-Status: Executing Phase 20
+Plan: 2 of 2
+Status: Ready to execute
 Last activity: 2026-06-14 -- Phase 20 execution started
 
 ## Performance Metrics
@@ -59,6 +59,7 @@ Recent decisions affecting current work:
 - v2.0 planning: Abas por tool preservadas como deep links — chat unificado é default, não substituição forçada
 - [Phase ?]: Wiring final Phase 14-06
 - [Phase ?]: Phase 19-02: controles de ingestao (Nova em Branco/Carregar Exemplo/Importar) so no grid principal; importacao aciona setSpec e entra no historico de undo; falha preserva o estado anterior.
+- [Phase 20]: Phase 20-01: tradução de fórmulas EN<->pt-BR no BFF (translateEnToPtBr) antes de devolver o table_spec à grade; provider unificado com ramo fixture vs OpenAI por hasOpenAiKey()
 
 ### Pending Todos
 
@@ -80,6 +81,7 @@ None yet.
 | Phase 18 P04 | 8 min | 2 tasks | 14 files |
 | Phase 18 P05 | 13 min | 2 tasks | 14 files |
 | Phase 19 P02 | 5 min | 2 tasks | 2 files |
+| Phase 20 P01 | 12 | 3 tasks | 5 files |
 
 ## Deferred Items
 
@@ -102,7 +104,7 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-06-14T17:53:18.269Z
+Last session: 2026-06-14T20:08:07.172Z
 Stopped at: Phase 20 context gathered
 Resume file: .planning/phases/20-protocolo-de-muta-o-chat-grade-q-a/20-CONTEXT.md
 

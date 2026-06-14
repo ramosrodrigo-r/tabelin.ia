@@ -26,12 +26,12 @@
 
 ### Chat sobre a Planilha (CHAT)
 
-- [ ] **CHAT-01**: O pedido do usuário é enviado ao modelo junto com o estado atual da planilha (colunas, tipos, amostra de linhas) (RF-03)
-- [ ] **CHAT-02**: A IA retorna operações estruturadas (sobre células/colunas/linhas/fórmulas) que são aplicadas à grade aberta — contrato de saída do protocolo de mutação chat→grade (RF-03, §7)
+- [x] **CHAT-01**: O pedido do usuário é enviado ao modelo junto com o estado atual da planilha (colunas, tipos, amostra de linhas) (RF-03)
+- [x] **CHAT-02**: A IA retorna operações estruturadas (sobre células/colunas/linhas/fórmulas) que são aplicadas à grade aberta — contrato de saída do protocolo de mutação chat→grade (RF-03, §7)
 - [ ] **CHAT-03**: As mudanças que a IA aplica à grade podem ser desfeitas pelo usuário (undo) (RF-03)
-- [ ] **CHAT-04**: Perguntas analíticas sobre os dados ("qual a média da coluna Valor?", "quantas linhas acima de 1000?") retornam resposta em texto no chat, sem alterar a grade (RF-04)
-- [ ] **CHAT-05**: A resposta do chat faz streaming ao usuário (§4.5)
-- [ ] **CHAT-06**: Com `OPENAI_API_KEY` ausente, o chat responde por fixture (dev/test sem custo) (RNF-03)
+- [x] **CHAT-04**: Perguntas analíticas sobre os dados ("qual a média da coluna Valor?", "quantas linhas acima de 1000?") retornam resposta em texto no chat, sem alterar a grade (RF-04)
+- [x] **CHAT-05**: A resposta do chat faz streaming ao usuário (§4.5)
+- [x] **CHAT-06**: Com `OPENAI_API_KEY` ausente, o chat responde por fixture (dev/test sem custo) (RNF-03)
 
 ### Export & Persistência (PERS)
 
@@ -42,7 +42,7 @@
 
 ### Localização (LOC) — regressão-guard
 
-- [ ] **LOC-01**: Fórmulas (nomes de função pt-BR), separador `;`, formatação R$/DD-MM-AAAA e cópia de UI permanecem em pt-BR após o pivô, sem regressão (RNF-01)
+- [x] **LOC-01**: Fórmulas (nomes de função pt-BR), separador `;`, formatação R$/DD-MM-AAAA e cópia de UI permanecem em pt-BR após o pivô, sem regressão (RNF-01)
 
 ### Remoção Comprovada de Capacidades OUT (CLEAN)
 
@@ -104,17 +104,17 @@ Preenchida na criação do roadmap (cada requisito mapeia para exatamente uma fa
 | DATA-02 | Phase 19 | Complete |
 | DATA-03 | Phase 19 | Complete |
 | DATA-04 | Phase 19 | Complete |
-| CHAT-01 | Phase 20 | Pending |
-| CHAT-02 | Phase 20 | Pending |
+| CHAT-01 | Phase 20 | Complete |
+| CHAT-02 | Phase 20 | Complete |
 | CHAT-03 | Phase 20 | Pending |
-| CHAT-04 | Phase 20 | Pending |
-| CHAT-05 | Phase 20 | Pending |
-| CHAT-06 | Phase 20 | Pending |
+| CHAT-04 | Phase 20 | Complete |
+| CHAT-05 | Phase 20 | Complete |
+| CHAT-06 | Phase 20 | Complete |
 | PERS-01 | Phase 21 | Pending |
 | PERS-02 | Phase 21 | Pending |
 | PERS-03 | Phase 21 | Pending |
 | PERS-04 | Phase 21 | Pending |
-| LOC-01 | Phase 20 | Pending |
+| LOC-01 | Phase 20 | Complete |
 | CLEAN-01 | Phase 18 | Complete |
 | CLEAN-02 | Phase 18 | Complete |
 | CLEAN-03 | Phase 18 | Complete |
