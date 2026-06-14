@@ -1,6 +1,6 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import React from "react";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // Mocks da util de export (Plan 01) — evita efeito DOM/fs real (Pitfall 4).
 // vi.hoisted: vi.mock é hoisted ao topo do arquivo, então as referências usadas
@@ -33,6 +33,8 @@ if (typeof window !== "undefined" && !window.ResizeObserver) {
 // Import direto: o módulo já existe nesta fase (Wave 2) — usado pelos testes
 // de export EXP-01/EXP-02 que precisam de render real (não skip-graceful).
 import { TableGridPanel as TableGridPanelDirect } from "../src/features/unified-chat/components/table-grid-panel";
+import { WorkspaceStateProvider } from "../src/components/app/workspace-state-context";
+import { SAMPLE_SPEC } from "../src/features/unified-chat/lib/sample-spec";
 import type { TableSpecPayload } from "@tabelin/shared";
 
 // NOTE: TableGridPanel será criado no Wave 2.
@@ -329,5 +331,161 @@ describe("TableGridPanel — EXP-01/EXP-02 export CSV/XLSX", () => {
     fireEvent.click(screen.getAllByLabelText("Exportar XLSX")[0]);
     expect(buildXlsxMock).toHaveBeenCalledTimes(1);
     expect(downloadXlsxMock).toHaveBeenCalledTimes(1);
+  });
+});
+
+// ─── Wave 2: controles de ingestão (DATA-01..04) ──────────────────────────────
+
+/** Renderiza o grid principal (sem propSpec) dentro do provider de estado. */
+function renderWorkspaceGrid() {
+  return render(
+    <WorkspaceStateProvider>
+      <TableGridPanelDirect />
+    </WorkspaceStateProvider>
+  );
+}
+
+/** Cria um FileList sintético com um único arquivo (jsdom não expõe construtor). */
+function setInputFile(input: HTMLInputElement, file: File) {
+  Object.defineProperty(input, "files", {
+    configurable: true,
+    value: {
+      0: file,
+      length: 1,
+      item: (i: number) => (i === 0 ? file : null),
+    },
+  });
+}
+
+const IMPORTED_PAYLOAD: TableSpecPayload = {
+  kind: "table_spec",
+  title: "Planilha Importada",
+  columns: [
+    { name: "Produto", type: "text", key: "produto" },
+    { name: "Preco", type: "number", key: "preco" },
+  ],
+  rowCount: 2,
+  rows: [
+    { produto: "Café Importado XYZ", preco: 30 },
+    { produto: "Açúcar Importado XYZ", preco: 12 },
+  ],
+  formulaLanguage: "pt-BR",
+  separator: ";",
+};
+
+describe("TableGridPanel — DATA-01 Nova em Branco", () => {
+  it("renderiza os botões de ingestão na toolbar do grid principal", () => {
+    renderWorkspaceGrid();
+    expect(screen.getByLabelText("Nova em Branco")).toBeInTheDocument();
+    expect(screen.getByLabelText("Carregar Exemplo")).toBeInTheDocument();
+    expect(screen.getByLabelText("Importar Planilha")).toBeInTheDocument();
+  });
+
+  it("clicar reseta para a planilha em branco (título 'Planilha sem título')", () => {
+    renderWorkspaceGrid();
+    expect(screen.getByText(SAMPLE_SPEC.title)).toBeInTheDocument();
+    fireEvent.click(screen.getByLabelText("Nova em Branco"));
+    expect(screen.getByText("Planilha sem título")).toBeInTheDocument();
+  });
+});
+
+describe("TableGridPanel — DATA-02 Carregar Exemplo", () => {
+  it("restaura o SAMPLE_SPEC após reset para branco", () => {
+    renderWorkspaceGrid();
+    fireEvent.click(screen.getByLabelText("Nova em Branco"));
+    expect(screen.getByText("Planilha sem título")).toBeInTheDocument();
+    fireEvent.click(screen.getByLabelText("Carregar Exemplo"));
+    expect(screen.getByText(SAMPLE_SPEC.title)).toBeInTheDocument();
+  });
+});
+
+describe("TableGridPanel — DATA-03 importação com sucesso", () => {
+  beforeEach(() => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => ({
+        ok: true,
+        status: 200,
+        json: async () => IMPORTED_PAYLOAD,
+      })) as unknown as typeof fetch
+    );
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("seleciona arquivo, faz POST e atualiza a grade com o payload importado", async () => {
+    renderWorkspaceGrid();
+    const input = screen.getByTestId("import-file-input") as HTMLInputElement;
+    const file = new File(["produto;preco\nCafé;30"], "lista.csv", { type: "text/csv" });
+    setInputFile(input, file);
+    fireEvent.change(input);
+
+    await waitFor(() => {
+      expect(screen.getByText("Planilha Importada")).toBeInTheDocument();
+    });
+    expect(fetch).toHaveBeenCalledWith("/api/workspace/import", expect.objectContaining({ method: "POST" }));
+    // overlay de loading deve ter desaparecido
+    expect(screen.queryByText("Importando planilha...")).not.toBeInTheDocument();
+  });
+});
+
+describe("TableGridPanel — DATA-04 importação com erro preserva estado", () => {
+  beforeEach(() => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => ({
+        ok: false,
+        status: 422,
+        json: async () => ({ error: "Formato de arquivo não suportado. Use CSV ou XLSX." }),
+      })) as unknown as typeof fetch
+    );
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("exibe banner de erro em pt-BR e mantém o título anterior intacto", async () => {
+    renderWorkspaceGrid();
+    const input = screen.getByTestId("import-file-input") as HTMLInputElement;
+    const file = new File(["conteúdo"], "arquivo.pdf", { type: "application/pdf" });
+    setInputFile(input, file);
+    fireEvent.change(input);
+
+    await waitFor(() => {
+      expect(
+        screen.getByText("Formato de arquivo não suportado. Use CSV ou XLSX.")
+      ).toBeInTheDocument();
+    });
+    // estado anterior preservado
+    expect(screen.getByText(SAMPLE_SPEC.title)).toBeInTheDocument();
+
+    // banner pode ser fechado
+    fireEvent.click(screen.getByLabelText("Fechar erro"));
+    expect(
+      screen.queryByText("Formato de arquivo não suportado. Use CSV ou XLSX.")
+    ).not.toBeInTheDocument();
+  });
+});
+
+describe("TableGridPanel — TAB-04 undo de ingestão (Ctrl+Z)", () => {
+  it("Ctrl+Z focado no grid reverte o reset para o estado anterior", () => {
+    renderWorkspaceGrid();
+    expect(screen.getByText(SAMPLE_SPEC.title)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByLabelText("Nova em Branco"));
+    expect(screen.getByText("Planilha sem título")).toBeInTheDocument();
+
+    const container = document.querySelector(".table-grid-panel") as HTMLElement;
+    // Simular foco dentro do grid para que o guard de undo dispare
+    const focusable = document.createElement("button");
+    container.appendChild(focusable);
+    focusable.focus();
+
+    fireEvent.keyDown(focusable, { key: "z", ctrlKey: true });
+
+    expect(screen.getByText(SAMPLE_SPEC.title)).toBeInTheDocument();
   });
 });
