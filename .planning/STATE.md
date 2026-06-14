@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Planilha Viva + Chat de IA
 status: verifying
-stopped_at: Completed 18-08-PLAN.md — Phase 18 fechada (packages/shared reduzido, billing/quota órfãos removidos, smoke/schema tests alinhados); typecheck+testes verdes
-last_updated: "2026-06-14T17:26:44.641Z"
+stopped_at: Phase 20 context gathered
+last_updated: "2026-06-14T17:53:18.281Z"
 last_activity: 2026-06-14
 progress:
   total_phases: 11
@@ -102,9 +102,9 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-06-14T17:17:55.277Z
-Stopped at: Completed 18-08-PLAN.md — Phase 18 fechada (packages/shared reduzido, billing/quota órfãos removidos, smoke/schema tests alinhados); typecheck+testes verdes
-Resume file: None
+Last session: 2026-06-14T17:53:18.269Z
+Stopped at: Phase 20 context gathered
+Resume file: .planning/phases/20-protocolo-de-muta-o-chat-grade-q-a/20-CONTEXT.md
 
 ## Operator Next Steps
 
