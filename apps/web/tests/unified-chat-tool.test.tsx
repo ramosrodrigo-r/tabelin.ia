@@ -1,8 +1,10 @@
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import type { ReactElement } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { useInvokeNewConversation, WorkspaceConversationProvider } from "@/components/app/workspace-conversation-context";
+import { useWorkspaceState, WorkspaceStateProvider } from "@/components/app/workspace-state-context";
 import { IntentPill } from "@/features/unified-chat/components/intent-pill";
 import { RenderDispatcher } from "@/features/unified-chat/components/render-dispatcher";
 import { UnifiedChatTool } from "@/features/unified-chat/unified-chat-tool";
@@ -94,6 +96,40 @@ function qaStream() {
   ]);
 }
 
+function tableSpecStream() {
+  return streamResponse([
+    { type: "intent_detected", intent: "sheet_operation", confidence: "high" },
+    { type: "metadata", metadata: { mode: "generate", providerModel: "test" } },
+    { type: "complete", payload: tableSpecWithRows },
+  ]);
+}
+
+// Sonda que expõe o estado da planilha viva (título atual + capacidade de undo)
+// para asserts sobre a mutação chat→grade sem depender da grade virtualizada.
+function WorkspaceProbe() {
+  const ws = useWorkspaceState();
+  return (
+    <div>
+      <span data-testid="ws-title">{ws.spec.title}</span>
+      <span data-testid="ws-can-undo">{String(ws.canUndo)}</span>
+      <button type="button" onClick={() => ws.undo()}>
+        Desfazer
+      </button>
+    </div>
+  );
+}
+
+// Renderiza o chat unificado dentro do provider de estado da planilha
+// (obrigatório desde 20-02, pois o hook lê e muta o spec via contexto).
+function renderUnifiedChatTool(ui: ReactElement = <UnifiedChatTool />) {
+  return render(
+    <WorkspaceStateProvider>
+      <WorkspaceProbe />
+      {ui}
+    </WorkspaceStateProvider>
+  );
+}
+
 function sheetOperationStream() {
   return streamResponse([
     { type: "intent_detected", intent: "sheet_operation", confidence: "high" },
@@ -182,7 +218,7 @@ describe("UnifiedChatTool", () => {
   });
 
   it("renders the empty state", () => {
-    render(<UnifiedChatTool />);
+    renderUnifiedChatTool();
 
     expect(screen.getByText("O que você quer resolver hoje?")).toBeInTheDocument();
     expect(screen.getByLabelText("Pedido")).toBeInTheDocument();
@@ -202,7 +238,7 @@ describe("UnifiedChatTool", () => {
       )
     );
 
-    render(<UnifiedChatTool />);
+    renderUnifiedChatTool();
 
     await user.type(screen.getByLabelText("Pedido"), "Some a coluna A");
     await user.click(screen.getByRole("button", { name: "Enviar" }));
@@ -228,7 +264,7 @@ describe("UnifiedChatTool", () => {
     const user = userEvent.setup();
     const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(qaStream());
 
-    render(<UnifiedChatTool />);
+    renderUnifiedChatTool();
 
     await user.type(screen.getByLabelText("Pedido"), "Some a coluna A");
     await user.click(screen.getByRole("button", { name: "Enviar" }));
@@ -249,7 +285,7 @@ describe("UnifiedChatTool", () => {
     const user = userEvent.setup();
     vi.spyOn(globalThis, "fetch").mockResolvedValue(rawStreamResponse(["not-json\n"]));
 
-    render(<UnifiedChatTool />);
+    renderUnifiedChatTool();
 
     await user.type(screen.getByLabelText("Pedido"), "Some a coluna A");
     await user.click(screen.getByRole("button", { name: "Enviar" }));
@@ -264,7 +300,7 @@ describe("UnifiedChatTool", () => {
     const user = userEvent.setup();
     const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(qaStream());
 
-    render(<UnifiedChatTool />);
+    renderUnifiedChatTool();
 
     const input = document.querySelector('input[type="file"]') as HTMLInputElement;
     await user.upload(input, new File(["a,b\n1,2"], "dados.csv", { type: "text/csv" }));
@@ -284,7 +320,7 @@ describe("UnifiedChatTool", () => {
       .mockResolvedValueOnce(qaStream())
       .mockResolvedValueOnce(sheetOperationStream());
 
-    render(<UnifiedChatTool />);
+    renderUnifiedChatTool();
 
     await user.type(screen.getByLabelText("Pedido"), "Tenho PROCV, mas quero operação");
     await user.click(screen.getByRole("button", { name: "Enviar" }));
@@ -314,10 +350,12 @@ describe("UnifiedChatTool", () => {
     }
 
     render(
-      <WorkspaceConversationProvider>
-        <ClearButton />
-        <UnifiedChatTool />
-      </WorkspaceConversationProvider>
+      <WorkspaceStateProvider>
+        <WorkspaceConversationProvider>
+          <ClearButton />
+          <UnifiedChatTool />
+        </WorkspaceConversationProvider>
+      </WorkspaceStateProvider>
     );
 
     await user.type(screen.getByLabelText("Pedido"), "Some a coluna A");
@@ -336,7 +374,7 @@ describe("UnifiedChatTool", () => {
       .mockResolvedValueOnce(qaStream())
       .mockResolvedValueOnce(qaStream());
 
-    render(<UnifiedChatTool />);
+    renderUnifiedChatTool();
 
     await user.type(screen.getByLabelText("Pedido"), "Primeiro pedido");
     await user.click(screen.getByRole("button", { name: "Enviar" }));
@@ -352,7 +390,7 @@ describe("UnifiedChatTool", () => {
   });
 
   it("drag-and-drop attaches a valid file", () => {
-    render(<UnifiedChatTool />);
+    renderUnifiedChatTool();
 
     const workspace = screen.getByLabelText("Chat unificado");
     fireEvent.drop(workspace, {
@@ -370,5 +408,63 @@ describe("UnifiedChatTool", () => {
     ].map((component) => String(component));
 
     expect(sourceNodes.join("\n")).not.toContain("dangerouslySetInnerHTML");
+  });
+
+  it("sends the current spreadsheet spec as specOverride in the request body", async () => {
+    const user = userEvent.setup();
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(qaStream());
+
+    renderUnifiedChatTool();
+
+    await user.type(screen.getByLabelText("Pedido"), "Some a coluna Valor");
+    await user.click(screen.getByRole("button", { name: "Enviar" }));
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    const body = parseJsonRequestBody(fetchMock);
+
+    expect(body.specOverride).toMatchObject({ kind: "table_spec" });
+    expect((body.specOverride as Record<string, unknown>).columns).toBeInstanceOf(Array);
+  });
+
+  it("applies a table_spec mutation to the live grid (and stays undoable)", async () => {
+    const user = userEvent.setup();
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(tableSpecStream());
+
+    renderUnifiedChatTool();
+
+    // Estado inicial: planilha-amostra (não é a tabela mutada "Vendas").
+    expect(screen.getByTestId("ws-title").textContent).not.toBe(tableSpecWithRows.title);
+    expect(screen.getByTestId("ws-can-undo").textContent).toBe("false");
+
+    await user.type(screen.getByLabelText("Pedido"), "cria a tabela de vendas");
+    await user.click(screen.getByRole("button", { name: "Enviar" }));
+
+    // A mutação chat→grade atualiza o estado da planilha viva via setSpec.
+    await waitFor(() =>
+      expect(screen.getByTestId("ws-title").textContent).toBe(tableSpecWithRows.title)
+    );
+    // setSpec registra o estado anterior no histórico → undo fica disponível.
+    expect(screen.getByTestId("ws-can-undo").textContent).toBe("true");
+
+    // Ctrl+Z (undo) restaura a planilha anterior à mutação da IA.
+    await user.click(screen.getByRole("button", { name: "Desfazer" }));
+    expect(screen.getByTestId("ws-title").textContent).not.toBe(tableSpecWithRows.title);
+  });
+
+  it("does not mutate the grid for a qa_response", async () => {
+    const user = userEvent.setup();
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(qaStream());
+
+    renderUnifiedChatTool();
+
+    const initialTitle = screen.getByTestId("ws-title").textContent;
+
+    await user.type(screen.getByLabelText("Pedido"), "qual a média da coluna Valor?");
+    await user.click(screen.getByRole("button", { name: "Enviar" }));
+
+    // O Q&A responde em texto sem tocar na planilha.
+    await waitFor(() => expect(screen.getByText(qaPayload.content)).toBeInTheDocument());
+    expect(screen.getByTestId("ws-title").textContent).toBe(initialTitle);
+    expect(screen.getByTestId("ws-can-undo").textContent).toBe("false");
   });
 });
