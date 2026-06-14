@@ -15,7 +15,7 @@ findings:
   warning: 7
   info: 4
   total: 13
-status: issues_found
+status: resolved
 ---
 
 # Phase 19: Relatório de Revisão de Código
