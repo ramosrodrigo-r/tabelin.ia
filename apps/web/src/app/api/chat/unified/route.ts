@@ -4,7 +4,6 @@ import {
   type FileDependentIntent,
   type IntentClassification,
   type OverrideIntent,
-  type TableSpecPayload,
   type UnifiedIntent,
   fileAnalysisPayloadSchema,
   formulaGenerateRequestSchema,
@@ -14,7 +13,6 @@ import {
   regexGenerateRequestSchema,
   scriptGenerateRequestSchema,
   sqlGenerateRequestSchema,
-  tableSpecPayloadSchema,
   tableStubPayloadSchema,
   templateGenerateRequestSchema,
   unifiedIntentSchema,
@@ -23,7 +21,6 @@ import {
 import { GENERATE_MODE, MAX_EXTRACTED_CHARS } from "@/server/ai/context-messages";
 import { createFormulaEventStream, resolveFormulaPayload } from "@/server/ai/formula-stream";
 import { classifyIntent } from "@/server/ai/intent-classifier";
-import { askClarificationQuestion, buildTableSpec } from "@/server/ai/table-clarifier";
 import { createRegexEventStream, resolveRegexPayload } from "@/server/ai/regex-stream";
 import { createScriptEventStream, resolveScriptPayload } from "@/server/ai/scripts-stream";
 import { createSqlEventStream, resolveSqlPayload } from "@/server/ai/sql-stream";
@@ -36,7 +33,6 @@ import { recordToolRequest } from "@/server/tools/tool-repository";
 
 const MAX_PROMPT_CHARS = 8_000;
 const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
-const MAX_CLAR_TURNS = 2;
 
 type ResolvedToolKind =
   | "formula"
@@ -242,98 +238,19 @@ function needsFileStream(classification: IntentClassification, intent: FileDepen
   ]);
 }
 
-function tableStubMessage() {
-  return (
-    "Detectei que voce quer montar uma tabela. Nesta fase eu ja separei o pedido; " +
-    "a proxima etapa vai confirmar os campos e gerar a tabela interativa."
-  );
-}
+function unsupportedTableGenerationStream(classification: IntentClassification, prompt: string) {
+  const payload = tableStubPayloadSchema.parse({
+    kind: "table_stub",
+    originalPrompt: prompt,
+    message:
+      "A geracao de tabela do zero foi removida nesta versao. Descreva o que voce quer fazer com a planilha aberta.",
+  });
 
-// ---------------------------------------------------------------------------
-// Helpers para o loop de clarificação (case unified_table)
-// ---------------------------------------------------------------------------
-
-type ConversationExchangeLike = {
-  assistantPayload: unknown;
-};
-
-/**
- * Conta quantos turns de clarificação existem no histórico do usuário.
- * Derivado exclusivamente do banco — nunca de campo client-side (T-13-08).
- */
-function countClarTurns(history: ConversationExchangeLike[]): number {
-  return history.filter((ex) => {
-    const p = ex.assistantPayload as Record<string, unknown> | null;
-    return p?.kind === "table_clar_question";
-  }).length;
-}
-
-/**
- * Detecta se há uma clarificação unified_table ABERTA no histórico.
- * "Aberta" = o último exchange unified_table é uma table_clar_question
- * (ainda não finalizada em table_spec) E o teto de turns não foi atingido.
- * Derivado exclusivamente do banco — nunca de campo client-side (T-13-08).
- */
-function hasOpenTableClarification(history: ConversationExchangeLike[], MAX: number): boolean {
-  if (history.length === 0) return false;
-  const lastPayload = history[history.length - 1]?.assistantPayload as Record<string, unknown> | null;
-  const lastIsClarQuestion = lastPayload?.kind === "table_clar_question";
-  return lastIsClarQuestion && countClarTurns(history) < MAX;
-}
-
-/**
- * Extrai a spec parcial mais recente do histórico de clarificação.
- * Utilizada para alimentar o LLM no próximo turno.
- */
-function mergeSpecFromHistory(history: ConversationExchangeLike[]): Record<string, unknown> {
-  const lastClarWithSpec = [...history]
-    .reverse()
-    .find((ex) => {
-      const p = ex.assistantPayload as Record<string, unknown> | null;
-      return p?.kind === "table_clar_question" && p?.spec;
-    });
-  const p = lastClarWithSpec?.assistantPayload as Record<string, unknown> | null;
-  return (p?.spec as Record<string, unknown>) ?? {};
-}
-
-/**
- * Heurística: retorna true se o prompt parece um NOVO pedido de tabela
- * (contém variações de "tabela" com ou sem acento).
- */
-function promptLooksLikeNewTableRequest(prompt: string): boolean {
-  return /tabela|tabel[ao]/i.test(prompt);
-}
-
-/**
- * Contagem conservativa de turns — se o histórico estiver vazio E o prompt
- * não parece novo pedido, assume que o teto foi atingido (evita loop infinito
- * em falha silenciosa do banco — Armadilha 2).
- */
-function conservativeClarTurnCount(
-  history: ConversationExchangeLike[],
-  prompt: string,
-  MAX: number
-): number {
-  if (history.length === 0 && !promptLooksLikeNewTableRequest(prompt)) {
-    return MAX;
-  }
-  return countClarTurns(history);
-}
-
-/**
- * Tenta parsear e validar a spec editada enviada pelo client no campo `specOverride`.
- * Re-validação server-side obrigatória — T-13-10.
- * Retorna null se ausente, JSON inválido ou falhar na validação Zod.
- */
-function resolveOverrideSpec(specOverride: string | undefined): TableSpecPayload | null {
-  if (!specOverride) return null;
-  try {
-    const raw = JSON.parse(specOverride) as unknown;
-    const result = tableSpecPayloadSchema.safeParse(raw);
-    return result.success ? result.data : null;
-  } catch {
-    return null;
-  }
+  return createEventStream([
+    intentEvent(classification),
+    { type: "delta", text: payload.message },
+    { type: "complete", payload },
+  ]);
 }
 
 export async function POST(request: Request) {
@@ -382,28 +299,7 @@ export async function POST(request: Request) {
       lastIntent: lastIntentResult.value,
       overrideIntent: overrideResult.value as OverrideIntent | undefined,
     });
-    let resolvedToolKind = INTENT_TO_TOOL_KIND[classification.intent];
-
-    // CURTO-CIRCUITO DE CLARIFICAÇÃO (Phase 12/13 — bug table-clarification-misroute):
-    // Se há uma clarificação unified_table aberta no histórico, OU a requisição
-    // carrega overrideGenerate/specOverride (botões "Gerar mesmo assim" / "Confirmar
-    // spec" do card de clarificação), o roteamento NÃO pode depender da reclassificação
-    // do texto atual (uma resposta curta como "10, texto" cairia em formula/template).
-    // Forçamos unified_table para que o loop de clarificação seja re-entrado e o flag
-    // overrideGenerate/specOverride seja efetivamente avaliado. Estado derivado do banco
-    // (T-13-08) — nunca de campo client-side bruto.
-    if (resolvedToolKind !== "unified_table" && !file) {
-      const wantsTableOverride =
-        fields.overrideGenerate === "true" || Boolean(fields.specOverride);
-      if (wantsTableOverride) {
-        resolvedToolKind = "unified_table";
-      } else {
-        const tableHistory = await findConversationExchanges(user.id, "unified_table");
-        if (hasOpenTableClarification(tableHistory, MAX_CLAR_TURNS)) {
-          resolvedToolKind = "unified_table";
-        }
-      }
-    }
+    const resolvedToolKind = INTENT_TO_TOOL_KIND[classification.intent];
 
     if ((classification.intent === "file_analysis" || classification.intent === "ocr") && !file) {
       return responseFromStream(needsFileStream(classification, classification.intent));
@@ -605,78 +501,8 @@ export async function POST(request: Request) {
         );
       }
 
-      case "unified_table": {
-        const tableHistory = await findConversationExchanges(user.id, "unified_table");
-        const clarTurnCount = conservativeClarTurnCount(tableHistory, promptResult.prompt, MAX_CLAR_TURNS);
-        const collectedSpec = mergeSpecFromHistory(tableHistory);
-        const shouldGenerate =
-          clarTurnCount >= MAX_CLAR_TURNS || fields.overrideGenerate === "true";
-
-        if (!shouldGenerate) {
-          // CLARIFICATION PATH — sem débito de cota (CLAR-05, T-13-09; cota removida na Phase 17)
-          const question = await askClarificationQuestion({
-            prompt: promptResult.prompt,
-            turnIndex: clarTurnCount,
-            collectedSpec,
-          });
-
-          const clarPayload = {
-            kind: "table_clar_question" as const,
-            question,
-            turnIndex: clarTurnCount,
-            totalTurns: MAX_CLAR_TURNS,
-            canSkip: true,
-            spec: collectedSpec,
-          };
-
-          await saveConversationExchange({
-            userId: user.id,
-            toolKind: "unified_table",
-            mode: GENERATE_MODE,
-            userPrompt: promptResult.prompt,
-            assistantPayload: clarPayload,
-          });
-
-          return responseFromStream(
-            createEventStream([
-              intentEvent(classification),
-              { type: "complete", payload: clarPayload },
-            ])
-          );
-        }
-
-        // GENERATION PATH (cota removida na Phase 17)
-        const overrideSpec = resolveOverrideSpec(fields.specOverride);
-        // tableSpec.kind === "table_spec" — garantido por tableSpecPayloadSchema
-        const tableSpec = overrideSpec ?? (await buildTableSpec({
-          prompt: promptResult.prompt,
-          collectedSpec,
-        }));
-
-        await recordToolRequest({
-          userId: user.id,
-          toolKind: "unified_table",
-          mode: GENERATE_MODE,
-          status: "success",
-          latencyMs: Math.round(performance.now() - startedAt),
-          providerModel: "table-clarifier",
-        });
-        // Persiste com kind: "table_spec" no assistantPayload (tabela gerada)
-        await saveConversationExchange({
-          userId: user.id,
-          toolKind: "unified_table",
-          mode: GENERATE_MODE,
-          userPrompt: promptResult.prompt,
-          assistantPayload: { ...tableSpec, kind: "table_spec" as const },
-        });
-
-        return responseFromStream(
-          createEventStream([
-            intentEvent(classification),
-            { type: "complete", payload: tableSpec },
-          ])
-        );
-      }
+      default:
+        return responseFromStream(unsupportedTableGenerationStream(classification, promptResult.prompt));
     }
   } catch (err) {
     console.error("unified chat failed", { err });
