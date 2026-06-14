@@ -110,7 +110,10 @@ export function UnifiedChatTool({
     setValidationError("");
     appliedResultRef.current = null;
     stream.reset();
-  }, [stream]);
+    // D-04: reset coerente — ao limpar a conversa, a planilha viva volta à
+    // semente padrão (SAMPLE_SPEC) para acompanhar o histórico apagado.
+    workspaceState.resetToSeed();
+  }, [stream, workspaceState]);
 
   useRegisterNewConversation(handleNewConversation);
 

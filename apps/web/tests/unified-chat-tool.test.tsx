@@ -368,6 +368,68 @@ describe("UnifiedChatTool", () => {
     expect(screen.getByText("O que você quer resolver hoje?")).toBeInTheDocument();
   });
 
+  it("new conversation resets the live grid to the seed (D-04)", async () => {
+    const user = userEvent.setup();
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(tableSpecStream());
+
+    function ClearButton() {
+      const invoke = useInvokeNewConversation();
+      return <button type="button" onClick={() => invoke?.()}>Limpar</button>;
+    }
+
+    render(
+      <WorkspaceStateProvider>
+        <WorkspaceConversationProvider>
+          <WorkspaceProbe />
+          <ClearButton />
+          <UnifiedChatTool />
+        </WorkspaceConversationProvider>
+      </WorkspaceStateProvider>
+    );
+
+    const seedTitle = screen.getByTestId("ws-title").textContent;
+
+    // Muta a planilha viva via chat→grade (passa a ser "Vendas").
+    await user.type(screen.getByLabelText("Pedido"), "cria a tabela de vendas");
+    await user.click(screen.getByRole("button", { name: "Enviar" }));
+    await waitFor(() =>
+      expect(screen.getByTestId("ws-title").textContent).toBe(tableSpecWithRows.title)
+    );
+
+    // "Nova conversa" reseta a grade de volta à semente padrão (SAMPLE_SPEC).
+    await user.click(screen.getByRole("button", { name: "Limpar" }));
+
+    expect(screen.getByTestId("ws-title").textContent).toBe(seedTitle);
+    expect(screen.getByTestId("ws-title").textContent).not.toBe(tableSpecWithRows.title);
+  });
+
+  it("renders initialExchanges hydrated from the server (D-03)", () => {
+    render(
+      <WorkspaceStateProvider>
+        <WorkspaceConversationProvider>
+          <UnifiedChatTool
+            initialExchanges={[
+              {
+                id: "exchange-server-1",
+                userPrompt: "qual a média da coluna Valor?",
+                assistantPayload: qaPayload,
+                mode: "generate",
+                platform: null,
+                dialect: null,
+                createdAt: new Date("2026-06-14T00:00:00Z"),
+              },
+            ]}
+          />
+        </WorkspaceConversationProvider>
+      </WorkspaceStateProvider>
+    );
+
+    // O histórico server-side hidrata o thread (sai do empty state).
+    expect(screen.getByText("qual a média da coluna Valor?")).toBeInTheDocument();
+    expect(screen.getByText(qaPayload.content)).toBeInTheDocument();
+    expect(screen.queryByText("O que você quer resolver hoje?")).not.toBeInTheDocument();
+  });
+
   it("carries lastIntent from the previous exchange into the next submit", async () => {
     const user = userEvent.setup();
     const fetchMock = vi.spyOn(globalThis, "fetch")
