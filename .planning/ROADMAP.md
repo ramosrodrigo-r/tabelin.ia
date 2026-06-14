@@ -274,7 +274,7 @@ Full details: ver seções abaixo (Phase 12-15) ou `.planning/milestones/v2.0-RO
 
 **Wave 2** *(depende da Wave 1)*
 
-- [ ] 18-04: Remover curto-circuito de clarificação/case unified_table e os 5 branches de tools avulsos em route.ts — CLEAN-07/CLEAN-01
+- [x] 18-04: Remover curto-circuito de clarificação/case unified_table e os 5 branches de tools avulsos em route.ts — CLEAN-07/CLEAN-01
 
 **Wave 3** *(depende da Wave 2)*
 
@@ -375,7 +375,7 @@ Full details: ver seções abaixo (Phase 12-15) ou `.planning/milestones/v2.0-RO
 | 15. Export, UX Migration & Hardening | v2.0 | 3/3 | Complete    | 2026-06-10 |
 | 16. Tela Única & Fim da Navegação Multi-Ferramenta | v3.0 | 2/2 | Complete    | 2026-06-11 |
 | 17. Desligar Monetização & Cota | v3.0 | 3/3 | Complete   | 2026-06-11 |
-| 18. Remover Tools Avulsos, OCR, File Analysis & Reduzir Dispatcher | v3.0 | 3/8 | In Progress|  |
+| 18. Remover Tools Avulsos, OCR, File Analysis & Reduzir Dispatcher | v3.0 | 5/8 | In Progress|  |
 | 19. Ingestão Tri-Estado da Planilha | v3.0 | 0/TBD | Not started | - |
 | 20. Protocolo de Mutação Chat→Grade & Q&A | v3.0 | 0/TBD | Not started | - |
 | 21. Export & Persistência da Planilha+Conversa | v3.0 | 0/TBD | Not started | - |

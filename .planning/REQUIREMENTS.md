@@ -52,7 +52,7 @@
 - [ ] **CLEAN-04**: Toda a monetização/cota é removida — checkout, provedor de pagamento (Mercado Pago), webhooks, plano Pro, entitlement gates, sistema de cota/usage ledger e UI de upsell/limite (§5.4)
 - [x] **CLEAN-05**: A navegação multi-ferramenta (sidebar/tool-nav e roteamento entre módulos sem destino) é removida (§5.5)
 - [ ] **CLEAN-06**: O classificador de intent e o render-dispatcher são **reduzidos** ao que serve à planilha + Q&A; ramos que apontam para capacidades removidas saem (§5.6)
-- [ ] **CLEAN-07**: A geração de tabela do zero pela IA (stub → clarificação → confirmação de spec) é removida (§5.7, D5)
+- [x] **CLEAN-07**: A geração de tabela do zero pela IA (stub → clarificação → confirmação de spec) é removida (§5.7, D5)
 - [ ] **CLEAN-08**: Modelos Prisma e migrations órfãos (billing/cota/ferramentas removidas) são removidos via migration coerente e revisável; o banco aplica as migrations limpo, preservando dados de usuário (contas, planilhas) (§6.4, aceite §9.9)
 - [ ] **CLEAN-09**: Dependências de `package.json` que ficam sem qualquer import após a remoção são removidas — e somente essas (§6.5, aceite §9.10)
 - [ ] **CLEAN-10**: Configuração órfã é limpa/atualizada — env vars, `.env.example`, `docker-compose`, scripts, README e docs que descrevem só capacidades OUT (§6.6, aceite §9.10/§9.13)
@@ -121,7 +121,7 @@ Preenchida na criação do roadmap (cada requisito mapeia para exatamente uma fa
 | CLEAN-04 | Phase 17 | Pending |
 | CLEAN-05 | Phase 16 | Complete |
 | CLEAN-06 | Phase 18 | Pending |
-| CLEAN-07 | Phase 18 | Pending |
+| CLEAN-07 | Phase 18 | Complete |
 | CLEAN-08 | Phase 22 | Pending |
 | CLEAN-09 | Phase 22 | Pending |
 | CLEAN-10 | Phase 22 | Pending |
