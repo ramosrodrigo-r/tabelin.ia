@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Planilha Viva + Chat de IA
 status: executing
-stopped_at: Completed 18-07-PLAN.md
-last_updated: "2026-06-14T13:00:00-03:00"
-last_activity: 2026-06-14 -- Completed 18-07-PLAN.md
+stopped_at: Completed 18-08-PLAN.md (Phase 18 complete)
+last_updated: "2026-06-14T13:45:00-03:00"
+last_activity: 2026-06-14 -- Completed 18-08-PLAN.md — Phase 18 fully executed
 progress:
   total_phases: 11
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 14
-  completed_plans: 13
-  percent: 93
+  completed_plans: 14
+  percent: 100
 ---
 
 # Project State
@@ -25,10 +25,10 @@ See: .planning/PROJECT.md (updated 2026-06-08)
 
 ## Current Position
 
-Phase: 18 (remover-tools-avulsos-ocr-file-analysis-reduzir-dispatcher) — EXECUTING
-Plan: 8 of 8
-Status: Ready to execute
-Last activity: 2026-06-14 -- Completed 18-07-PLAN.md
+Phase: 18 (remover-tools-avulsos-ocr-file-analysis-reduzir-dispatcher) — COMPLETE (8/8 plans)
+Plan: 8 of 8 — all executed
+Status: Phase done; ready to verify / advance
+Last activity: 2026-06-14 -- Completed 18-08-PLAN.md (Phase 18 fully executed)
 
 ## Performance Metrics
 
@@ -100,13 +100,14 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-06-14T16:00:00.000Z
-Stopped at: Completed 18-07-PLAN.md (cliente do chat unificado reduzido ao eixo binário; session-context-selector deletado; typecheck+testes verdes)
+Last session: 2026-06-14T16:45:00.000Z
+Stopped at: Completed 18-08-PLAN.md — Phase 18 fechada (packages/shared reduzido, billing/quota órfãos removidos, smoke/schema tests alinhados); typecheck+testes verdes
 Resume file: None
 
 ## Operator Next Steps
 
-- Phase 18 em execução: 18-07 concluído (cliente do chat unificado reduzido ao eixo binário, session-context-selector deletado, context-messages reduzido); próximo e ÚLTIMO plano da fase é 18-08 (reescrita dos smokes para a tela unificada — resolve WR-02 da Phase 17).
+- Phase 18 CONCLUÍDA (8/8 planos): inventário de deleção fechado — tools avulsos/OCR/file-analysis removidos, dispatcher e schema reduzidos ao eixo binário sheet_operation/qa, packages/shared enxuto, billing/quota órfãos removidos. WR-02 (smoke obsoleto) resolvido no 18-08. Próximo: verificar a fase (/gsd-verify-work ou /gsd-progress) e avançar para a Phase 19 (ingestão tri-estado da planilha — diretório já criado em .planning/phases/19-*).
+- Nota: billing/schema.ts preservado em packages/shared para reuso futuro do AbacatePay; FileSchema preservado (reduzido) pois a extração de anexos CSV/XLSX do chat unificado ainda o consome.
 - ✅ Checkpoint 17→18 cumprido: o eval binário "operação na planilha vs Q&A" foi plantado no Plan 18-05 (6-8 prompts PT representativos como testes automatizados em intent-classifier.test.ts); o eval completo (~20 prompts) permanece como UAT formal da Phase 20.
 - Limite com Phase 22: esta fase remove código/rotas/UI/testes; migrations/deps Prisma destrutivas finais ficam na Phase 22 (nenhum plano da 18 roda migration destrutiva).
 - Pendência da Phase 17 (code review): WR-02 (smoke.spec.ts obsoleto) é resolvido dentro do Plan 18-08 (reescrita dos smokes para a tela unificada). WR-01 já corrigido (quick task 260611-svu).
