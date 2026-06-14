@@ -25,13 +25,18 @@ export type SubmitUnifiedChatInput = {
   lastIntent?: UnifiedIntent | null;
 };
 
+export type UnifiedChatStreamMetadata = {
+  mode: string;
+  providerModel: string;
+};
+
 export function useUnifiedChatStream() {
   const [status, setStatus] = useState<UnifiedChatStreamStatus>("idle");
   const [intent, setIntent] = useState<UnifiedIntent | null>(null);
   const [confidence, setConfidence] = useState<"high" | "low" | null>(null);
   const [draft, setDraft] = useState("");
   const [result, setResult] = useState<UnifiedCompletePayload | null>(null);
-  const [metadata, setMetadata] = useState<unknown | null>(null);
+  const [metadata, setMetadata] = useState<UnifiedChatStreamMetadata | null>(null);
   const [warnings, setWarnings] = useState<string[]>([]);
   const [error, setError] = useState("");
   const [attachmentStatus, setAttachmentStatus] = useState<"uploading" | "extracting" | null>(null);
@@ -125,6 +130,11 @@ export function useUnifiedChatStream() {
     const decoder = new TextDecoder();
     let buffer = "";
 
+    let finalPayload: UnifiedCompletePayload | null = null;
+    let finalMetadata: any = null;
+    let finalError: string | null = null;
+    let hasCompleteEvent = false;
+
     async function handleLine(line: string) {
       if (!line.trim()) return;
 
@@ -132,9 +142,7 @@ export function useUnifiedChatStream() {
       try {
         event = unifiedStreamEventSchema.parse(JSON.parse(line));
       } catch {
-        setError("Resposta corrompida. Tente novamente.");
-        setAttachmentStatus(null);
-        setStatus("error");
+        finalError = "Resposta corrompida. Tente novamente.";
         return;
       }
 
@@ -153,7 +161,7 @@ export function useUnifiedChatStream() {
       }
 
       if (event.type === "metadata") {
-        setMetadata(event.metadata);
+        setMetadata(event.metadata as UnifiedChatStreamMetadata);
       }
 
       if (event.type === "warning") {
@@ -166,35 +174,57 @@ export function useUnifiedChatStream() {
       }
 
       if (event.type === "complete") {
-        setResult(event.payload);
+        hasCompleteEvent = true;
+        finalPayload = event.payload;
         if ("metadata" in event.payload) {
-          setMetadata(event.payload.metadata);
+          finalMetadata = event.payload.metadata;
         }
-        setAttachmentStatus(null);
-        setStatus("complete");
       }
 
       if (event.type === "error") {
-        setError(event.message);
+        finalError = event.message;
+      }
+    }
+
+    try {
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() ?? "";
+
+        for (const line of lines) {
+          await handleLine(line);
+        }
+      }
+
+      if (buffer.trim()) {
+        await handleLine(buffer);
+      }
+
+      if (finalError) {
+        setError(finalError);
+        setAttachmentStatus(null);
+        setStatus("error");
+      } else if (hasCompleteEvent && finalPayload) {
+        setResult(finalPayload);
+        if (finalMetadata) {
+          setMetadata(finalMetadata);
+        }
+        setAttachmentStatus(null);
+        setStatus("complete");
+      } else {
+        setError("Resposta incompleta do servidor.");
+        setAttachmentStatus(null);
         setStatus("error");
       }
-    }
-
-    while (true) {
-      const { value, done } = await reader.read();
-      if (done) break;
-
-      buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split("\n");
-      buffer = lines.pop() ?? "";
-
-      for (const line of lines) {
-        await handleLine(line);
-      }
-    }
-
-    if (buffer.trim()) {
-      await handleLine(buffer);
+    } catch (err) {
+      console.error("error while reading stream", err);
+      setError("Falha na conexão com o servidor. Tente novamente.");
+      setAttachmentStatus(null);
+      setStatus("error");
     }
   }, [workspaceState.spec]);
 

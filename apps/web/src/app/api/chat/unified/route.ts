@@ -159,27 +159,19 @@ function validateSpecOverride(value: string | undefined) {
   return { ok: true as const, value: result.data };
 }
 
-type StreamSource = AsyncIterable<object> | object[];
-
-function createEventStream(source: StreamSource) {
+/**
+ * Converte um array pré-computado de eventos em um ReadableStream NDJSON.
+ * A geração e persistência já ocorreram antes do início do stream.
+ */
+function createEventStream(events: object[]) {
   const encoder = new TextEncoder();
 
   return new ReadableStream<Uint8Array>({
-    async start(controller) {
-      try {
-        for await (const event of source as AsyncIterable<object>) {
-          controller.enqueue(encoder.encode(`${JSON.stringify(event)}\n`));
-        }
-        controller.close();
-      } catch (err) {
-        controller.enqueue(
-          encoder.encode(
-            `${JSON.stringify({ type: "error", message: "Falha ao gerar a resposta." })}\n`
-          )
-        );
-        console.error("unified stream failed", { err });
-        controller.close();
+    start(controller) {
+      for (const event of events) {
+        controller.enqueue(encoder.encode(`${JSON.stringify(event)}\n`));
       }
+      controller.close();
     },
   });
 }
@@ -350,7 +342,7 @@ export async function POST(request: Request) {
 
     return responseFromStream(createEventStream(result.events));
   } catch (err) {
-    console.error("unified chat failed", { err });
+    console.error("unified chat failed", { message: err instanceof Error ? err.message : String(err) });
     return NextResponse.json({ error: "Nao consegui validar a resposta." }, { status: 502 });
   }
 }

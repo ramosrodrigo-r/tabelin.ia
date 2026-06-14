@@ -53,7 +53,17 @@ function serializeSpecForPrompt(spec: TableSpecPayload | undefined): string {
     .join("\n");
 
   const rows = (spec.rows ?? [])
-    .map((row, idx) => `linha ${idx + 1}: ${JSON.stringify(row)}`)
+    .map((row, idx) => {
+      const truncatedRow: Record<string, string | number> = {};
+      for (const [key, val] of Object.entries(row)) {
+        if (typeof val === "string" && val.length > 100) {
+          truncatedRow[key] = val.slice(0, 97) + "...";
+        } else {
+          truncatedRow[key] = val;
+        }
+      }
+      return `linha ${idx + 1}: ${JSON.stringify(truncatedRow)}`;
+    })
     .join("\n");
 
   return [
@@ -113,7 +123,7 @@ export function fixtureMutation(context: SheetContext): TableSpecPayload {
 
   const numericKeys = base.columns
     .filter((c) => c.type === "number" || c.type === "currency")
-    .map((c, index) => ({ column: c, ref: columnRef(base, c.key ?? `col${index}`) }))
+    .map((c) => ({ column: c, ref: columnRef(base, c.key ?? c.name) }))
     .filter((entry) => entry.ref !== null);
 
   if (numericKeys.length === 0) {
@@ -138,11 +148,22 @@ export function fixtureMutation(context: SheetContext): TableSpecPayload {
   return translateSpecFormulas(mutated);
 }
 
+/** Retorna a letra correspondente ao índice da coluna estilo Excel (A, B, ..., Z, AA, AB, ...). */
+function columnLetter(index: number): string {
+  let n = index;
+  let letter = "";
+  do {
+    letter = String.fromCharCode("A".charCodeAt(0) + (n % 26)) + letter;
+    n = Math.floor(n / 26) - 1;
+  } while (n >= 0);
+  return letter;
+}
+
 /** Resolve a letra de coluna (estilo Excel) de uma chave de coluna no spec. */
 function columnRef(spec: TableSpecPayload, key: string): string | null {
   const index = spec.columns.findIndex((c) => (c.key ?? c.name) === key);
   if (index < 0) return null;
-  const letter = String.fromCharCode("A".charCodeAt(0) + index);
+  const letter = columnLetter(index);
   return `${letter}{row}`;
 }
 

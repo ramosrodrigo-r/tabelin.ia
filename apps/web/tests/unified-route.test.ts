@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { POST } from "@/app/api/chat/unified/route";
 import { createSessionToken, createSessionUser } from "@/server/auth/session";
+import * as provider from "@/server/ai/unified-provider";
 
 type StreamEvent = {
   type: string;
@@ -209,5 +210,52 @@ describe("unified chat route", () => {
 
     expect(response.status).toBe(400);
     expect(routeMocks.classifyIntent).not.toHaveBeenCalled();
+  });
+
+  it("uses UNKNOWN_MESSAGE fallback when generateQaDeltas yields no deltas", async () => {
+    const spy = vi.spyOn(provider, "generateQaDeltas").mockImplementation(async function* () {
+      // yield nothing
+    });
+
+    routeMocks.classifyIntent.mockResolvedValue({ intent: "qa", confidence: "high" });
+
+    const response = await POST(
+      authedJson({ prompt: "Qual o total de vendas?", specOverride: JSON.stringify(SAMPLE_SPEC) })
+    );
+    const events = await readEvents(response);
+
+    expect(response.status).toBe(200);
+    const complete = completeEvent(events);
+    expect(complete?.payload?.content).toBe(
+      "Nao consegui identificar o pedido com seguranca. Reescreva como uma operacao na planilha aberta ou uma pergunta sobre os dados."
+    );
+
+    spy.mockRestore();
+  });
+
+  it("fixtureMutation handles columns without keys and columns >= 26", () => {
+    const columns = Array.from({ length: 27 }, (_, i) => ({
+      name: `Col ${i + 1}`,
+      type: i === 0 || i === 26 ? ("number" as const) : ("text" as const),
+      ...(i < 26 ? { key: `col_${i}` } : {}),
+    }));
+
+    const spec = {
+      kind: "table_spec" as const,
+      title: "Grande",
+      columns,
+      rowCount: 2,
+      rows: [
+        { col_0: 10, "Col 27": 20 },
+        { col_0: 30, "Col 27": 40 },
+      ],
+      formulaLanguage: "pt-BR" as const,
+      separator: ";" as const,
+    };
+
+    const result = provider.fixtureMutation({ spec, prompt: "Somar tudo" });
+    const lastCol = result.columns[result.columns.length - 1];
+    expect(lastCol.name).toBe("Total IA");
+    expect(lastCol.formula).toBe("=SOMA(A{row}; AA{row})");
   });
 });

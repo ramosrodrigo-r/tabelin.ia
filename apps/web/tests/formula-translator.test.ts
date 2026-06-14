@@ -23,6 +23,15 @@ describe("translateEnToPtBr", () => {
     );
   });
 
+  it("trata aspas escapadas no estilo Excel e padrão", () => {
+    expect(translateEnToPtBr('=IF(A1="say ""hi, there""", 1, 0)')).toBe(
+      '=SE(A1="say ""hi, there"""; 1; 0)'
+    );
+    expect(translateEnToPtBr('=IF(A1="say \\"hi, there\\"", 1, 0)')).toBe(
+      '=SE(A1="say \\"hi, there\\""; 1; 0)'
+    );
+  });
+
   it("traduz funções aninhadas", () => {
     expect(translateEnToPtBr("=IF(SUM(A1, B1) > 10, 1, 0)")).toBe(
       "=SE(SOMA(A1; B1) > 10; 1; 0)"
@@ -56,5 +65,19 @@ describe("translatePtBrToEn", () => {
   it("é round-trippable para fórmulas suportadas", () => {
     const enInput = '=IF(SUM(A1, B1) > 3.5, "X, Y", "Z")';
     expect(translatePtBrToEn(translateEnToPtBr(enInput))).toBe(enInput);
+  });
+
+  it("normaliza aliases de funções pt-BR para a forma canônica no round-trip", () => {
+    // Exemplo: CONTSE e CONT_SE são aliases não-canônicos para COUNTIF,
+    // que se traduzem no round-trip para a forma canônica CONT.SE.
+    const inputBr = "=CONTSE(A1:A5; 2)";
+    const expectedEn = "=COUNTIF(A1:A5, 2)";
+    const expectedCanonicalBr = "=CONT.SE(A1:A5; 2)";
+
+    const en = translatePtBrToEn(inputBr);
+    expect(en).toBe(expectedEn);
+
+    const br = translateEnToPtBr(en);
+    expect(br).toBe(expectedCanonicalBr);
   });
 });

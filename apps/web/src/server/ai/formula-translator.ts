@@ -61,7 +61,19 @@ function replaceFunctionNames(
 function isInsideString(text: string, index: number): boolean {
   let inString = false;
   for (let i = 0; i < index; i += 1) {
-    if (text[i] === '"') inString = !inString;
+    const char = text[i];
+    if (char === '"') {
+      if (inString && text[i + 1] === '"') {
+        i += 1;
+        continue;
+      }
+      inString = !inString;
+      continue;
+    }
+    if (char === '\\' && inString && text[i + 1] === '"') {
+      i += 1;
+      continue;
+    }
   }
   return inString;
 }
@@ -75,10 +87,25 @@ function swapSeparators(formula: string, from: string, to: string): string {
   let inString = false;
   let depth = 0;
 
-  for (const char of formula) {
+  for (let i = 0; i < formula.length; i += 1) {
+    const char = formula[i];
+
     if (char === '"') {
+      if (inString && formula[i + 1] === '"') {
+        // aspa escapada no estilo Excel ("") — literal, não alterna estado
+        result += '""';
+        i += 1;
+        continue;
+      }
       inString = !inString;
       result += char;
+      continue;
+    }
+
+    if (char === '\\' && inString && formula[i + 1] === '"') {
+      // aspa escapada no estilo padrão (\") — literal, não alterna estado
+      result += '\\"';
+      i += 1;
       continue;
     }
 
