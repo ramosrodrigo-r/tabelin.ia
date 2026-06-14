@@ -1,14 +1,18 @@
 "use client";
 
 import { WorkspaceConversationProvider } from "./workspace-conversation-context";
+import { WorkspaceStateProvider } from "./workspace-state-context";
 
 /**
  * Shell client wrapper do workspace layout.
  *
- * Envolve {children} no WorkspaceConversationProvider para que os tool components
- * (client) possam registrar onNewConversation e o Topbar possa invocá-lo —
- * sem alterar o layout server component nem as pages.
+ * Envolve {children} no WorkspaceConversationProvider e WorkspaceStateProvider
+ * para que os componentes do workspace compartilhem o estado de conversas e da planilha viva.
  */
 export function WorkspaceShell({ children }: { children: React.ReactNode }) {
-  return <WorkspaceConversationProvider>{children}</WorkspaceConversationProvider>;
+  return (
+    <WorkspaceConversationProvider>
+      <WorkspaceStateProvider>{children}</WorkspaceStateProvider>
+    </WorkspaceConversationProvider>
+  );
 }

@@ -9,6 +9,7 @@ import { ArrowDown, ArrowUp, X } from "lucide-react";
 
 import type { TableColumn, TableSpecPayload } from "@tabelin/shared";
 
+import { useWorkspaceState } from "@/components/app/workspace-state-context";
 import { type RowData, useFormulaEngine } from "../hooks/use-formula-engine";
 import { buildCsv, buildXlsx, downloadCsv, downloadXlsx } from "../lib/table-export";
 
@@ -114,40 +115,67 @@ export function slugifyTitle(title: string): string {
 
 // ─── Componente principal ──────────────────────────────────────────────────────
 
-export function TableGridPanel({ spec }: { spec: TableSpecPayload }) {
+export function TableGridPanel({ spec: propSpec }: { spec?: TableSpecPayload }) {
+  const context = propSpec ? null : useWorkspaceState();
+
+  // 1. Initial / Active Spec
+  const activeSpec = propSpec ?? context!.spec;
+
   // Derivar chaves de colunas a partir do spec
   const initialColumns: TableColumn[] = useMemo(
     () =>
-      spec.columns.map((col) => ({
+      activeSpec.columns.map((col) => ({
         ...col,
         key: col.key ?? col.name.toLowerCase().replace(/\s+/g, "_"),
       })),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [] // Inicialização única — spec não muda durante o ciclo de vida do grid
+    [activeSpec.columns]
   );
 
-  // ── Estado de histórico (undo/redo) ──
-  const [historyState, dispatch] = useReducer(historyReducer, {
+  // ── Estado de histórico local (só usado se propSpec for passado) ──
+  const [localHistoryState, localDispatch] = useReducer(historyReducer, {
     past: [],
     present: {
-      rows: (spec.rows ?? []) as RowData[],
+      rows: (activeSpec.rows ?? []) as RowData[],
       columns: initialColumns,
     },
     future: [],
   });
 
+  // ── Determinar Rows, Columns, Separator com base na presença de propSpec ──
+  const currentRows = propSpec ? localHistoryState.present.rows : context!.state.rows;
+  const currentColumns = propSpec ? localHistoryState.present.columns : context!.state.columns;
+  const currentSeparator = activeSpec.separator ?? ";";
+
+  // ── Função de dispatch unificada ──
+  const dispatch = useCallback(
+    (action: Action) => {
+      if (propSpec) {
+        localDispatch(action);
+      } else {
+        if (action.type === "SET") {
+          context!.updateState({
+            rows: action.newState.rows,
+            columns: action.newState.columns,
+            title: activeSpec.title,
+            separator: currentSeparator,
+          });
+        }
+      }
+    },
+    [propSpec, context, activeSpec.title, currentSeparator]
+  );
+
   // ── Motor de fórmulas — displayRows derivado, nunca armazenado (Pitfall 2) ──
   const { displayRows } = useFormulaEngine(
-    historyState.present.rows,
-    historyState.present.columns,
-    spec.separator ?? ";"
+    currentRows,
+    currentColumns,
+    currentSeparator
   );
 
   // ── Sort state ──
   const [sortState, setSortState] = useState<{ key: string; dir: "asc" | "desc" } | null>(null);
 
-  // ── sortedRows + sortIndexMap — Pitfall 3: [...rows].sort() nunca muta original ──
-  // sortIndexMap[sortedIdx] = originalIdx — permite reverter edição e delete para ordem original
+  // ── sortedRows + sortIndexMap ──
   const { sortedRows, sortIndexMap } = useMemo(() => {
     if (!sortState) {
       return {
@@ -171,7 +199,7 @@ export function TableGridPanel({ spec }: { spec: TableSpecPayload }) {
     };
   }, [displayRows, sortState]);
 
-  // ── Ref do container do grid (WR-05: scopar undo/redo ao grid focado) ──
+  // ── Ref do container do grid ──
   const gridContainerRef = useRef<HTMLDivElement>(null);
 
   // ── Handlers ──
@@ -186,12 +214,8 @@ export function TableGridPanel({ spec }: { spec: TableSpecPayload }) {
 
   const handleChange = useCallback(
     (newRows: RowData[]) => {
-      // CR-01: quando sort está ativo, newRows chega em ordem do sort.
-      // Usar sortIndexMap para restaurar a ordem original antes do dispatch —
-      // assim o estado canônico nunca é corrompido pelo sort.
       let rowsInOriginalOrder: RowData[];
       if (sortState) {
-        // Reconstrói o array na ordem original usando o mapa sort→original
         const restored = new Array<RowData>(newRows.length);
         sortIndexMap.forEach((origIdx, sortedIdx) => {
           restored[origIdx] = newRows[sortedIdx];
@@ -203,57 +227,56 @@ export function TableGridPanel({ spec }: { spec: TableSpecPayload }) {
       }
       dispatch({
         type: "SET",
-        newState: { rows: rowsInOriginalOrder, columns: historyState.present.columns },
+        newState: { rows: rowsInOriginalOrder, columns: currentColumns },
       });
     },
-    [historyState.present.columns, sortState, sortIndexMap]
+    [currentColumns, sortState, sortIndexMap, dispatch]
   );
 
   const addRow = useCallback(() => {
-    if (historyState.present.rows.length >= 200) return; // TAB-06
+    if (currentRows.length >= 200) return;
     const newRow: RowData = {};
-    historyState.present.columns.forEach((c) => {
+    currentColumns.forEach((c) => {
       newRow[c.key!] = "";
     });
     dispatch({
       type: "SET",
       newState: {
-        rows: [...historyState.present.rows, newRow],
-        columns: historyState.present.columns,
+        rows: [...currentRows, newRow],
+        columns: currentColumns,
       },
     });
-  }, [historyState.present]);
+  }, [currentRows, currentColumns, dispatch]);
 
   const addColumn = useCallback(() => {
-    if (historyState.present.columns.length >= 26) return; // TAB-06
+    if (currentColumns.length >= 26) return;
     const newKey = `coluna_${Date.now()}`;
     dispatch({
       type: "SET",
       newState: {
-        rows: historyState.present.rows.map((r) => ({ ...r, [newKey]: "" })),
+        rows: currentRows.map((r) => ({ ...r, [newKey]: "" })),
         columns: [
-          ...historyState.present.columns,
+          ...currentColumns,
           { name: "Nova Coluna", type: "text" as const, key: newKey },
         ],
       },
     });
-  }, [historyState.present]);
+  }, [currentRows, currentColumns, dispatch]);
 
   const removeColumn = useCallback(
     (key: string) => {
       dispatch({
         type: "SET",
         newState: {
-          rows: historyState.present.rows.map((r) => {
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          rows: currentRows.map((r) => {
             const { [key]: _removed, ...rest } = r;
             return rest;
           }),
-          columns: historyState.present.columns.filter((c) => c.key !== key),
+          columns: currentColumns.filter((c) => c.key !== key),
         },
       });
     },
-    [historyState.present]
+    [currentRows, currentColumns, dispatch]
   );
 
   const removeRow = useCallback(
@@ -261,40 +284,45 @@ export function TableGridPanel({ spec }: { spec: TableSpecPayload }) {
       dispatch({
         type: "SET",
         newState: {
-          rows: historyState.present.rows.filter((_, i) => i !== index),
-          columns: historyState.present.columns,
+          rows: currentRows.filter((_, i) => i !== index),
+          columns: currentColumns,
         },
       });
     },
-    [historyState.present]
+    [currentRows, currentColumns, dispatch]
   );
 
   // ── Undo/redo via Ctrl+Z / Ctrl+Y (TAB-04) ──
-  // WR-05: listener no window guardado por foco-dentro do container — evita
-  // disparar undo em todos os grids montados e em inputs de texto da página.
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
-      // Só processa se o foco estiver dentro do container deste grid
       if (!gridContainerRef.current?.contains(document.activeElement)) return;
       if ((e.ctrlKey || e.metaKey) && e.key === "z" && !e.shiftKey) {
         e.preventDefault();
-        dispatch({ type: "UNDO" });
+        if (propSpec) {
+          localDispatch({ type: "UNDO" });
+        } else {
+          context!.undo();
+        }
       }
       if (
         (e.ctrlKey || e.metaKey) &&
         (e.key === "y" || (e.key === "z" && e.shiftKey))
       ) {
         e.preventDefault();
-        dispatch({ type: "REDO" });
+        if (propSpec) {
+          localDispatch({ type: "REDO" });
+        } else {
+          context!.redo();
+        }
       }
     }
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []);
+  }, [propSpec, context]);
 
-  // ── Colunas do DSG — Pitfall 4: useMemo obrigatório ──
+  // ── Colunas do DSG ──
   const dsgColumns = useMemo(() => {
-    const dataCols = historyState.present.columns.map((col) => {
+    const dataCols = currentColumns.map((col) => {
       const colKey = col.key!;
       const colType = col.type;
       const isFormula = colType === "formula";
@@ -323,9 +351,7 @@ export function TableGridPanel({ spec }: { spec: TableSpecPayload }) {
             </button>
           </div>
         ),
-        // Células formula são read-only (D-06, TAB-01)
         disabled: isFormula ? () => true : undefined,
-        // Renderizador customizado de célula (SEC-05 — apenas textContent via React children)
         component: ({
           rowData,
           rowIndex,
@@ -344,7 +370,6 @@ export function TableGridPanel({ spec }: { spec: TableSpecPayload }) {
           deleteRow: () => void;
           getContextMenuItems: () => unknown[];
         }) => {
-          // Para colunas formula: exibir displayRows (calculado), não rawRows
           const displayRow = sortedRows[rowIndex] ?? rowData;
           const rawValue = displayRow[colKey] ?? "";
           const displayValue = isFormula ? rawValue : (rowData[colKey] ?? "");
@@ -360,17 +385,12 @@ export function TableGridPanel({ spec }: { spec: TableSpecPayload }) {
             );
           }
 
-          // Formatar para exibição — NUNCA dangerouslySetInnerHTML (SEC-05)
           const formatted = formatCellValue(displayValue, colType);
           return <span>{formatted}</span>;
         },
       };
     });
 
-    // stickyRightColumn para remoção de linha (TAB-03)
-    // CR-02: usar apenas removeRow com o índice original (sortIndexMap[rowIndex]).
-    // Não chamar dsgDeleteRow() — isso causaria double-dispatch e usaria rowIndex
-    // como índice no array original (errado quando sort está ativo).
     const deleteColComponent = ({
       rowIndex,
     }: {
@@ -392,7 +412,6 @@ export function TableGridPanel({ spec }: { spec: TableSpecPayload }) {
         type="button"
         aria-label={`Remover linha ${rowIndex + 1}`}
         onClick={() => {
-          // Mapeia índice sorted → índice original para garantir remoção correta
           const originalIdx = sortIndexMap[rowIndex] ?? rowIndex;
           removeRow(originalIdx);
         }}
@@ -422,36 +441,36 @@ export function TableGridPanel({ spec }: { spec: TableSpecPayload }) {
         maxWidth: 36,
       },
     };
-  }, [historyState.present.columns, sortState, sortedRows, sortIndexMap, handleSortClick, removeColumn, removeRow]);
+  }, [currentColumns, sortState, sortedRows, sortIndexMap, handleSortClick, removeColumn, removeRow]);
 
-  // ── Export CSV/XLSX (EXP-01/EXP-02) — sempre displayRows (calculado), nunca rows (templates) ──
+  // ── Export CSV/XLSX ──
   const handleExportCsv = useCallback(() => {
-    const slug = slugifyTitle(spec.title);
-    const csv = buildCsv(historyState.present.columns, displayRows);
+    const slug = slugifyTitle(activeSpec.title);
+    const csv = buildCsv(currentColumns, displayRows);
     downloadCsv(csv, `${slug}.csv`);
-  }, [historyState.present.columns, displayRows, spec.title]);
+  }, [currentColumns, displayRows, activeSpec.title]);
 
   const handleExportXlsx = useCallback(() => {
-    const slug = slugifyTitle(spec.title);
-    const wb = buildXlsx(historyState.present.columns, displayRows);
+    const slug = slugifyTitle(activeSpec.title);
+    const wb = buildXlsx(currentColumns, displayRows);
     downloadXlsx(wb, `${slug}.xlsx`);
-  }, [historyState.present.columns, displayRows, spec.title]);
+  }, [currentColumns, displayRows, activeSpec.title]);
 
   const createRow = useCallback((): RowData => {
     const newRow: RowData = {};
-    historyState.present.columns.forEach((c) => {
+    currentColumns.forEach((c) => {
       newRow[c.key!] = "";
     });
     return newRow;
-  }, [historyState.present.columns]);
+  }, [currentColumns]);
 
-  const rowsAtLimit = historyState.present.rows.length >= 200;
-  const colsAtLimit = historyState.present.columns.length >= 26;
+  const rowsAtLimit = currentRows.length >= 200;
+  const colsAtLimit = currentColumns.length >= 26;
 
   return (
-    <div className="assistant-card" aria-label={`Tabela: ${spec.title}`}>
+    <div className="assistant-card" aria-label={`Tabela: ${activeSpec.title}`}>
       <div className="output-header">
-        <h2>{spec.title}</h2>
+        <h2>{activeSpec.title}</h2>
       </div>
 
       <div className="table-grid-toolbar">
