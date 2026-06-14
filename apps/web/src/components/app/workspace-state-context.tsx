@@ -1,7 +1,10 @@
 "use client";
-import { createContext, useCallback, useContext, useReducer } from "react";
+import { createContext, useCallback, useContext, useEffect, useReducer, useRef } from "react";
 import type { TableColumn, TableSpecPayload } from "@tabelin/shared";
 import { SAMPLE_SPEC } from "@/features/unified-chat/lib/sample-spec";
+
+/** Janela de debounce do auto-save da planilha (D-02): 1.5s sem mudanças. */
+const AUTO_SAVE_DEBOUNCE_MS = 1_500;
 
 export type RowData = Record<string, string | number>;
 
@@ -120,8 +123,16 @@ type WorkspaceStateContextValue = {
 
 export const WorkspaceStateContext = createContext<WorkspaceStateContextValue | null>(null);
 
-export function WorkspaceStateProvider({ children }: { children: React.ReactNode }) {
-  const initialPresent = seedToGridState(SAMPLE_SPEC);
+export function WorkspaceStateProvider({
+  children,
+  initialSpec,
+}: {
+  children: React.ReactNode;
+  initialSpec?: TableSpecPayload;
+}) {
+  // D-03: inicializa a partir do spec persistido (server-side), caindo de
+  // volta no SAMPLE_SPEC quando não há planilha salva.
+  const initialPresent = seedToGridState(initialSpec ?? SAMPLE_SPEC);
 
   const [history, dispatch] = useReducer(historyReducer, {
     past: [],
@@ -145,6 +156,36 @@ export function WorkspaceStateProvider({ children }: { children: React.ReactNode
     separator: history.present.separator ?? ";",
     formulaLanguage: "pt-BR" as const,
   };
+
+  // D-02: auto-save debancado e deduplicado. lastSavedRef guarda a string do
+  // último estado conhecido como salvo; o mount inicial não dispara POST porque
+  // lastSavedRef já reflete o estado inicial. Mudanças subsequentes agendam um
+  // POST após AUTO_SAVE_DEBOUNCE_MS; o sucesso atualiza o ref para evitar
+  // gravações redundantes.
+  const lastSavedRef = useRef(JSON.stringify(spec));
+  const specJson = JSON.stringify(spec);
+
+  useEffect(() => {
+    if (specJson === lastSavedRef.current) return;
+
+    const timer = setTimeout(() => {
+      void fetch("/api/workspace/state", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: specJson,
+      })
+        .then((res) => {
+          if (res.ok) {
+            lastSavedRef.current = specJson;
+          }
+        })
+        .catch(() => {
+          // Falha de rede é silenciosa: a próxima mudança reagenda o save.
+        });
+    }, AUTO_SAVE_DEBOUNCE_MS);
+
+    return () => clearTimeout(timer);
+  }, [specJson]);
 
   return (
     <WorkspaceStateContext
