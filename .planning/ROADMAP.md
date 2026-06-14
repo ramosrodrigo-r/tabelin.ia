@@ -345,10 +345,11 @@ Full details: ver seções abaixo (Phase 12-15) ou `.planning/milestones/v2.0-RO
   4. Ao recarregar a tela única, a conversa do chat associada à planilha é recarregada — o usuário vê o histórico de trocas anteriores
   5. Export e persistência funcionam tanto para uma planilha originada de seed/em branco quanto de upload CSV/XLSX
 
-**Plans**: 2/2 plans complete
+**Plans**: 2/2 plans complete + 1 gap-closure plan
 
 - [x] 21-01-PLAN.md
 - [x] 21-02-PLAN.md
+- [ ] 21-03-PLAN.md (gap closure) — fecha CR-01/CR-02/WR-03/WR-04: round-trip de persistência (SC3) e reset coerente de "Nova conversa" (SC5)
 
 ### Phase 22: Limpeza Final — Prisma, Dependências, Config, Testes & QA Verde
 
