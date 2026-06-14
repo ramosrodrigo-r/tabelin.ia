@@ -8,6 +8,8 @@ import {
 } from "@tabelin/shared";
 import { useCallback, useState } from "react";
 
+import { useWorkspaceState } from "@/components/app/workspace-state-context";
+
 export type UnifiedChatStreamStatus = "idle" | "loading" | "streaming" | "complete" | "error";
 
 export type UnifiedAttachmentMeta = {
@@ -34,6 +36,7 @@ export function useUnifiedChatStream() {
   const [error, setError] = useState("");
   const [attachmentStatus, setAttachmentStatus] = useState<"uploading" | "extracting" | null>(null);
   const [attachmentMeta, setAttachmentMeta] = useState<UnifiedAttachmentMeta | null>(null);
+  const workspaceState = useWorkspaceState();
 
   const reset = useCallback(() => {
     setStatus("idle");
@@ -63,12 +66,16 @@ export function useUnifiedChatStream() {
     let body: BodyInit;
     let headers: HeadersInit = {};
 
+    // Estado atual da planilha viva serializado para o BFF aplicar a mutação sobre ele.
+    const specOverride = JSON.stringify(workspaceState.spec);
+
     if (input.file) {
       setAttachmentStatus("uploading");
       const fd = new FormData();
       fd.append("prompt", input.prompt);
       if (input.overrideIntent) fd.append("overrideIntent", input.overrideIntent);
       if (input.lastIntent) fd.append("lastIntent", input.lastIntent);
+      fd.append("specOverride", specOverride);
       fd.append("file", input.file);
       body = fd;
     } else {
@@ -76,6 +83,7 @@ export function useUnifiedChatStream() {
         prompt: input.prompt,
         overrideIntent: input.overrideIntent,
         lastIntent: input.lastIntent,
+        specOverride: workspaceState.spec,
       });
       headers = { "content-type": "application/json" };
     }
@@ -188,7 +196,7 @@ export function useUnifiedChatStream() {
     if (buffer.trim()) {
       await handleLine(buffer);
     }
-  }, []);
+  }, [workspaceState.spec]);
 
   return {
     status,
