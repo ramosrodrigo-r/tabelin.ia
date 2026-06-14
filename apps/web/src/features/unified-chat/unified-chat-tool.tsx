@@ -12,6 +12,7 @@ import { AttachmentChip } from "@/components/app/attachment-chip";
 import { ChatInput } from "@/components/app/chat-input";
 import { PrivacyNotice } from "@/components/app/privacy-notice";
 import { useRegisterNewConversation } from "@/components/app/workspace-conversation-context";
+import { useWorkspaceState } from "@/components/app/workspace-state-context";
 import { IntentPill } from "./components/intent-pill";
 import { RenderDispatcher } from "./components/render-dispatcher";
 import {
@@ -93,9 +94,11 @@ export function UnifiedChatTool({
     })
   );
 
+  const workspaceState = useWorkspaceState();
   const stream = useUnifiedChatStream();
   const pending = stream.status === "loading" || stream.status === "streaming";
   const lastSubmitInputRef = useRef<Parameters<typeof stream.submit>[0] | null>(null);
+  const appliedResultRef = useRef<UnifiedCompletePayload | null>(null);
 
   const handleNewConversation = useCallback(() => {
     setExchanges([]);
@@ -105,6 +108,7 @@ export function UnifiedChatTool({
     setPendingFile(null);
     setFileError(null);
     setValidationError("");
+    appliedResultRef.current = null;
     stream.reset();
   }, [stream]);
 
@@ -148,6 +152,19 @@ export function UnifiedChatTool({
     submittedCorrected,
     submittedText,
   ]);
+
+  // Mutação chat→grade: ao concluir um stream cujo payload é table_spec, aplica
+  // o novo estado na planilha viva via setSpec (entra no histórico → Ctrl+Z desfaz).
+  // O ref deduplica a aplicação para não re-disparar em re-renders subsequentes.
+  useEffect(() => {
+    if (stream.status !== "complete") return;
+    const result = stream.result;
+    if (!result || result.kind !== "table_spec") return;
+    if (appliedResultRef.current === result) return;
+
+    appliedResultRef.current = result;
+    workspaceState.setSpec(result);
+  }, [stream.status, stream.result, workspaceState]);
 
   function handleFileSelect(file: File) {
     const err = validateFile(file);
