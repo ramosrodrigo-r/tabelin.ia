@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Planilha Viva + Chat de IA
-status: secured
+status: executing
 stopped_at: Phase 20 complete & secured
-last_updated: "2026-06-14T20:35:50Z"
-last_activity: 2026-06-14
+last_updated: "2026-06-14T20:46:47.757Z"
+last_activity: 2026-06-14 -- Phase 21 execution started
 progress:
   total_phases: 11
-  completed_phases: 6
-  total_plans: 17
+  completed_phases: 5
+  total_plans: 19
   completed_plans: 18
-  percent: 54
+  percent: 45
 ---
 
 # Project State
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-06-08)
 
 **Core value:** Usuários brasileiros trabalham numa planilha viva sempre na tela e pedem em português que a IA manipule os dados na própria grade — ou responda dúvidas sobre eles — sem escolher ferramentas nem navegar entre módulos.
-**Current focus:** Phase 20 — protocolo-de-muta-o-chat-grade-q-a
+**Current focus:** Phase 21 — export-persistencia-da-planilha-conversa
 
 ## Current Position
 
-Phase: 21
-Plan: 21-01-PLAN.md
-Status: Planning completed — ready for execution
-Last activity: 2026-06-14
+Phase: 21 (export-persistencia-da-planilha-conversa) — EXECUTING
+Plan: 1 of 2
+Status: Executing Phase 21
+Last activity: 2026-06-14 -- Phase 21 execution started
 
 ## Performance Metrics
 
