@@ -121,6 +121,11 @@ export function TableGridPanel({ spec: propSpec }: { spec?: TableSpecPayload }) 
   // 1. Initial / Active Spec
   const activeSpec = propSpec ?? context!.spec;
 
+  // ── Estado de ingestão (importação de planilha) ──
+  const [loading, setLoading] = useState(false);
+  const [importError, setImportError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   // Derivar chaves de colunas a partir do spec
   const initialColumns: TableColumn[] = useMemo(
     () =>
@@ -464,6 +469,66 @@ export function TableGridPanel({ spec: propSpec }: { spec?: TableSpecPayload }) 
     return newRow;
   }, [currentColumns]);
 
+  // ── Controles de ingestão (Nova em Branco / Carregar Exemplo / Importar) ──
+
+  const handleNewBlank = useCallback(() => {
+    setImportError(null);
+    context?.resetToBlank();
+  }, [context]);
+
+  const handleLoadSample = useCallback(() => {
+    setImportError(null);
+    context?.resetToSeed();
+  }, [context]);
+
+  const handleImportClick = useCallback(() => {
+    setImportError(null);
+    fileInputRef.current?.click();
+  }, []);
+
+  const handleFileChange = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const input = e.target;
+      const file = input.files?.[0];
+      if (!file) return;
+
+      setLoading(true);
+      setImportError(null);
+
+      try {
+        const formData = new FormData();
+        formData.append("file", file);
+
+        const response = await fetch("/api/workspace/import", {
+          method: "POST",
+          body: formData,
+        });
+
+        if (!response.ok) {
+          let message = "Falha ao importar a planilha. Tente novamente.";
+          try {
+            const json = (await response.json()) as { error?: string };
+            if (json?.error) message = json.error;
+          } catch {
+            // resposta sem JSON — mantém o fallback
+          }
+          setImportError(message);
+          return;
+        }
+
+        const payload = (await response.json()) as TableSpecPayload;
+        context?.setSpec(payload);
+      } catch {
+        setImportError("Não foi possível importar a planilha. Verifique sua conexão e tente novamente.");
+      } finally {
+        setLoading(false);
+        // Limpar o seletor para permitir reimportar o mesmo arquivo
+        input.value = "";
+      }
+    },
+    [context]
+  );
+
   const rowsAtLimit = currentRows.length >= 200;
   const colsAtLimit = currentColumns.length >= 26;
 
@@ -473,7 +538,58 @@ export function TableGridPanel({ spec: propSpec }: { spec?: TableSpecPayload }) 
         <h2>{activeSpec.title}</h2>
       </div>
 
+      {importError && (
+        <div className="table-grid-error-banner" role="alert">
+          <span className="table-grid-error-banner-message">{importError}</span>
+          <button
+            className="table-grid-error-banner-close"
+            type="button"
+            aria-label="Fechar erro"
+            onClick={() => setImportError(null)}
+          >
+            <X size={14} />
+          </button>
+        </div>
+      )}
+
       <div className="table-grid-toolbar">
+        {!propSpec && (
+          <>
+            <button
+              className="ghost-button"
+              type="button"
+              aria-label="Nova em Branco"
+              onClick={handleNewBlank}
+            >
+              Nova em Branco
+            </button>
+            <button
+              className="ghost-button"
+              type="button"
+              aria-label="Carregar Exemplo"
+              onClick={handleLoadSample}
+            >
+              Carregar Exemplo
+            </button>
+            <button
+              className="ghost-button"
+              type="button"
+              aria-label="Importar Planilha"
+              onClick={handleImportClick}
+            >
+              Importar Planilha
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".csv,.xlsx,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+              style={{ display: "none" }}
+              aria-hidden="true"
+              data-testid="import-file-input"
+              onChange={handleFileChange}
+            />
+          </>
+        )}
         <button
           className="ghost-button"
           type="button"
@@ -513,7 +629,32 @@ export function TableGridPanel({ spec: propSpec }: { spec?: TableSpecPayload }) 
         </button>
       </div>
 
-      <div className="table-grid-panel" ref={gridContainerRef}>
+      <div
+        className="table-grid-panel"
+        ref={gridContainerRef}
+        style={{ position: "relative" }}
+      >
+        {loading && (
+          <div
+            className="table-grid-loading-overlay"
+            role="status"
+            aria-live="polite"
+            style={{
+              position: "absolute",
+              inset: 0,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "0.75rem",
+              background: "rgba(255, 255, 255, 0.75)",
+              zIndex: 10,
+            }}
+          >
+            <span className="table-grid-loading-spinner" aria-hidden="true" />
+            <span>Importando planilha...</span>
+          </div>
+        )}
         <DynamicDataSheetGrid
           value={sortedRows}
           onChange={handleChange}
