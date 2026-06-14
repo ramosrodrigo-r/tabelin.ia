@@ -278,7 +278,7 @@ Full details: ver seções abaixo (Phase 12-15) ou `.planning/milestones/v2.0-RO
 
 **Wave 3** *(depende da Wave 2)*
 
-- [ ] 18-05: Reduzir intent-classifier.ts/schema ao eixo binário sheet_operation/qa; plantar eval de 6-8 prompts — CLEAN-06
+- [x] 18-05: Reduzir intent-classifier.ts/schema ao eixo binário sheet_operation/qa; plantar eval de 6-8 prompts — CLEAN-06
 
 **Wave 4** *(depende da Wave 3)*
 
