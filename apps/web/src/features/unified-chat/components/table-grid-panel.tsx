@@ -1,15 +1,15 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
+import { useCallback, useContext, useEffect, useMemo, useReducer, useRef, useState } from "react";
 
 import { DynamicDataSheetGrid, keyColumn, textColumn } from "react-datasheet-grid";
 import "react-datasheet-grid/dist/style.css";
 
 import { ArrowDown, ArrowUp, X } from "lucide-react";
 
-import type { TableColumn, TableSpecPayload } from "@tabelin/shared";
+import { type TableColumn, type TableSpecPayload, tableSpecPayloadSchema } from "@tabelin/shared";
 
-import { useWorkspaceState } from "@/components/app/workspace-state-context";
+import { WorkspaceStateContext } from "@/components/app/workspace-state-context";
 import { type RowData, useFormulaEngine } from "../hooks/use-formula-engine";
 import { buildCsv, buildXlsx, downloadCsv, downloadXlsx } from "../lib/table-export";
 
@@ -49,6 +49,10 @@ function historyReducer(state: HistoryState, action: Action): HistoryState {
         present: state.future[0],
         future: state.future.slice(1),
       };
+    default: {
+      const _exhaustive: never = action;
+      return state;
+    }
   }
 }
 
@@ -116,7 +120,7 @@ export function slugifyTitle(title: string): string {
 // ─── Componente principal ──────────────────────────────────────────────────────
 
 export function TableGridPanel({ spec: propSpec }: { spec?: TableSpecPayload }) {
-  const context = propSpec ? null : useWorkspaceState();
+  const context = useContext(WorkspaceStateContext);
 
   // 1. Initial / Active Spec
   const activeSpec = propSpec ?? context!.spec;
@@ -270,6 +274,7 @@ export function TableGridPanel({ spec: propSpec }: { spec?: TableSpecPayload }) 
 
   const removeColumn = useCallback(
     (key: string) => {
+      if (currentColumns.length <= 1) return;
       dispatch({
         type: "SET",
         newState: {
@@ -343,17 +348,19 @@ export function TableGridPanel({ spec: propSpec }: { spec?: TableSpecPayload }) 
             {col.name}
             {sortState?.key === colKey && sortState.dir === "asc" && <ArrowUp size={12} />}
             {sortState?.key === colKey && sortState.dir === "desc" && <ArrowDown size={12} />}
-            <button
-              className="col-header-remove"
-              type="button"
-              aria-label={`Remover coluna ${col.name}`}
-              onClick={(e) => {
-                e.stopPropagation();
-                removeColumn(colKey);
-              }}
-            >
-              Remover
-            </button>
+            {currentColumns.length > 1 && (
+              <button
+                className="col-header-remove"
+                type="button"
+                aria-label={`Remover coluna ${col.name}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  removeColumn(colKey);
+                }}
+              >
+                Remover
+              </button>
+            )}
           </div>
         ),
         disabled: isFormula ? () => true : undefined,
@@ -516,8 +523,20 @@ export function TableGridPanel({ spec: propSpec }: { spec?: TableSpecPayload }) 
           return;
         }
 
-        const payload = (await response.json()) as TableSpecPayload;
-        context?.setSpec(payload);
+        let payload: unknown;
+        try {
+          payload = await response.json();
+        } catch {
+          setImportError("Resposta inválida do servidor.");
+          return;
+        }
+
+        const parsed = tableSpecPayloadSchema.safeParse(payload);
+        if (!parsed.success) {
+          setImportError("Planilha importada em formato inválido.");
+          return;
+        }
+        context?.setSpec(parsed.data);
       } catch {
         setImportError("Não foi possível importar a planilha. Verifique sua conexão e tente novamente.");
       } finally {

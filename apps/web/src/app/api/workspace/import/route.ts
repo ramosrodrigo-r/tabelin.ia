@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { parse } from "csv-parse/sync";
 import * as XLSX from "xlsx";
-import type { TableColumn, TableSpecPayload } from "@tabelin/shared";
+import { type TableColumn, type TableSpecPayload, tableSpecPayloadSchema } from "@tabelin/shared";
 
 import { getSessionFromCookieHeader } from "@/server/auth/session";
 import { detectFileType } from "@/server/extraction/byte-validation";
@@ -14,6 +14,21 @@ function detectDelimiter(text: string): "," | ";" {
   const commaCount = (firstLine.match(/,/g) ?? []).length;
   const semicolonCount = (firstLine.match(/;/g) ?? []).length;
   return semicolonCount > commaCount ? ";" : ",";
+}
+
+function isValidDateString(s: string): boolean {
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
+    return !isNaN(Date.parse(s));
+  }
+  const brMatch = s.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (brMatch) {
+    const day = parseInt(brMatch[1], 10);
+    const month = parseInt(brMatch[2], 10) - 1;
+    const year = parseInt(brMatch[3], 10);
+    const d = new Date(year, month, day);
+    return d.getFullYear() === year && d.getMonth() === month && d.getDate() === day;
+  }
+  return false;
 }
 
 function inferTypeForColumn(samples: unknown[]): "number" | "date" | "text" {
@@ -38,7 +53,7 @@ function inferTypeForColumn(samples: unknown[]): "number" | "date" | "text" {
   if (
     nonNull.every((v) => {
       const s = String(v).trim();
-      return s.length > 5 && !isNaN(Date.parse(s));
+      return isValidDateString(s);
     })
   ) {
     return "date";
@@ -80,6 +95,7 @@ export async function POST(request: Request) {
 
     let rawRows: Record<string, unknown>[] = [];
     const fileName = file.name;
+    let delimiter: ";" | "," = ";";
 
     if (fileType.kind === "xlsx") {
       const guardResult = guardXlsxZip(bytes);
@@ -107,7 +123,7 @@ export async function POST(request: Request) {
       }
 
       const text = new TextDecoder("utf-8").decode(buffer);
-      const delimiter = detectDelimiter(text);
+      delimiter = detectDelimiter(text);
       rawRows = parse(text, {
         columns: true,
         skip_empty_lines: true,
@@ -133,6 +149,7 @@ export async function POST(request: Request) {
     const limitedHeaders = headers.slice(0, 26);
 
     // Mapear cabeçalhos para chaves únicas seguras e inferir tipos
+    const usedKeys = new Set<string>();
     const headersToKeys: Record<string, string> = {};
     const columnTypes: Record<string, "number" | "date" | "text"> = {};
     const columns: TableColumn[] = limitedHeaders.map((h, index) => {
@@ -142,7 +159,13 @@ export async function POST(request: Request) {
         .replace(/[\u0300-\u036f]/g, "")
         .replace(/[^a-z0-9_]/g, "_")
         .replace(/^_+|_+$/g, "");
-      const key = baseKey || `col_${index}`;
+      
+      let key = baseKey || `col_${index}`;
+      let n = 2;
+      while (usedKeys.has(key)) {
+        key = `${baseKey || `col_${index}`}_${n++}`;
+      }
+      usedKeys.add(key);
       
       headersToKeys[h] = key;
       const type = inferTypeForColumn(limitedRawRows.map((r) => r[h]));
@@ -182,7 +205,8 @@ export async function POST(request: Request) {
 
     // Derivar título do nome do arquivo
     const cleanFileName = fileName.replace(/\.[^/.]+$/, "").replace(/[_-]/g, " ").trim();
-    const title = cleanFileName.charAt(0).toUpperCase() + cleanFileName.slice(1) || "Planilha Importada";
+    const base = cleanFileName.charAt(0).toUpperCase() + cleanFileName.slice(1);
+    const title = base.trim() || "Planilha Importada";
 
     const payload: TableSpecPayload = {
       kind: "table_spec",
@@ -190,11 +214,16 @@ export async function POST(request: Request) {
       columns,
       rows,
       rowCount: rows.length,
-      separator: fileType.kind === "xlsx" ? ";" : detectDelimiter(new TextDecoder("utf-8").decode(buffer)),
+      separator: fileType.kind === "xlsx" ? ";" : delimiter,
       formulaLanguage: "pt-BR",
     };
 
-    return NextResponse.json(payload);
+    const parsed = tableSpecPayloadSchema.safeParse(payload);
+    if (!parsed.success) {
+      return NextResponse.json({ error: "Não foi possível estruturar a planilha importada." }, { status: 422 });
+    }
+
+    return NextResponse.json(parsed.data);
   } catch (error) {
     console.error("Falha ao importar planilha", error);
     return NextResponse.json({ error: "Erro ao processar o arquivo de planilha." }, { status: 500 });

@@ -25,6 +25,28 @@ type Action =
   | { type: "RESET_TO_BLANK" }
   | { type: "RESET_TO_SEED"; seed: TableSpecPayload };
 
+function seedToGridState(seed: TableSpecPayload): GridState {
+  const columns = seed.columns.map((c) => ({
+    ...c,
+    key: c.key ?? c.name.toLowerCase().replace(/\s+/g, "_"),
+  }));
+  const rows = (seed.rows ?? []).map((r) => {
+    const newRow: RowData = {};
+    seed.columns.forEach((c, index) => {
+      const resolvedKey = columns[index].key;
+      const val = r[c.key ?? ""] ?? r[c.name] ?? r[resolvedKey];
+      newRow[resolvedKey] = val !== undefined ? val : "";
+    });
+    return newRow;
+  });
+  return {
+    title: seed.title,
+    columns,
+    rows,
+    separator: seed.separator ?? ";",
+  };
+}
+
 function historyReducer(state: HistoryState, action: Action): HistoryState {
   switch (action.type) {
     case "SET":
@@ -69,20 +91,16 @@ function historyReducer(state: HistoryState, action: Action): HistoryState {
       };
     }
     case "RESET_TO_SEED": {
-      const seedState: GridState = {
-        title: action.seed.title,
-        columns: action.seed.columns.map((c) => ({
-          ...c,
-          key: c.key ?? c.name.toLowerCase().replace(/\s+/g, "_"),
-        })),
-        rows: (action.seed.rows ?? []) as RowData[],
-        separator: action.seed.separator ?? ";",
-      };
+      const seedState = seedToGridState(action.seed);
       return {
         past: [...state.past.slice(-49), state.present],
         present: seedState,
         future: [],
       };
+    }
+    default: {
+      const _exhaustive: never = action;
+      return state;
     }
   }
 }
@@ -100,18 +118,10 @@ type WorkspaceStateContextValue = {
   canRedo: boolean;
 };
 
-const WorkspaceStateContext = createContext<WorkspaceStateContextValue | null>(null);
+export const WorkspaceStateContext = createContext<WorkspaceStateContextValue | null>(null);
 
 export function WorkspaceStateProvider({ children }: { children: React.ReactNode }) {
-  const initialPresent: GridState = {
-    title: SAMPLE_SPEC.title,
-    columns: SAMPLE_SPEC.columns.map((c) => ({
-      ...c,
-      key: c.key ?? c.name.toLowerCase().replace(/\s+/g, "_"),
-    })),
-    rows: (SAMPLE_SPEC.rows ?? []) as RowData[],
-    separator: SAMPLE_SPEC.separator ?? ";",
-  };
+  const initialPresent = seedToGridState(SAMPLE_SPEC);
 
   const [history, dispatch] = useReducer(historyReducer, {
     past: [],
