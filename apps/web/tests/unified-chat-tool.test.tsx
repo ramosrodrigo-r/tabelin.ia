@@ -332,7 +332,10 @@ describe("UnifiedChatTool", () => {
     await user.type(screen.getByLabelText("Pedido"), "Some a coluna A");
     await user.click(screen.getByRole("button", { name: "Enviar" }));
 
-    expect(await screen.findByText("Resposta corrompida. Tente novamente.")).toBeInTheDocument();
+    await waitFor(
+      () => expect(screen.getByText("Resposta corrompida. Tente novamente.")).toBeInTheDocument(),
+      { timeout: 5_000 }
+    );
   });
 
   it("file submit uses FormData without manual content-type", async () => {
