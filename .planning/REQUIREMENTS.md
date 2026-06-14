@@ -37,8 +37,8 @@
 
 - [x] **PERS-01**: Usuário pode exportar a planilha atual (com fórmulas já calculadas) para CSV (RF-05)
 - [x] **PERS-02**: Usuário pode exportar a planilha atual (com fórmulas já calculadas) para XLSX (RF-05)
-- [ ] **PERS-03**: A planilha do usuário é salva e recuperada entre sessões (RF-06)
-- [ ] **PERS-04**: A conversa associada à planilha do usuário é salva e recuperada entre sessões (RF-06)
+- [x] **PERS-03**: A planilha do usuário é salva e recuperada entre sessões (RF-06)
+- [x] **PERS-04**: A conversa associada à planilha do usuário é salva e recuperada entre sessões (RF-06)
 
 ### Localização (LOC) — regressão-guard
 
@@ -112,8 +112,8 @@ Preenchida na criação do roadmap (cada requisito mapeia para exatamente uma fa
 | CHAT-06 | Phase 20 | Complete |
 | PERS-01 | Phase 21 | Complete |
 | PERS-02 | Phase 21 | Complete |
-| PERS-03 | Phase 21 | Pending |
-| PERS-04 | Phase 21 | Pending |
+| PERS-03 | Phase 21 | Complete |
+| PERS-04 | Phase 21 | Complete |
 | LOC-01 | Phase 20 | Complete |
 | CLEAN-01 | Phase 18 | Complete |
 | CLEAN-02 | Phase 18 | Complete |

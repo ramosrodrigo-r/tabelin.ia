@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Planilha Viva + Chat de IA
-status: executing
+status: verifying
 stopped_at: Phase 20 complete & secured
-last_updated: "2026-06-14T20:53:02.568Z"
+last_updated: "2026-06-14T20:58:32.781Z"
 last_activity: 2026-06-14 -- Phase 21 execution started
 progress:
   total_phases: 11
-  completed_phases: 5
+  completed_phases: 6
   total_plans: 19
-  completed_plans: 19
-  percent: 45
+  completed_plans: 20
+  percent: 55
 ---
 
 # Project State
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-06-08)
 
 Phase: 21 (export-persistencia-da-planilha-conversa) — EXECUTING
 Plan: 2 of 2
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-06-14 -- Phase 21 execution started
 
 ## Performance Metrics
@@ -63,6 +63,8 @@ Recent decisions affecting current work:
 - [Phase ?]: Phase 20-02: frontend transmite o estado vivo da grade como specOverride e aplica o table_spec via setSpec (efeito dedicado + dedupe por ref), preservando o undo Ctrl+Z
 - [Phase ?]: 21-01: spec ativo persistido single-row (toolKind=unified_table, mode=active_spec) via transaction Serializable delete+create
 - [Phase ?]: 21-01: auto-save do WorkspaceStateProvider debancado 1.5s e deduplicado por lastSavedRef; sem POST no mount inicial
+- [Phase ?]: WorkspacePage reusa a sessao via getCachedUser (React cache) ao hidratar o historico server-side, evitando segunda query de auth
+- [Phase ?]: Reset coerente (D-04): handleNewConversation chama workspaceState.resetToSeed() para devolver a planilha viva a SAMPLE_SPEC junto com a conversa limpa
 
 ### Pending Todos
 
@@ -87,6 +89,7 @@ None yet.
 | Phase 20 P01 | 12 | 3 tasks | 5 files |
 | Phase 20 P02 | 3 | 3 tasks | 3 files |
 | Phase 21 P01 | 10min | 3 tasks | 5 files |
+| Phase 21 P02 | 2min | 4 tasks | 5 files |
 
 ## Deferred Items
 
@@ -109,7 +112,7 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-06-14T20:52:45.167Z
+Last session: 2026-06-14T20:58:01.512Z
 Stopped at: Phase 20 complete & secured
 Resume file: .planning/phases/20-protocolo-de-muta-o-chat-grade-q-a/20-SECURITY.md
 

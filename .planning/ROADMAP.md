@@ -75,7 +75,7 @@ Full details: ver seções abaixo (Phase 12-15) ou `.planning/milestones/v2.0-RO
 - [x] **Phase 18: Remover Tools Avulsos, OCR, File Analysis & Reduzir Dispatcher** - Geradores de texto, OCR, Análise de Arquivos e geração de tabela do zero saem; classificador de intent e render-dispatcher reduzidos a planilha + Q&A (completed 2026-06-14)
 - [x] **Phase 19: Ingestão Tri-Estado da Planilha** - Usuário abre a planilha viva com seed, em branco, ou via upload CSV/XLSX (substitui a grade) (completed 2026-06-14)
 - [x] **Phase 20: Protocolo de Mutação Chat→Grade & Q&A** - Chat aplica operações estruturadas à grade aberta com undo, responde dúvidas analíticas em texto, com streaming e fixture sem chave (completed 2026-06-14)
-- [ ] **Phase 21: Export & Persistência da Planilha+Conversa** - Export CSV/XLSX com fórmulas calculadas; planilha e conversa do usuário persistem entre sessões
+- [x] **Phase 21: Export & Persistência da Planilha+Conversa** - Export CSV/XLSX com fórmulas calculadas; planilha e conversa do usuário persistem entre sessões (completed 2026-06-14)
 - [ ] **Phase 22: Limpeza Final — Prisma, Dependências, Config, Testes & QA Verde** - Migrations destrutivas (preservando dados), deps órfãs, config/docs/env órfãos, testes/fixtures/assets de capacidades OUT removidos; suíte completa verde
 
 ## Phase Details
@@ -345,10 +345,10 @@ Full details: ver seções abaixo (Phase 12-15) ou `.planning/milestones/v2.0-RO
   4. Ao recarregar a tela única, a conversa do chat associada à planilha é recarregada — o usuário vê o histórico de trocas anteriores
   5. Export e persistência funcionam tanto para uma planilha originada de seed/em branco quanto de upload CSV/XLSX
 
-**Plans**: 1/2 plans executed
+**Plans**: 2/2 plans complete
 
 - [x] 21-01-PLAN.md
-- [ ] 21-02-PLAN.md
+- [x] 21-02-PLAN.md
 
 ### Phase 22: Limpeza Final — Prisma, Dependências, Config, Testes & QA Verde
 
@@ -389,5 +389,5 @@ Full details: ver seções abaixo (Phase 12-15) ou `.planning/milestones/v2.0-RO
 | 18. Remover Tools Avulsos, OCR, File Analysis & Reduzir Dispatcher | v3.0 | 8/8 | Complete | 2026-06-14 |
 | 19. Ingestão Tri-Estado da Planilha | v3.0 | 2/2 | Complete    | 2026-06-14 |
 | 20. Protocolo de Mutação Chat→Grade & Q&A | v3.0 | 2/2 | Complete    | 2026-06-14 |
-| 21. Export & Persistência da Planilha+Conversa | v3.0 | 1/2 | In Progress|  |
+| 21. Export & Persistência da Planilha+Conversa | v3.0 | 2/2 | Complete   | 2026-06-14 |
 | 22. Limpeza Final — Prisma, Dependências, Config, Testes & QA Verde | v3.0 | 0/TBD | Not started | - |
