@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Planilha Viva + Chat de IA
-status: verifying
-stopped_at: Phase 20 context gathered
-last_updated: "2026-06-14T20:25:12.423Z"
+status: secured
+stopped_at: Phase 20 complete & secured
+last_updated: "2026-06-14T20:35:50Z"
 last_activity: 2026-06-14
 progress:
   total_phases: 11
-  completed_phases: 5
+  completed_phases: 6
   total_plans: 17
   completed_plans: 18
-  percent: 45
+  percent: 54
 ---
 
 # Project State
@@ -26,8 +26,8 @@ See: .planning/PROJECT.md (updated 2026-06-08)
 ## Current Position
 
 Phase: 21
-Plan: Not started
-Status: Phase complete — ready for verification
+Plan: 21-01-PLAN.md
+Status: Planning completed — ready for execution
 Last activity: 2026-06-14
 
 ## Performance Metrics
@@ -106,14 +106,11 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-06-14T20:15:31.896Z
-Stopped at: Phase 20 context gathered
-Resume file: .planning/phases/20-protocolo-de-muta-o-chat-grade-q-a/20-CONTEXT.md
+Last session: 2026-06-14T20:35:50Z
+Stopped at: Phase 20 complete & secured
+Resume file: .planning/phases/20-protocolo-de-muta-o-chat-grade-q-a/20-SECURITY.md
 
 ## Operator Next Steps
 
-- Phase 18 CONCLUÍDA (8/8 planos): inventário de deleção fechado — tools avulsos/OCR/file-analysis removidos, dispatcher e schema reduzidos ao eixo binário sheet_operation/qa, packages/shared enxuto, billing/quota órfãos removidos. WR-02 (smoke obsoleto) resolvido no 18-08. Próximo: verificar a fase (/gsd-verify-work ou /gsd-progress) e avançar para a Phase 19 (ingestão tri-estado da planilha — diretório já criado em .planning/phases/19-*).
-- Nota: billing/schema.ts preservado em packages/shared para reuso futuro do AbacatePay; FileSchema preservado (reduzido) pois a extração de anexos CSV/XLSX do chat unificado ainda o consome.
-- ✅ Checkpoint 17→18 cumprido: o eval binário "operação na planilha vs Q&A" foi plantado no Plan 18-05 (6-8 prompts PT representativos como testes automatizados em intent-classifier.test.ts); o eval completo (~20 prompts) permanece como UAT formal da Phase 20.
-- Limite com Phase 22: esta fase remove código/rotas/UI/testes; migrations/deps Prisma destrutivas finais ficam na Phase 22 (nenhum plano da 18 roda migration destrutiva).
-- Pendência da Phase 17 (code review): WR-02 (smoke.spec.ts obsoleto) é resolvido dentro do Plan 18-08 (reescrita dos smokes para a tela unificada). WR-01 já corrigido (quick task 260611-svu).
+- Phase 20 CONCLUÍDA & SECURED: O protocolo de mutação chat→grade e Q&A do chat unificado foi completamente implementado, auditado, corrigido contra todas as vulnerabilidades e warnings listados no relatório de code-review, e validado.
+- Próximo: Avançar para a Phase 21 (ou realizar a próxima etapa do plano de desenvolvimento).
