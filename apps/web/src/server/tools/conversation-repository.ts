@@ -1,5 +1,27 @@
+import type { ConversationExchange } from "@prisma/client";
+import { type TableSpecPayload, tableSpecPayloadSchema } from "@tabelin/shared";
+
 import { GENERATE_MODE } from "@/server/ai/context-messages";
 import { prisma } from "@/server/db/client";
+
+/**
+ * toolKind canônico do spec ativo da planilha (D-01): exatamente uma linha
+ * por usuário, substituída via transaction delete + create. Distinto dos
+ * kinds de histórico de chat ("sheet_operation"/"qa").
+ */
+const ACTIVE_SPEC_TOOL_KIND = "unified_table";
+
+/**
+ * mode canônico do spec ativo (D-01). NÃO é GENERATE_MODE: a planilha persistida
+ * não deve entrar no histórico multi-turn lido por findConversationExchanges.
+ */
+const ACTIVE_SPEC_MODE = "active_spec";
+
+/**
+ * Kinds do histórico unificado de chat injetados server-side (D-03):
+ * apenas operações de planilha e Q&A geram trocas exibíveis no chat.
+ */
+const UNIFIED_CHAT_TOOL_KINDS = ["sheet_operation", "qa"] as const;
 
 const MAX_PAYLOAD_BYTES = 32 * 1024; // 32 KB per row
 
@@ -104,6 +126,86 @@ export async function findConversationExchanges(userId: string, toolKind: string
     return rows.reverse();
   } catch (err) {
     console.warn("ConversationExchange read skipped.", err);
+    return [];
+  }
+}
+
+/**
+ * Lê o spec da planilha ativa do usuário (D-01). Busca o registro mais recente
+ * `unified_table` e valida o payload persistido com tableSpecPayloadSchema —
+ * payload malformado (schema drift, escrita parcial) é tratado como ausência
+ * de spec (fail-closed) para que o caller caia no SAMPLE_SPEC.
+ */
+export async function getActiveSpreadsheetSpec(userId: string): Promise<TableSpecPayload | null> {
+  try {
+    const row = await prisma.conversationExchange.findFirst({
+      where: { userId, toolKind: ACTIVE_SPEC_TOOL_KIND },
+      orderBy: { createdAt: "desc" },
+    });
+    if (!row) return null;
+
+    const parsed = tableSpecPayloadSchema.safeParse(row.assistantPayload);
+    return parsed.success ? parsed.data : null;
+  } catch (err) {
+    console.warn("Active spreadsheet spec read skipped.", err);
+    return null;
+  }
+}
+
+/**
+ * Persiste o spec da planilha ativa (D-01): mantém exatamente uma linha
+ * `unified_table` por usuário, substituindo via transaction delete + create.
+ * O payload passa por guardPayloadSize para respeitar o teto de 32 KB/linha.
+ */
+export async function saveActiveSpreadsheetSpec(
+  userId: string,
+  spec: TableSpecPayload,
+): Promise<void> {
+  try {
+    await prisma.$transaction(
+      async (tx) => {
+        await tx.conversationExchange.deleteMany({
+          where: { userId, toolKind: ACTIVE_SPEC_TOOL_KIND },
+        });
+        await tx.conversationExchange.create({
+          data: {
+            userId,
+            toolKind: ACTIVE_SPEC_TOOL_KIND,
+            mode: ACTIVE_SPEC_MODE,
+            platform: null,
+            dialect: null,
+            userPrompt: "",
+            assistantPayload: guardPayloadSize(spec),
+            attachmentContext: null,
+          },
+        });
+      },
+      { isolationLevel: "Serializable" },
+    );
+  } catch (err) {
+    console.warn("Active spreadsheet spec persistence skipped.", err);
+  }
+}
+
+/**
+ * Lê o histórico unificado de chat do usuário (D-03): trocas com
+ * toolKind em ["sheet_operation", "qa"] e mode GENERATE_MODE, ordenadas
+ * cronologicamente (createdAt asc) para hidratar o chat server-side.
+ */
+export async function findUnifiedConversationExchanges(
+  userId: string,
+): Promise<ConversationExchange[]> {
+  try {
+    return await prisma.conversationExchange.findMany({
+      where: {
+        userId,
+        toolKind: { in: [...UNIFIED_CHAT_TOOL_KINDS] },
+        mode: GENERATE_MODE,
+      },
+      orderBy: { createdAt: "asc" },
+    });
+  } catch (err) {
+    console.warn("Unified conversation read skipped.", err);
     return [];
   }
 }
