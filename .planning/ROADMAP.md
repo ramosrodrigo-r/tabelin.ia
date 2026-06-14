@@ -73,7 +73,7 @@ Full details: ver seções abaixo (Phase 12-15) ou `.planning/milestones/v2.0-RO
 - [x] **Phase 16: Tela Única & Fim da Navegação Multi-Ferramenta** - Shell consolida planilha+chat numa rota única; sidebar/tool-nav e rotas órfãs de tool são removidas (completed 2026-06-11)
 - [x] **Phase 17: Desligar Monetização & Cota** - Billing/Mercado Pago/Pro/cota saem por completo; rota de chat permanece funcional sem gate (completed 2026-06-11)
 - [x] **Phase 18: Remover Tools Avulsos, OCR, File Analysis & Reduzir Dispatcher** - Geradores de texto, OCR, Análise de Arquivos e geração de tabela do zero saem; classificador de intent e render-dispatcher reduzidos a planilha + Q&A (completed 2026-06-14)
-- [ ] **Phase 19: Ingestão Tri-Estado da Planilha** - Usuário abre a planilha viva com seed, em branco, ou via upload CSV/XLSX (substitui a grade)
+- [x] **Phase 19: Ingestão Tri-Estado da Planilha** - Usuário abre a planilha viva com seed, em branco, ou via upload CSV/XLSX (substitui a grade) (completed 2026-06-14)
 - [ ] **Phase 20: Protocolo de Mutação Chat→Grade & Q&A** - Chat aplica operações estruturadas à grade aberta com undo, responde dúvidas analíticas em texto, com streaming e fixture sem chave
 - [ ] **Phase 21: Export & Persistência da Planilha+Conversa** - Export CSV/XLSX com fórmulas calculadas; planilha e conversa do usuário persistem entre sessões
 - [ ] **Phase 22: Limpeza Final — Prisma, Dependências, Config, Testes & QA Verde** - Migrations destrutivas (preservando dados), deps órfãs, config/docs/env órfãos, testes/fixtures/assets de capacidades OUT removidos; suíte completa verde
@@ -305,7 +305,11 @@ Full details: ver seções abaixo (Phase 12-15) ou `.planning/milestones/v2.0-RO
   4. Após a importação, o arquivo bruto enviado não é mantido — apenas a planilha resultante (dados extraídos) é persistida; busca confirma que nenhum armazenamento de arquivo bruto ocorre fora do fluxo efêmero de processamento
   5. A validação de bytes (magic bytes/anti-ZIP-bomb) reaproveitada do pipeline de extração continua ativa no caminho de upload da planilha
 
-**Plans**: TBD
+**Plans**: 2/2 plans complete
+
+- [x] 19-01-PLAN.md
+- [x] 19-02-PLAN.md
+
 **UI hint**: yes
 
 ### Phase 20: Protocolo de Mutação Chat→Grade & Q&A
@@ -376,7 +380,7 @@ Full details: ver seções abaixo (Phase 12-15) ou `.planning/milestones/v2.0-RO
 | 16. Tela Única & Fim da Navegação Multi-Ferramenta | v3.0 | 2/2 | Complete    | 2026-06-11 |
 | 17. Desligar Monetização & Cota | v3.0 | 3/3 | Complete   | 2026-06-11 |
 | 18. Remover Tools Avulsos, OCR, File Analysis & Reduzir Dispatcher | v3.0 | 8/8 | Complete | 2026-06-14 |
-| 19. Ingestão Tri-Estado da Planilha | v3.0 | 0/2 | In Progress | - |
+| 19. Ingestão Tri-Estado da Planilha | v3.0 | 2/2 | Complete   | 2026-06-14 |
 | 20. Protocolo de Mutação Chat→Grade & Q&A | v3.0 | 0/TBD | Not started | - |
 | 21. Export & Persistência da Planilha+Conversa | v3.0 | 0/TBD | Not started | - |
 | 22. Limpeza Final — Prisma, Dependências, Config, Testes & QA Verde | v3.0 | 0/TBD | Not started | - |

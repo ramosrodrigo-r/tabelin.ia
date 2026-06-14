@@ -19,10 +19,10 @@
 
 ### Estados Iniciais da Planilha (DATA)
 
-- [ ] **DATA-01**: Usuário pode abrir a planilha com uma planilha-amostra (seed) de exemplo (RF-02a)
-- [ ] **DATA-02**: Usuário pode abrir uma planilha em branco (RF-02b)
-- [ ] **DATA-03**: Usuário pode importar CSV/XLSX e o arquivo vira a planilha viva, substituindo a grade (RF-02c, §4.4)
-- [ ] **DATA-04**: O arquivo importado é efêmero — só a planilha resultante (conteúdo extraído) é persistida (RNF-02, §4.9)
+- [x] **DATA-01**: Usuário pode abrir a planilha com uma planilha-amostra (seed) de exemplo (RF-02a)
+- [x] **DATA-02**: Usuário pode abrir uma planilha em branco (RF-02b)
+- [x] **DATA-03**: Usuário pode importar CSV/XLSX e o arquivo vira a planilha viva, substituindo a grade (RF-02c, §4.4)
+- [x] **DATA-04**: O arquivo importado é efêmero — só a planilha resultante (conteúdo extraído) é persistida (RNF-02, §4.9)
 
 ### Chat sobre a Planilha (CHAT)
 
@@ -100,10 +100,10 @@ Preenchida na criação do roadmap (cada requisito mapeia para exatamente uma fa
 | SHELL-01 | Phase 16 | Complete |
 | SHELL-02 | Phase 16 | Complete |
 | SHELL-03 | Phase 16 | Complete |
-| DATA-01 | Phase 19 | Pending |
-| DATA-02 | Phase 19 | Pending |
-| DATA-03 | Phase 19 | Pending |
-| DATA-04 | Phase 19 | Pending |
+| DATA-01 | Phase 19 | Complete |
+| DATA-02 | Phase 19 | Complete |
+| DATA-03 | Phase 19 | Complete |
+| DATA-04 | Phase 19 | Complete |
 | CHAT-01 | Phase 20 | Pending |
 | CHAT-02 | Phase 20 | Pending |
 | CHAT-03 | Phase 20 | Pending |
