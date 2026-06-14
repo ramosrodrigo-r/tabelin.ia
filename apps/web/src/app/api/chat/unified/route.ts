@@ -3,13 +3,20 @@ import { NextResponse } from "next/server";
 import {
   type IntentClassification,
   type OverrideIntent,
+  type TableSpecPayload,
+  type UnifiedCompletePayload,
   overrideIntentSchema,
   qaResponsePayloadSchema,
+  tableSpecPayloadSchema,
   unifiedIntentSchema,
 } from "@tabelin/shared";
 
 import { GENERATE_MODE, MAX_EXTRACTED_CHARS } from "@/server/ai/context-messages";
 import { classifyIntent } from "@/server/ai/intent-classifier";
+import {
+  generateMutation,
+  generateQaDeltas,
+} from "@/server/ai/unified-provider";
 import { getSessionFromCookieHeader } from "@/server/auth/session";
 import { extractContent } from "@/server/extraction/dispatcher";
 import { saveConversationExchange } from "@/server/tools/conversation-repository";
@@ -134,16 +141,45 @@ function attachmentMetaFromContext(attachmentContext: string | undefined): Attac
   };
 }
 
-function createEventStream(events: object[]) {
+function validateSpecOverride(value: string | undefined) {
+  if (!value) return { ok: true as const, value: undefined };
+
+  let parsedJson: unknown;
+  try {
+    parsedJson = JSON.parse(value);
+  } catch {
+    return { ok: false as const, issues: [{ message: "specOverride não é um JSON válido." }] };
+  }
+
+  const result = tableSpecPayloadSchema.safeParse(parsedJson);
+  if (!result.success) {
+    return { ok: false as const, issues: result.error.issues };
+  }
+
+  return { ok: true as const, value: result.data };
+}
+
+type StreamSource = AsyncIterable<object> | object[];
+
+function createEventStream(source: StreamSource) {
   const encoder = new TextEncoder();
 
   return new ReadableStream<Uint8Array>({
     async start(controller) {
-      for (const event of events) {
-        controller.enqueue(encoder.encode(`${JSON.stringify(event)}\n`));
-        await new Promise((resolve) => setTimeout(resolve, 5));
+      try {
+        for await (const event of source as AsyncIterable<object>) {
+          controller.enqueue(encoder.encode(`${JSON.stringify(event)}\n`));
+        }
+        controller.close();
+      } catch (err) {
+        controller.enqueue(
+          encoder.encode(
+            `${JSON.stringify({ type: "error", message: "Falha ao gerar a resposta." })}\n`
+          )
+        );
+        console.error("unified stream failed", { err });
+        controller.close();
       }
-      controller.close();
     },
   });
 }
@@ -169,39 +205,78 @@ function toolKindFromIntent(classification: IntentClassification): OverrideInten
   return classification.intent === "sheet_operation" ? "sheet_operation" : "qa";
 }
 
-function temporaryMessageFor(toolKind: OverrideIntent, classification: IntentClassification) {
-  if (classification.intent === "unknown") {
-    return "Nao consegui identificar o pedido com seguranca. Reescreva como uma operacao na planilha aberta ou uma pergunta sobre os dados.";
-  }
+const UNKNOWN_MESSAGE =
+  "Nao consegui identificar o pedido com seguranca. Reescreva como uma operacao na planilha aberta ou uma pergunta sobre os dados.";
 
-  if (toolKind === "sheet_operation") {
-    return "Recebi seu pedido de operacao na planilha. A execucao estruturada sera conectada no fluxo de planilha viva.";
-  }
+type BinaryIntentResult = {
+  payload: UnifiedCompletePayload;
+  toolKind: OverrideIntent;
+  events: object[];
+};
 
-  return "Recebi sua pergunta sobre os dados. A resposta analitica completa sera conectada no fluxo de planilha viva.";
+function metadataEvent(toolKind: OverrideIntent) {
+  return {
+    type: "metadata" as const,
+    metadata: { mode: GENERATE_MODE, providerModel: `unified-${toolKind}` },
+  };
 }
 
-function binaryIntentStream(
-  classification: IntentClassification,
-  attachmentMeta?: AttachmentMeta
-) {
-  const toolKind = toolKindFromIntent(classification);
-  const payload = qaResponsePayloadSchema.parse({
-    kind: "qa_response",
-    content: temporaryMessageFor(toolKind, classification),
-  });
+type ProviderContext = { prompt: string; spec?: TableSpecPayload };
 
-  return {
-    payload,
-    toolKind,
-    stream: createEventStream([
-      intentEvent(classification),
-      ...(attachmentMeta ? [{ type: "attachment_grounded", ...attachmentMeta }] : []),
-      { type: "metadata", metadata: { mode: GENERATE_MODE, providerModel: `binary-${toolKind}` } },
-      { type: "delta", text: payload.content },
-      { type: "complete", payload },
-    ]),
-  };
+/**
+ * Q&A: agrega os deltas de texto (stream real da OpenAI ou delta único de
+ * fixture) e finaliza com o payload `qa_response`. Os eventos são coletados
+ * antes da persistência para que `assistantPayload` reflita o texto final.
+ */
+async function buildQaResult(
+  classification: IntentClassification,
+  context: ProviderContext,
+  attachmentMeta?: AttachmentMeta
+): Promise<BinaryIntentResult> {
+  const events: object[] = [intentEvent(classification)];
+  if (attachmentMeta) events.push({ type: "attachment_grounded", ...attachmentMeta });
+  events.push(metadataEvent("qa"));
+
+  let aggregated = "";
+  for await (const delta of generateQaDeltas(context)) {
+    aggregated += delta;
+    events.push({ type: "delta", text: delta });
+  }
+
+  const content = aggregated.trim() || UNKNOWN_MESSAGE;
+  const payload = qaResponsePayloadSchema.parse({ kind: "qa_response", content });
+  events.push({ type: "complete", payload });
+
+  return { payload, toolKind: "qa", events };
+}
+
+/**
+ * Operação de planilha (sheet_operation): gera a nova tabela estruturada com as
+ * fórmulas já traduzidas de EN para pt-BR e finaliza com o payload `table_spec`.
+ */
+async function buildMutationResult(
+  classification: IntentClassification,
+  context: ProviderContext,
+  attachmentMeta?: AttachmentMeta
+): Promise<BinaryIntentResult> {
+  const events: object[] = [intentEvent(classification)];
+  if (attachmentMeta) events.push({ type: "attachment_grounded", ...attachmentMeta });
+  events.push(metadataEvent("sheet_operation"));
+
+  const payload = await generateMutation(context);
+  events.push({ type: "complete", payload });
+
+  return { payload, toolKind: "sheet_operation", events };
+}
+
+async function buildBinaryResult(
+  classification: IntentClassification,
+  context: ProviderContext,
+  attachmentMeta?: AttachmentMeta
+): Promise<BinaryIntentResult> {
+  return toolKindFromIntent(classification) === "sheet_operation"
+    ? buildMutationResult(classification, context, attachmentMeta)
+    : buildQaResult(classification, context, attachmentMeta);
 }
 
 export async function POST(request: Request) {
@@ -225,6 +300,11 @@ export async function POST(request: Request) {
   const lastIntentResult = validateOptionalIntent(fields.lastIntent, unifiedIntentSchema);
   if (!lastIntentResult.ok) {
     return NextResponse.json({ error: "Intent anterior invalido.", issues: lastIntentResult.issues }, { status: 400 });
+  }
+
+  const specResult = validateSpecOverride(fields.specOverride);
+  if (!specResult.ok) {
+    return NextResponse.json({ error: "Planilha invalida.", issues: specResult.issues }, { status: 400 });
   }
 
   try {
@@ -251,7 +331,11 @@ export async function POST(request: Request) {
     });
 
     const attachmentMeta = attachmentMetaFromContext(attachmentContext);
-    const result = binaryIntentStream(classification, attachmentMeta);
+    const result = await buildBinaryResult(
+      classification,
+      { prompt: promptResult.prompt, spec: specResult.value },
+      attachmentMeta
+    );
 
     await saveConversationExchange({
       userId: user.id,
@@ -264,7 +348,7 @@ export async function POST(request: Request) {
       attachmentContext,
     });
 
-    return responseFromStream(result.stream);
+    return responseFromStream(createEventStream(result.events));
   } catch (err) {
     console.error("unified chat failed", { err });
     return NextResponse.json({ error: "Nao consegui validar a resposta." }, { status: 502 });
