@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Planilha Viva + Chat de IA
 status: executing
-stopped_at: Completed 18-05-PLAN.md
-last_updated: "2026-06-14T12:28:15-03:00"
-last_activity: 2026-06-14 -- Completed 18-05-PLAN.md
+stopped_at: Completed 18-06-PLAN.md
+last_updated: "2026-06-14T12:48:00-03:00"
+last_activity: 2026-06-14 -- Completed 18-06-PLAN.md (resumed interrupted session)
 progress:
   total_phases: 11
   completed_phases: 2
   total_plans: 13
-  completed_plans: 11
-  percent: 84
+  completed_plans: 12
+  percent: 92
 ---
 
 # Project State
@@ -26,9 +26,9 @@ See: .planning/PROJECT.md (updated 2026-06-08)
 ## Current Position
 
 Phase: 18 (remover-tools-avulsos-ocr-file-analysis-reduzir-dispatcher) — EXECUTING
-Plan: 6 of 8
+Plan: 7 of 8
 Status: Ready to execute
-Last activity: 2026-06-14 -- Completed 18-05-PLAN.md
+Last activity: 2026-06-14 -- Completed 18-06-PLAN.md (resumed interrupted session)
 
 ## Performance Metrics
 
@@ -100,13 +100,13 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-06-14T15:28:15.000Z
-Stopped at: Completed 18-05-PLAN.md
+Last session: 2026-06-14T15:48:00.000Z
+Stopped at: Completed 18-06-PLAN.md (sessão interrompida retomada via /gsd-resume-work — caller cleanup de typecheck e ajustes de teste finalizados, committed)
 Resume file: None
 
 ## Operator Next Steps
 
-- Phase 18 em execução: 18-05 concluído; próximo plano é 18-06 (reduzir payload schema/render-dispatcher e remover componentes de stub/clarificação/spec).
+- Phase 18 em execução: 18-06 concluído (schema/render-dispatcher reduzidos, 3 componentes deletados, typecheck+testes verdes); próximo plano é 18-07.
 - ✅ Checkpoint 17→18 cumprido: o eval binário "operação na planilha vs Q&A" foi plantado no Plan 18-05 (6-8 prompts PT representativos como testes automatizados em intent-classifier.test.ts); o eval completo (~20 prompts) permanece como UAT formal da Phase 20.
 - Limite com Phase 22: esta fase remove código/rotas/UI/testes; migrations/deps Prisma destrutivas finais ficam na Phase 22 (nenhum plano da 18 roda migration destrutiva).
 - Pendência da Phase 17 (code review): WR-02 (smoke.spec.ts obsoleto) é resolvido dentro do Plan 18-08 (reescrita dos smokes para a tela unificada). WR-01 já corrigido (quick task 260611-svu).
