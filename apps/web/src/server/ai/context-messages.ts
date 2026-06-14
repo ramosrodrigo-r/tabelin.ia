@@ -53,9 +53,11 @@ function estimateTokens(text: string): number {
  * Serializa o assistantPayload de um ConversationExchange em prosa natural,
  * prefixada com o rótulo "[Resposta anterior]".
  *
- * Extrai apenas o artefato principal + explicação curta por tool kind (D-05).
- * NUNCA emite JSON cru, metadata, warnings, assumptions ou outros campos —
- * isso impede que o modelo imite o formato JSON de saída (T-08-01).
+ * Após a redução binária da Phase 18, só existem dois kinds de payload:
+ * `qa_response` (resposta textual de Q&A) e `table_spec` (especificação da
+ * grade). Extrai apenas o artefato principal por kind (D-05). NUNCA emite JSON
+ * cru, metadata, warnings, assumptions ou outros campos — isso impede que o
+ * modelo imite o formato JSON de saída (T-08-01).
  *
  * O rótulo "[Resposta anterior]" sinaliza ao modelo que o conteúdo seguinte é
  * uma resposta anterior ao contexto, não o output esperado para o turno atual.
@@ -78,45 +80,10 @@ function serializeAssistant(payload: unknown): string | null {
   const p = payload as Record<string, unknown>;
 
   switch (p.kind) {
-    case "sql": {
-      const query = typeof p.query === "string" ? p.query.trim() : "";
-      const explanation = typeof p.explanation === "string" ? p.explanation.trim() : "";
-      if (!query || !explanation) return null;
-      return `[Resposta anterior]\n${query}\n\n${explanation}`;
-    }
-
-    case "regex_generate": {
-      const pattern = typeof p.pattern === "string" ? p.pattern.trim() : "";
-      const explanation = typeof p.explanation === "string" ? p.explanation.trim() : "";
-      if (!pattern || !explanation) return null;
-      return `[Resposta anterior]\n${pattern}\n\n${explanation}`;
-    }
-
-    case "script": {
-      const code = typeof p.code === "string" ? p.code.trim() : "";
-      const explanation = typeof p.explanation === "string" ? p.explanation.trim() : "";
-      if (!code || !explanation) return null;
-      return `[Resposta anterior]\n${code}\n\n${explanation}`;
-    }
-
-    case "template": {
-      const output = typeof p.output === "string" ? p.output.trim() : "";
-      const explanation = typeof p.explanation === "string" ? p.explanation.trim() : "";
-      if (!output || !explanation) return null;
-      return `[Resposta anterior]\n${output}\n\n${explanation}`;
-    }
-
-    case "table_stub": {
-      const originalPrompt = typeof p.originalPrompt === "string" ? p.originalPrompt.trim() : "";
-      const message = typeof p.message === "string" ? p.message.trim() : "";
-      if (!message) return null;
-      return `[Resposta anterior - tabela solicitada]\n${originalPrompt}\n\n${message}`;
-    }
-
-    case "table_clar_question": {
-      const question = typeof p.question === "string" ? p.question.trim() : "";
-      if (!question) return null;
-      return `[Pergunta de clarificação anterior]\n${question}`;
+    case "qa_response": {
+      const content = typeof p.content === "string" ? p.content.trim() : "";
+      if (!content) return null;
+      return `[Resposta anterior]\n${content}`;
     }
 
     case "table_spec": {
@@ -126,13 +93,6 @@ function serializeAssistant(payload: unknown): string | null {
         : "";
       if (!title) return null;
       return `[Especificação de tabela confirmada]\nTítulo: ${title}\nColunas: ${cols}`;
-    }
-
-    case "formula": {
-      const formula = typeof p.formula === "string" ? p.formula.trim() : "";
-      const explanation = typeof p.explanation === "string" ? p.explanation.trim() : "";
-      if (!formula || !explanation) return null;
-      return `[Resposta anterior]\n${formula}\n\n${explanation}`;
     }
 
     default:

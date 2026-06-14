@@ -20,12 +20,13 @@ function makeExchange(overrides: {
   return {
     id: "cuid-test",
     userId: "user-1",
-    toolKind: overrides.toolKind ?? "sql",
+    toolKind: overrides.toolKind ?? "qa",
     mode: overrides.mode ?? "generate",
     platform: null,
     dialect: null,
     userPrompt: overrides.userPrompt ?? "Prompt do usuário",
-    assistantPayload: overrides.assistantPayload ?? { kind: "sql", query: "SELECT 1", explanation: "Seleciona 1" },
+    assistantPayload:
+      overrides.assistantPayload ?? { kind: "qa_response", content: "A média da coluna Valor é 42." },
     attachmentContext: overrides.attachmentContext ?? null,
     createdAt: overrides.createdAt ?? new Date("2026-01-01T00:00:00Z"),
     user: { id: "user-1", name: "Ana", email: "ana@empresa.com" }
@@ -33,218 +34,62 @@ function makeExchange(overrides: {
 }
 
 // ---------------------------------------------------------------------------
-// TASK 1: Serialização por tool + montagem do array
+// TASK 1: Serialização por kind + montagem do array
+//
+// Após a redução binária da Phase 18 só restam dois kinds de payload:
+// qa_response (Q&A textual) e table_spec (especificação da grade). Kinds
+// legados (sql/regex_generate/script/template/table_stub/table_clar_question/
+// formula) caem no default e serializam para null (D-09).
 // ---------------------------------------------------------------------------
 
 describe("buildToolContextMessages", () => {
-  describe("serialização SQL", () => {
-    it("serializa exchange SQL com query + explanation como prosa natural", () => {
+  describe("serialização qa_response", () => {
+    it("serializa qa_response com rótulo [Resposta anterior] e sem JSON cru", () => {
       const exchange = makeExchange({
-        assistantPayload: {
-          kind: "sql",
-          query: "SELECT * FROM orders WHERE status = 'paid'",
-          explanation: "Busca todos os pedidos pagos",
-          assumptions: ["tabela orders existe"],
-          warnings: ["pode ser lento em tabelas grandes"],
-          metadata: { mode: "generate", dialect: "postgresql", isDestructive: false }
-        }
+        assistantPayload: { kind: "qa_response", content: "A média da coluna Valor é 42." }
       });
 
-      const result = buildToolContextMessages("sql", [exchange], "System prompt", "Nova pergunta");
+      const result = buildToolContextMessages("qa", [exchange], "System prompt", "Nova pergunta");
 
       const assistantMsg = result.find((m) => m.role === "assistant");
       expect(assistantMsg).toBeDefined();
       const content = assistantMsg!.content as string;
 
-      // deve conter artefato e explicação
-      expect(content).toContain("SELECT * FROM orders WHERE status = 'paid'");
-      expect(content).toContain("Busca todos os pedidos pagos");
-
-      // NÃO deve conter JSON cru, metadata ou warnings
-      expect(content).not.toContain('"kind"');
-      expect(content).not.toContain("metadata");
-      expect(content).not.toContain("{");
-      expect(content).not.toContain("}");
-    });
-  });
-
-  describe("serialização Regex", () => {
-    it("serializa exchange Regex com pattern + explanation como prosa natural", () => {
-      const exchange = makeExchange({
-        toolKind: "regex",
-        assistantPayload: {
-          kind: "regex_generate",
-          pattern: "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$",
-          explanation: "Valida endereços de e-mail no formato padrão",
-          examples: ["test@example.com"],
-          metadata: { mode: "generate" }
-        }
-      });
-
-      const result = buildToolContextMessages("regex", [exchange], "System", "Prompt");
-
-      const assistantMsg = result.find((m) => m.role === "assistant");
-      const content = assistantMsg!.content as string;
-
-      expect(content).toContain("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
-      expect(content).toContain("Valida endereços de e-mail no formato padrão");
-      expect(content).not.toContain("metadata");
-    });
-  });
-
-  describe("serialização Scripts", () => {
-    it("serializa exchange Script com code + explanation como prosa natural", () => {
-      const exchange = makeExchange({
-        toolKind: "script",
-        assistantPayload: {
-          kind: "script",
-          code: "Sub ExibirMensagem()\n  MsgBox \"Olá!\"\nEnd Sub",
-          explanation: "Script VBA que exibe uma caixa de mensagem",
-          assumptions: [],
-          warnings: [],
-          metadata: { mode: "generate", scriptType: "vba", isDestructive: false }
-        }
-      });
-
-      const result = buildToolContextMessages("script", [exchange], "System", "Prompt");
-
-      const assistantMsg = result.find((m) => m.role === "assistant");
-      const content = assistantMsg!.content as string;
-
-      expect(content).toContain('Sub ExibirMensagem()');
-      expect(content).toContain("Script VBA que exibe uma caixa de mensagem");
-      expect(content).not.toContain("metadata");
-    });
-  });
-
-  describe("serialização Template", () => {
-    it("serializa exchange Template com output + explanation como prosa natural", () => {
-      const exchange = makeExchange({
-        toolKind: "template",
-        assistantPayload: {
-          kind: "template",
-          output: "| Produto | Preço | Quantidade |\n|---------|-------|------------|",
-          explanation: "Tabela de controle de estoque simples",
-          assumptions: [],
-          warnings: [],
-          metadata: { mode: "generate" }
-        }
-      });
-
-      const result = buildToolContextMessages("template", [exchange], "System", "Prompt");
-
-      const assistantMsg = result.find((m) => m.role === "assistant");
-      const content = assistantMsg!.content as string;
-
-      expect(content).toContain("| Produto | Preço | Quantidade |");
-      expect(content).toContain("Tabela de controle de estoque simples");
-      expect(content).not.toContain("metadata");
-    });
-  });
-
-  describe("serialização tabela solicitada", () => {
-    it("serializa table_stub com rótulo específico e sem JSON cru", () => {
-      const exchange = makeExchange({
-        toolKind: "unified_table",
-        assistantPayload: {
-          kind: "table_stub",
-          originalPrompt: "Monte uma tabela de controle de gastos",
-          message: "A tabela sera refinada nas proximas etapas."
-        }
-      });
-
-      const result = buildToolContextMessages("unified_table", [exchange], "System", "Refine a tabela");
-
-      const assistantMsg = result.find((m) => m.role === "assistant");
-      expect(assistantMsg).toBeDefined();
-      const content = assistantMsg!.content as string;
-
-      expect(content).toContain("[Resposta anterior - tabela solicitada]");
-      expect(content).toContain("Monte uma tabela de controle de gastos");
-      expect(content).toContain("A tabela sera refinada nas proximas etapas.");
+      expect(content).toBe("[Resposta anterior]\nA média da coluna Valor é 42.");
       expect(content).not.toContain('"kind"');
       expect(content).not.toContain("{");
       expect(content).not.toContain("}");
     });
 
-    it("pula table_stub sem message sem lançar erro", () => {
+    it("pula qa_response com content vazio sem lançar erro", () => {
       const exchange = makeExchange({
-        toolKind: "unified_table",
-        assistantPayload: {
-          kind: "table_stub",
-          originalPrompt: "Monte uma tabela"
-        }
+        assistantPayload: { kind: "qa_response", content: "   " }
       });
 
       expect(() => {
-        buildToolContextMessages("unified_table", [exchange], "System", "Prompt");
+        buildToolContextMessages("qa", [exchange], "System", "Prompt");
       }).not.toThrow();
 
-      const result = buildToolContextMessages("unified_table", [exchange], "System", "Prompt");
-      expect(result).toHaveLength(2);
-    });
-  });
-
-  describe("serialização table_clar_question", () => {
-    it("serializa table_clar_question com rótulo e question", () => {
-      const exchange = makeExchange({
-        toolKind: "unified_table",
-        assistantPayload: {
-          kind: "table_clar_question",
-          question: "Quantas linhas?",
-          turnIndex: 0,
-          totalTurns: 2,
-          canSkip: true,
-        },
-      });
-
-      const result = buildToolContextMessages("unified_table", [exchange], "System", "Resposta do usuário");
-
-      const assistantMsg = result.find((m) => m.role === "assistant");
-      expect(assistantMsg).toBeDefined();
-      const content = assistantMsg!.content as string;
-
-      expect(content).toContain("[Pergunta de clarificação anterior]");
-      expect(content).toContain("Quantas linhas?");
-      expect(content).not.toContain('"kind"');
-    });
-
-    it("pula table_clar_question com question vazia sem lançar erro", () => {
-      const exchange = makeExchange({
-        toolKind: "unified_table",
-        assistantPayload: {
-          kind: "table_clar_question",
-          question: "",
-          turnIndex: 0,
-          totalTurns: 2,
-          canSkip: false,
-        },
-      });
-
-      expect(() => {
-        buildToolContextMessages("unified_table", [exchange], "System", "Prompt");
-      }).not.toThrow();
-
-      const result = buildToolContextMessages("unified_table", [exchange], "System", "Prompt");
+      const result = buildToolContextMessages("qa", [exchange], "System", "Prompt");
       // exchange pulado → somente [system, user]
       expect(result).toHaveLength(2);
     });
+  });
 
-    it("pula table_clar_question com question null sem lançar erro", () => {
+  describe("kinds legados removidos", () => {
+    it("serializa kind sql (removido) como null → exchange pulado", () => {
       const exchange = makeExchange({
-        toolKind: "unified_table",
-        assistantPayload: {
-          kind: "table_clar_question",
-          question: null,
-          turnIndex: 0,
-          totalTurns: 2,
-          canSkip: false,
-        },
+        assistantPayload: { kind: "sql", query: "SELECT 1", explanation: "x" }
       });
 
-      expect(() => {
-        buildToolContextMessages("unified_table", [exchange], "System", "Prompt");
-      }).not.toThrow();
+      const result = buildToolContextMessages("sql", [exchange], "System", "Prompt");
+      expect(result).toHaveLength(2);
+    });
+
+    it("serializa kind table_stub (removido) como null → exchange pulado", () => {
+      const exchange = makeExchange({
+        assistantPayload: { kind: "table_stub", originalPrompt: "x", message: "y" }
+      });
 
       const result = buildToolContextMessages("unified_table", [exchange], "System", "Prompt");
       expect(result).toHaveLength(2);
@@ -302,7 +147,7 @@ describe("buildToolContextMessages", () => {
         makeExchange({ userPrompt: "Segunda pergunta", createdAt: new Date("2026-01-02") })
       ];
 
-      const result = buildToolContextMessages("sql", exchanges, "System", "Prompt atual");
+      const result = buildToolContextMessages("qa", exchanges, "System", "Prompt atual");
 
       // [system, user1, assistant1, user2, assistant2, user_atual]
       expect(result).toHaveLength(6);
@@ -320,7 +165,7 @@ describe("buildToolContextMessages", () => {
         makeExchange({ userPrompt: "Mais recente", createdAt: new Date("2026-01-02") })
       ];
 
-      const result = buildToolContextMessages("sql", exchanges, "System prompt", "Prompt atual");
+      const result = buildToolContextMessages("qa", exchanges, "System prompt", "Prompt atual");
 
       expect(result[0]).toMatchObject({ role: "system", content: "System prompt" });
       expect(result[1]).toMatchObject({ role: "user", content: "Mais antiga" });
@@ -329,7 +174,7 @@ describe("buildToolContextMessages", () => {
     });
 
     it("histórico vazio produz array idêntico ao single-turn [system, user] (D-10)", () => {
-      const result = buildToolContextMessages("sql", [], "System prompt", "Minha pergunta");
+      const result = buildToolContextMessages("qa", [], "System prompt", "Minha pergunta");
 
       expect(result).toHaveLength(2);
       expect(result[0]).toMatchObject({ role: "system", content: "System prompt" });
@@ -339,7 +184,7 @@ describe("buildToolContextMessages", () => {
 
   describe("attachmentContext", () => {
     it("injeta attachmentContext atual no system prompt com delimitadores anti-injection", () => {
-      const result = buildToolContextMessages("sql", [], "System prompt", "Analise o documento", "id,nome\n1,Joao");
+      const result = buildToolContextMessages("qa", [], "System prompt", "Analise o documento", "id,nome\n1,Joao");
 
       const systemMsg = result.find((m) => m.role === "system");
       expect(systemMsg).toBeDefined();
@@ -356,7 +201,7 @@ describe("buildToolContextMessages", () => {
         makeExchange({ attachmentContext: "dados mais recentes" })
       ];
 
-      const result = buildToolContextMessages("sql", exchanges, "System prompt", "Agora filtre os ativos");
+      const result = buildToolContextMessages("qa", exchanges, "System prompt", "Agora filtre os ativos");
 
       const systemMsg = result.find((m) => m.role === "system");
       const systemContent = systemMsg!.content as string;
@@ -368,7 +213,7 @@ describe("buildToolContextMessages", () => {
     it("trunca attachmentContext no limite exportado", () => {
       const longContent = "A".repeat(MAX_EXTRACTED_CHARS + 2_000);
 
-      const result = buildToolContextMessages("sql", [], "System prompt", "Analise", longContent);
+      const result = buildToolContextMessages("qa", [], "System prompt", "Analise", longContent);
       const systemMsg = result.find((m) => m.role === "system");
       const systemContent = systemMsg!.content as string;
       const injectedContent = systemContent
@@ -386,11 +231,10 @@ describe("buildToolContextMessages", () => {
         makeExchange({ userPrompt: "Gere isso", mode: "generate" })
       ];
 
-      const result = buildToolContextMessages("sql", exchanges, "System", "Nova pergunta");
+      const result = buildToolContextMessages("qa", exchanges, "System", "Nova pergunta");
 
       // Somente o exchange "generate" deve aparecer: [system, user_generate, assistant_generate, user_atual]
       expect(result).toHaveLength(4);
-      // O userPrompt "Explique isso" NÃO deve aparecer
       const userMessages = result.filter((m) => m.role === "user");
       const userContents = userMessages.map((m) => m.content as string);
       expect(userContents).not.toContain("Explique isso");
@@ -403,7 +247,7 @@ describe("buildToolContextMessages", () => {
         makeExchange({ mode: "explain" })
       ];
 
-      const result = buildToolContextMessages("sql", exchanges, "System", "Prompt");
+      const result = buildToolContextMessages("qa", exchanges, "System", "Prompt");
       expect(result).toHaveLength(2); // somente [system, user]
     });
   });
@@ -415,53 +259,32 @@ describe("buildToolContextMessages", () => {
       });
 
       expect(() => {
-        buildToolContextMessages("sql", [exchange], "System", "Prompt");
+        buildToolContextMessages("qa", [exchange], "System", "Prompt");
       }).not.toThrow();
 
       // O exchange desconhecido é pulado → apenas [system, user]
-      const result = buildToolContextMessages("sql", [exchange], "System", "Prompt");
+      const result = buildToolContextMessages("qa", [exchange], "System", "Prompt");
       expect(result).toHaveLength(2);
     });
 
     it("payload com campos ausentes é pulado sem lançar erro", () => {
       const exchange = makeExchange({
-        assistantPayload: { kind: "sql" }  // sem query nem explanation
+        assistantPayload: { kind: "qa_response" }  // sem content
       });
 
       expect(() => {
-        buildToolContextMessages("sql", [exchange], "System", "Prompt");
+        buildToolContextMessages("qa", [exchange], "System", "Prompt");
       }).not.toThrow();
     });
   });
 
-  describe("serialização SQL — rótulo [Resposta anterior]", () => {
+  describe("rótulo [Resposta anterior]", () => {
     it("conteúdo do assistant começa com [Resposta anterior]", () => {
       const exchange = makeExchange({
-        assistantPayload: {
-          kind: "sql",
-          query: "SELECT * FROM pedidos",
-          explanation: "Busca todos os pedidos"
-        }
+        assistantPayload: { kind: "qa_response", content: "Total das vendas: R$ 1.234,00" }
       });
 
-      const result = buildToolContextMessages("sql", [exchange], "System prompt", "Nova pergunta");
-
-      const assistantMsg = result.find((m) => m.role === "assistant");
-      expect(assistantMsg).toBeDefined();
-      const content = assistantMsg!.content as string;
-      expect(content).toContain("[Resposta anterior]");
-    });
-
-    it("buildToolContextMessages com 1 exchange: mensagem assistant contém [Resposta anterior]", () => {
-      const exchange = makeExchange({
-        assistantPayload: {
-          kind: "sql",
-          query: "SELECT id FROM clientes",
-          explanation: "Busca IDs"
-        }
-      });
-
-      const result = buildToolContextMessages("sql", [exchange], "System", "Follow-up");
+      const result = buildToolContextMessages("qa", [exchange], "System prompt", "Nova pergunta");
 
       const assistantMsg = result.find((m) => m.role === "assistant");
       expect(assistantMsg).toBeDefined();
@@ -476,19 +299,19 @@ describe("buildToolContextMessages", () => {
 
 describe("buildMultiTurnSystemPrompt", () => {
   it("retorna basePrompt sem modificação quando historyLength === 0", () => {
-    const basePrompt = "Voce e um especialista em SQL.";
+    const basePrompt = "Voce e um especialista em planilhas.";
     expect(buildMultiTurnSystemPrompt(basePrompt, 0)).toBe(basePrompt);
   });
 
   it("retorna basePrompt + parágrafo multi-turn quando historyLength === 1", () => {
-    const basePrompt = "Voce e um especialista em SQL.";
+    const basePrompt = "Voce e um especialista em planilhas.";
     const result = buildMultiTurnSystemPrompt(basePrompt, 1);
     expect(result).toContain(basePrompt);
     expect(result).toContain("ultima mensagem");
   });
 
   it("retorna basePrompt + parágrafo multi-turn quando historyLength === 5", () => {
-    const basePrompt = "Voce e um especialista em regex.";
+    const basePrompt = "Voce e um especialista em planilhas.";
     const result = buildMultiTurnSystemPrompt(basePrompt, 5);
     expect(result).toContain(basePrompt);
     expect(result).toContain("ultima mensagem");
@@ -498,6 +321,9 @@ describe("buildMultiTurnSystemPrompt", () => {
 
 // ---------------------------------------------------------------------------
 // TASK 2: Truncagem híbrida
+//
+// As asserções aqui dependem do tamanho de userPrompt (guarda de tokens), não
+// do kind do payload — preservadas da suíte original.
 // ---------------------------------------------------------------------------
 
 describe("truncateHistory", () => {
@@ -541,11 +367,7 @@ describe("truncateHistory", () => {
     const exchanges = Array.from({ length: 10 }, (_, i) =>
       makeExchange({
         userPrompt: bigText,
-        assistantPayload: {
-          kind: "sql",
-          query: bigText,
-          explanation: bigText
-        },
+        assistantPayload: { kind: "qa_response", content: bigText },
         createdAt: new Date(2026, 0, i + 1)
       })
     );
@@ -566,11 +388,7 @@ describe("truncateHistory", () => {
     const exchanges = [
       makeExchange({
         userPrompt: hugeText,
-        assistantPayload: {
-          kind: "sql",
-          query: hugeText,
-          explanation: hugeText
-        },
+        assistantPayload: { kind: "qa_response", content: hugeText },
         createdAt: new Date(2026, 0, 1)
       })
     ];
@@ -586,11 +404,11 @@ describe("truncateHistory", () => {
     // Cria dois pares de exchanges com tamanhos diferentes de payload
     const smallExchange = makeExchange({
       userPrompt: "Curto",
-      assistantPayload: { kind: "sql", query: "SELECT 1", explanation: "Ok" }
+      assistantPayload: { kind: "qa_response", content: "Ok" }
     });
     const bigExchange = makeExchange({
       userPrompt: "A".repeat(5000),
-      assistantPayload: { kind: "sql", query: "B".repeat(5000), explanation: "C".repeat(5000) }
+      assistantPayload: { kind: "qa_response", content: "C".repeat(5000) }
     });
 
     // Se passarmos os dois, ambos pequenos cabem; se estoura, o menor fica

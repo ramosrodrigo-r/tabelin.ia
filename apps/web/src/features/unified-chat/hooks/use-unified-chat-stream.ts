@@ -1,11 +1,7 @@
 "use client";
 
 import {
-  type FormulaLanguage,
-  type FormulaPlatform,
   type OverrideIntent,
-  type ScriptType,
-  type SqlDialect,
   type UnifiedCompletePayload,
   type UnifiedIntent,
   unifiedStreamEventSchema,
@@ -24,14 +20,7 @@ export type SubmitUnifiedChatInput = {
   prompt: string;
   file?: File;
   overrideIntent?: OverrideIntent;
-  platform: FormulaPlatform;
-  formulaLanguage: FormulaLanguage;
-  separator: ";" | ",";
-  sqlDialect: SqlDialect;
-  scriptType: ScriptType;
   lastIntent?: UnifiedIntent | null;
-  overrideGenerate?: boolean;
-  specOverride?: string;
 };
 
 export function useUnifiedChatStream() {
@@ -78,29 +67,15 @@ export function useUnifiedChatStream() {
       setAttachmentStatus("uploading");
       const fd = new FormData();
       fd.append("prompt", input.prompt);
-      fd.append("platform", input.platform);
-      fd.append("formulaLanguage", input.formulaLanguage);
-      fd.append("separator", input.separator);
-      fd.append("sqlDialect", input.sqlDialect);
-      fd.append("scriptType", input.scriptType);
       if (input.overrideIntent) fd.append("overrideIntent", input.overrideIntent);
       if (input.lastIntent) fd.append("lastIntent", input.lastIntent);
-      if (input.overrideGenerate) fd.append("overrideGenerate", "true");
-      if (input.specOverride) fd.append("specOverride", input.specOverride);
       fd.append("file", input.file);
       body = fd;
     } else {
       body = JSON.stringify({
         prompt: input.prompt,
-        platform: input.platform,
-        formulaLanguage: input.formulaLanguage,
-        separator: input.separator,
-        sqlDialect: input.sqlDialect,
-        scriptType: input.scriptType,
         overrideIntent: input.overrideIntent,
         lastIntent: input.lastIntent,
-        overrideGenerate: input.overrideGenerate ? "true" : undefined,
-        specOverride: input.specOverride,
       });
       headers = { "content-type": "application/json" };
     }

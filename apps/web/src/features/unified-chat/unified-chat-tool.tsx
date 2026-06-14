@@ -1,11 +1,7 @@
 "use client";
 
 import type {
-  FormulaLanguage,
-  FormulaPlatform,
   OverrideIntent,
-  ScriptType,
-  SqlDialect,
   UnifiedCompletePayload,
   UnifiedIntent,
 } from "@tabelin/shared";
@@ -18,20 +14,11 @@ import { PrivacyNotice } from "@/components/app/privacy-notice";
 import { useRegisterNewConversation } from "@/components/app/workspace-conversation-context";
 import { IntentPill } from "./components/intent-pill";
 import { RenderDispatcher } from "./components/render-dispatcher";
-import { SessionContextSelector } from "./components/session-context-selector";
 import {
   type UnifiedAttachmentMeta,
   type UnifiedChatStreamStatus,
   useUnifiedChatStream,
 } from "./hooks/use-unified-chat-stream";
-
-type UnifiedContext = {
-  platform: FormulaPlatform;
-  formulaLanguage: FormulaLanguage;
-  separator: ";" | ",";
-  sqlDialect: SqlDialect;
-  scriptType: ScriptType;
-};
 
 type UnifiedExchange = {
   id: string;
@@ -45,7 +32,6 @@ type UnifiedExchange = {
   metadata: unknown | null;
   attachmentMeta: UnifiedAttachmentMeta | null;
   corrected: boolean;
-  context: UnifiedContext;
 };
 
 type PersistedExchange = {
@@ -62,29 +48,15 @@ function createId() {
   return globalThis.crypto?.randomUUID?.() ?? `exchange-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
 
-function defaultContext(): UnifiedContext {
-  return {
-    platform: "excel",
-    formulaLanguage: "pt-BR",
-    separator: ";",
-    sqlDialect: "postgresql",
-    scriptType: "apps_script",
-  };
-}
-
 function intentFromPayload(payload: unknown): UnifiedIntent | null {
   if (typeof payload !== "object" || payload === null) return null;
   const kind = (payload as Record<string, unknown>).kind;
 
   switch (kind) {
-    case "table_stub":
-    case "table_clar_question":
     case "table_spec":
       return "sheet_operation";
     case "qa_response":
       return "qa";
-    case "needs_file":
-      return ((payload as { intent?: UnifiedIntent }).intent ?? null) as UnifiedIntent | null;
     default:
       return null;
   }
@@ -95,11 +67,9 @@ export function UnifiedChatTool({
 }: {
   initialExchanges?: PersistedExchange[];
 }) {
-  const [context, setContext] = useState<UnifiedContext>(defaultContext);
   const [text, setText] = useState("");
   const [validationError, setValidationError] = useState("");
   const [submittedText, setSubmittedText] = useState("");
-  const [submittedContext, setSubmittedContext] = useState<UnifiedContext | null>(null);
   const [submittedCorrected, setSubmittedCorrected] = useState(false);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
@@ -119,11 +89,6 @@ export function UnifiedChatTool({
         metadata: null,
         attachmentMeta: null,
         corrected: false,
-        context: {
-          ...defaultContext(),
-          platform: (exchange.platform as FormulaPlatform) ?? "excel",
-          formulaLanguage: (exchange.dialect as FormulaLanguage) ?? "pt-BR",
-        },
       };
     })
   );
@@ -135,7 +100,6 @@ export function UnifiedChatTool({
   const handleNewConversation = useCallback(() => {
     setExchanges([]);
     setSubmittedText("");
-    setSubmittedContext(null);
     setSubmittedCorrected(false);
     setText("");
     setPendingFile(null);
@@ -147,7 +111,7 @@ export function UnifiedChatTool({
   useRegisterNewConversation(handleNewConversation);
 
   useEffect(() => {
-    if (!submittedText || !submittedContext) return;
+    if (!submittedText) return;
     const terminalStatus =
       stream.status === "complete" || stream.status === "error" ? stream.status : null;
     if (!terminalStatus) return;
@@ -167,11 +131,9 @@ export function UnifiedChatTool({
           metadata: stream.metadata,
           attachmentMeta: stream.attachmentMeta,
           corrected: submittedCorrected,
-          context: submittedContext,
         },
       ]);
       setSubmittedText("");
-      setSubmittedContext(null);
       setSubmittedCorrected(false);
     });
   }, [
@@ -183,7 +145,6 @@ export function UnifiedChatTool({
     stream.result,
     stream.status,
     stream.warnings,
-    submittedContext,
     submittedCorrected,
     submittedText,
   ]);
@@ -204,7 +165,6 @@ export function UnifiedChatTool({
       file?: File;
       overrideIntent?: OverrideIntent;
       corrected?: boolean;
-      contextSnapshot?: UnifiedContext;
     } = {}
   ) {
     if (pending) return;
@@ -215,14 +175,12 @@ export function UnifiedChatTool({
       return;
     }
 
-    const contextSnapshot = options.contextSnapshot ?? context;
     const fileSnapshot = options.file ?? pendingFile ?? undefined;
     setValidationError("");
     setFileError(null);
     setText("");
     setPendingFile(null);
     setSubmittedText(trimmed);
-    setSubmittedContext(contextSnapshot);
     setSubmittedCorrected(Boolean(options.corrected));
     const resolvedLastIntent =
       [...exchanges].reverse().find((exchange) => exchange.intent && exchange.intent !== "unknown")?.intent ?? null;
@@ -231,11 +189,6 @@ export function UnifiedChatTool({
       prompt: trimmed,
       file: fileSnapshot,
       overrideIntent: options.overrideIntent,
-      platform: contextSnapshot.platform,
-      formulaLanguage: contextSnapshot.formulaLanguage,
-      separator: contextSnapshot.separator,
-      sqlDialect: contextSnapshot.sqlDialect,
-      scriptType: contextSnapshot.scriptType,
       lastIntent: resolvedLastIntent,
     };
 
@@ -248,7 +201,6 @@ export function UnifiedChatTool({
     void submitPrompt(exchange.userText, {
       overrideIntent,
       corrected: true,
-      contextSnapshot: exchange.context,
     });
   }
 
@@ -257,13 +209,12 @@ export function UnifiedChatTool({
     void submitPrompt(submittedText, {
       overrideIntent,
       corrected: true,
-      contextSnapshot: submittedContext ?? context,
     });
   }
 
   function handleRetry(exchange: UnifiedExchange) {
     setExchanges((current) => current.filter((item) => item.id !== exchange.id));
-    void submitPrompt(exchange.userText, { contextSnapshot: exchange.context });
+    void submitPrompt(exchange.userText);
   }
 
   const hasConversation = exchanges.length > 0 || Boolean(submittedText && stream.status !== "idle");
@@ -289,9 +240,9 @@ export function UnifiedChatTool({
         <section className="unified-empty-state" aria-label="Início do chat unificado">
           <h1>O que você quer resolver hoje?</h1>
           <p>
-            Escreva seu pedido em português e a IA escolhe a ferramenta certa. Ex.: &quot;me dá
-            uma fórmula PROCV&quot; ou &quot;SELECT das vendas de março&quot;. Para análise ou OCR,
-            anexe um arquivo com o clipe.
+            Escreva um pedido sobre a planilha aberta — ex.: &quot;ordena por data&quot; ou
+            &quot;cria uma coluna de total&quot; — ou faça uma pergunta sobre os dados, ex.:
+            &quot;qual a média da coluna Valor?&quot;.
           </p>
         </section>
       ) : null}
@@ -337,7 +288,7 @@ export function UnifiedChatTool({
                 metadata={stream.metadata}
                 warnings={stream.warnings}
                 error={stream.error}
-                onRetry={() => void submitPrompt(submittedText, { contextSnapshot: submittedContext ?? context })}
+                onRetry={() => void submitPrompt(submittedText)}
               />
             </div>
           ) : null}
@@ -358,27 +309,9 @@ export function UnifiedChatTool({
           value={text}
           onChange={setText}
           onSubmit={() => void submitPrompt(text)}
-          placeholder="Descreva o que você precisa — fórmula, SQL, regex, script, análise ou tabela."
+          placeholder="Descreva o que você precisa na planilha, ou faça uma pergunta sobre os dados."
           pending={pending}
           submitLabel="Enviar"
-          options={
-            <SessionContextSelector
-              platform={context.platform}
-              formulaLanguage={context.formulaLanguage}
-              separator={context.separator}
-              sqlDialect={context.sqlDialect}
-              onPlatformChange={(platform) => setContext((current) => ({ ...current, platform }))}
-              onFormulaLanguageChange={(formulaLanguage) =>
-                setContext((current) => ({
-                  ...current,
-                  formulaLanguage,
-                  separator: formulaLanguage === "pt-BR" ? ";" : ",",
-                }))
-              }
-              onSeparatorChange={(separator) => setContext((current) => ({ ...current, separator }))}
-              onSqlDialectChange={(sqlDialect) => setContext((current) => ({ ...current, sqlDialect }))}
-            />
-          }
           leftAction={
             <AttachmentButton
               isPro={true}

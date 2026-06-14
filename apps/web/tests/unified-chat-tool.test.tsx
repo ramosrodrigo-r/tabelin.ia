@@ -5,7 +5,6 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useInvokeNewConversation, WorkspaceConversationProvider } from "@/components/app/workspace-conversation-context";
 import { IntentPill } from "@/features/unified-chat/components/intent-pill";
 import { RenderDispatcher } from "@/features/unified-chat/components/render-dispatcher";
-import { SessionContextSelector } from "@/features/unified-chat/components/session-context-selector";
 import { UnifiedChatTool } from "@/features/unified-chat/unified-chat-tool";
 import type { UnifiedCompletePayload } from "@tabelin/shared";
 
@@ -137,29 +136,6 @@ describe("IntentPill", () => {
   });
 });
 
-describe("SessionContextSelector", () => {
-  it("shows the unified defaults", () => {
-    render(
-      <SessionContextSelector
-        platform="excel"
-        formulaLanguage="pt-BR"
-        separator=";"
-        sqlDialect="postgresql"
-        onPlatformChange={vi.fn()}
-        onFormulaLanguageChange={vi.fn()}
-        onSeparatorChange={vi.fn()}
-        onSqlDialectChange={vi.fn()}
-      />
-    );
-
-    expect(screen.getByText("Plataforma")).toBeInTheDocument();
-    expect(screen.getByRole("tab", { name: "Microsoft Excel" })).toHaveAttribute("aria-selected", "true");
-    expect(screen.getByRole("button", { name: "pt-BR" })).toHaveAttribute("aria-pressed", "true");
-    expect(screen.getByLabelText("Separador")).toHaveValue(";");
-    expect(screen.getByLabelText("Dialeto SQL")).toHaveValue("postgresql");
-  });
-});
-
 describe("RenderDispatcher", () => {
   const baseProps = {
     status: "complete" as const,
@@ -205,12 +181,11 @@ describe("UnifiedChatTool", () => {
     });
   });
 
-  it("renders the empty state and selector defaults", () => {
+  it("renders the empty state", () => {
     render(<UnifiedChatTool />);
 
     expect(screen.getByText("O que você quer resolver hoje?")).toBeInTheDocument();
-    expect(screen.getByLabelText("Separador")).toHaveValue(";");
-    expect(screen.getByLabelText("Dialeto SQL")).toHaveValue("postgresql");
+    expect(screen.getByLabelText("Pedido")).toBeInTheDocument();
   });
 
   it("shows intent_detected before the final payload arrives", async () => {
@@ -249,7 +224,7 @@ describe("UnifiedChatTool", () => {
     expect(fetchMock).toHaveBeenCalledWith("/api/chat/unified", expect.any(Object));
   });
 
-  it("submits default context fields as JSON", async () => {
+  it("submits the binary prompt payload as JSON without legacy tool fields", async () => {
     const user = userEvent.setup();
     const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(qaStream());
 
@@ -261,14 +236,13 @@ describe("UnifiedChatTool", () => {
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
     const body = parseJsonRequestBody(fetchMock);
 
-    expect(body).toMatchObject({
-      prompt: "Some a coluna A",
-      platform: "excel",
-      formulaLanguage: "pt-BR",
-      separator: ";",
-      sqlDialect: "postgresql",
-      scriptType: "apps_script",
-    });
+    expect(body).toMatchObject({ prompt: "Some a coluna A" });
+    // Campos de tools avulsos não existem mais no payload binário
+    expect(body).not.toHaveProperty("platform");
+    expect(body).not.toHaveProperty("formulaLanguage");
+    expect(body).not.toHaveProperty("separator");
+    expect(body).not.toHaveProperty("sqlDialect");
+    expect(body).not.toHaveProperty("scriptType");
   });
 
   it("corrupt NDJSON enters the error state", async () => {
@@ -356,7 +330,7 @@ describe("UnifiedChatTool", () => {
     expect(screen.getByText("O que você quer resolver hoje?")).toBeInTheDocument();
   });
 
-  it("persists selected context across two submits", async () => {
+  it("carries lastIntent from the previous exchange into the next submit", async () => {
     const user = userEvent.setup();
     const fetchMock = vi.spyOn(globalThis, "fetch")
       .mockResolvedValueOnce(qaStream())
@@ -364,7 +338,6 @@ describe("UnifiedChatTool", () => {
 
     render(<UnifiedChatTool />);
 
-    await user.selectOptions(screen.getByLabelText("Dialeto SQL"), "mysql");
     await user.type(screen.getByLabelText("Pedido"), "Primeiro pedido");
     await user.click(screen.getByRole("button", { name: "Enviar" }));
     await waitFor(() => expect(screen.getByText(qaPayload.content)).toBeInTheDocument());
@@ -373,8 +346,9 @@ describe("UnifiedChatTool", () => {
     await user.click(screen.getByRole("button", { name: "Enviar" }));
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
-    expect(parseJsonRequestBody(fetchMock, 0).sqlDialect).toBe("mysql");
-    expect(parseJsonRequestBody(fetchMock, 1).sqlDialect).toBe("mysql");
+    // Primeiro submit não tem histórico → sem lastIntent; o segundo herda "qa" do anterior
+    expect(parseJsonRequestBody(fetchMock, 0).lastIntent).toBeFalsy();
+    expect(parseJsonRequestBody(fetchMock, 1).lastIntent).toBe("qa");
   });
 
   it("drag-and-drop attaches a valid file", () => {
@@ -392,7 +366,6 @@ describe("UnifiedChatTool", () => {
     const sourceNodes = [
       IntentPill,
       RenderDispatcher,
-      SessionContextSelector,
       UnifiedChatTool,
     ].map((component) => String(component));
 
