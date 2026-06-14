@@ -3,29 +3,14 @@
 import type {
   FileAnalysisPayload,
   FileDependentIntent,
-  FormulaCompletePayload,
-  FormulaMetadata,
   OcrPayload,
-  RegexCompletePayload,
-  RegexMetadata,
-  ScriptGenerateResponse,
-  ScriptMetadata,
-  SqlGenerateResponse,
-  SqlMetadata,
   TableClarQuestionPayload,
   TableSpecPayload,
-  TemplateGenerateResponse,
-  TemplateMetadata,
   UnifiedCompletePayload,
 } from "@tabelin/shared";
 
 import { AttachmentPanel } from "@/components/app/attachment-panel";
 import { CopyButton } from "@/components/app/copy-button";
-import { FormulaOutputPanel } from "@/features/formula/components/formula-output-panel";
-import { RegexOutputPanel } from "@/features/regex/components/regex-output-panel";
-import { ScriptsOutputPanel } from "@/features/scripts/components/scripts-output-panel";
-import { SqlOutputPanel } from "@/features/sql/components/sql-output-panel";
-import { TemplateOutputPanel } from "@/features/template/components/template-output-panel";
 import type { UnifiedAttachmentMeta, UnifiedChatStreamStatus } from "../hooks/use-unified-chat-stream";
 import { ClarificationCard } from "./clarification-card";
 import { ConfirmationCard } from "./confirmation-card";
@@ -161,74 +146,17 @@ export function RenderDispatcher({
   switch (payload.kind) {
     case "formula":
     case "explanation":
-      return (
-        <FormulaOutputPanel
-          status={status}
-          draft={draft}
-          result={payload as FormulaCompletePayload}
-          metadata={metadata as FormulaMetadata | null}
-          warnings={warnings}
-          error={error}
-          attachmentMeta={attachmentMeta}
-          onRetry={onRetry}
-        />
-      );
-
     case "sql":
-      return (
-        <SqlOutputPanel
-          status={status}
-          draft={draft}
-          result={payload as SqlGenerateResponse}
-          metadata={metadata as SqlMetadata | null}
-          warnings={warnings}
-          error={error}
-          attachmentMeta={attachmentMeta}
-          onRetry={onRetry}
-        />
-      );
-
     case "regex_generate":
     case "regex_explain":
-      return (
-        <RegexOutputPanel
-          status={status}
-          draft={draft}
-          result={payload as RegexCompletePayload}
-          metadata={metadata as RegexMetadata | null}
-          warnings={warnings}
-          error={error}
-          attachmentMeta={attachmentMeta}
-          onRetry={onRetry}
-        />
-      );
-
     case "script":
-      return (
-        <ScriptsOutputPanel
-          status={status}
-          draft={draft}
-          result={payload as ScriptGenerateResponse}
-          metadata={metadata as ScriptMetadata | null}
-          warnings={warnings}
-          error={error}
-          attachmentMeta={attachmentMeta}
-          onRetry={onRetry}
-        />
-      );
-
     case "template":
       return (
-        <TemplateOutputPanel
-          status={status}
-          draft={draft}
-          result={payload as TemplateGenerateResponse}
-          metadata={metadata as TemplateMetadata | null}
-          warnings={warnings}
-          error={error}
-          attachmentMeta={attachmentMeta}
-          onRetry={onRetry}
-        />
+        <div className="assistant-card" aria-label="Resposta arquivada">
+          <div className="output-box" data-status="complete">
+            <p>Este tipo de resposta foi removido no novo modo de planilha viva.</p>
+          </div>
+        </div>
       );
 
     case "table_clar_question":

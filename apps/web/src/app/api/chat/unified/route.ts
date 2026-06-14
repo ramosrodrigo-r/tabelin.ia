@@ -1,35 +1,18 @@
 import { NextResponse } from "next/server";
 
 import {
-  type FileDependentIntent,
   type IntentClassification,
   type OverrideIntent,
   type UnifiedIntent,
-  fileAnalysisPayloadSchema,
-  formulaGenerateRequestSchema,
-  needsFilePayloadSchema,
-  ocrPayloadSchema,
   overrideIntentSchema,
-  regexGenerateRequestSchema,
-  scriptGenerateRequestSchema,
-  sqlGenerateRequestSchema,
   tableStubPayloadSchema,
-  templateGenerateRequestSchema,
   unifiedIntentSchema,
 } from "@tabelin/shared";
 
-import { GENERATE_MODE, MAX_EXTRACTED_CHARS } from "@/server/ai/context-messages";
-import { createFormulaEventStream, resolveFormulaPayload } from "@/server/ai/formula-stream";
+import { MAX_EXTRACTED_CHARS } from "@/server/ai/context-messages";
 import { classifyIntent } from "@/server/ai/intent-classifier";
-import { createRegexEventStream, resolveRegexPayload } from "@/server/ai/regex-stream";
-import { createScriptEventStream, resolveScriptPayload } from "@/server/ai/scripts-stream";
-import { createSqlEventStream, resolveSqlPayload } from "@/server/ai/sql-stream";
-import { createTemplateEventStream, resolveTemplatePayload } from "@/server/ai/template-stream";
 import { getSessionFromCookieHeader } from "@/server/auth/session";
 import { extractContent } from "@/server/extraction/dispatcher";
-import { recordFormulaToolRequest } from "@/server/tools/formula-repository";
-import { findConversationExchanges, saveConversationExchange } from "@/server/tools/conversation-repository";
-import { recordToolRequest } from "@/server/tools/tool-repository";
 
 const MAX_PROMPT_CHARS = 8_000;
 const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
@@ -187,31 +170,6 @@ function createEventStream(events: object[]) {
   });
 }
 
-function prefixIntentEvent(
-  stream: ReadableStream<Uint8Array>,
-  classification: IntentClassification
-): ReadableStream<Uint8Array> {
-  const encoder = new TextEncoder();
-
-  return new ReadableStream<Uint8Array>({
-    async start(controller) {
-      controller.enqueue(encoder.encode(`${JSON.stringify(intentEvent(classification))}\n`));
-
-      const reader = stream.getReader();
-      try {
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          controller.enqueue(value);
-        }
-      } finally {
-        reader.releaseLock();
-        controller.close();
-      }
-    },
-  });
-}
-
 function responseFromStream(stream: ReadableStream<Uint8Array>) {
   return new Response(stream, {
     headers: {
@@ -229,25 +187,23 @@ function intentEvent(classification: IntentClassification) {
   };
 }
 
-function needsFileStream(classification: IntentClassification, intent: FileDependentIntent) {
-  const payload = needsFilePayloadSchema.parse({ kind: "needs_file", intent });
-  return createEventStream([
-    intentEvent(classification),
-    { type: "needs_file", intent },
-    { type: "complete", payload },
-  ]);
-}
-
-function unsupportedTableGenerationStream(classification: IntentClassification, prompt: string) {
+function unsupportedLegacyIntentStream(
+  classification: IntentClassification,
+  prompt: string,
+  resolvedToolKind: ResolvedToolKind,
+  attachmentMeta?: AttachmentMeta
+) {
   const payload = tableStubPayloadSchema.parse({
     kind: "table_stub",
     originalPrompt: prompt,
     message:
-      "A geracao de tabela do zero foi removida nesta versao. Descreva o que voce quer fazer com a planilha aberta.",
+      "Este modo antigo nao esta mais disponivel. Descreva uma operacao na planilha aberta ou uma pergunta sobre os dados.",
   });
 
   return createEventStream([
     intentEvent(classification),
+    ...(attachmentMeta ? [{ type: "attachment_grounded", ...attachmentMeta }] : []),
+    { type: "metadata", metadata: { mode: "generate", providerModel: `removed-${resolvedToolKind}` } },
     { type: "delta", text: payload.message },
     { type: "complete", payload },
   ]);
@@ -259,7 +215,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Autenticacao obrigatoria." }, { status: 401 });
   }
 
-  const startedAt = performance.now();
   const { fields, file } = await parseUnifiedRequest(request);
   const promptResult = validatePrompt(fields.prompt);
 
@@ -301,209 +256,11 @@ export async function POST(request: Request) {
     });
     const resolvedToolKind = INTENT_TO_TOOL_KIND[classification.intent];
 
-    if ((classification.intent === "file_analysis" || classification.intent === "ocr") && !file) {
-      return responseFromStream(needsFileStream(classification, classification.intent));
-    }
-
     const attachmentMeta = attachmentMetaFromContext(attachmentContext);
 
-    if (resolvedToolKind === "file_analysis" || resolvedToolKind === "ocr") {
-      const payload =
-        resolvedToolKind === "ocr"
-          ? ocrPayloadSchema.parse({
-              kind: "ocr",
-              content: attachmentContext,
-              metadata: { mode: GENERATE_MODE, providerModel: "extraction-dispatcher" },
-            })
-          : fileAnalysisPayloadSchema.parse({
-              kind: "file_analysis",
-              content: attachmentContext,
-              metadata: { mode: GENERATE_MODE, providerModel: "extraction-dispatcher" },
-            });
-
-      await recordToolRequest({
-        userId: user.id,
-        toolKind: resolvedToolKind,
-        mode: GENERATE_MODE,
-        status: "success",
-        latencyMs: Math.round(performance.now() - startedAt),
-        providerModel: payload.metadata.providerModel,
-      });
-
-      return responseFromStream(
-        createEventStream([
-          intentEvent(classification),
-          ...(attachmentMeta ? [{ type: "attachment_grounded", ...attachmentMeta }] : []),
-          { type: "metadata", metadata: payload.metadata },
-          { type: "delta", text: payload.content },
-          { type: "complete", payload },
-        ])
-      );
-    }
-
-    switch (resolvedToolKind) {
-      case "formula": {
-        const requestPayload = formulaGenerateRequestSchema.parse({
-          platform: fields.platform,
-          formulaLanguage: fields.formulaLanguage,
-          prompt: promptResult.prompt,
-        });
-        const history = await findConversationExchanges(user.id, "formula");
-        const payload = await resolveFormulaPayload({
-          mode: "generate",
-          request: requestPayload,
-          history,
-          attachmentContext,
-        });
-
-        await recordFormulaToolRequest({
-          userId: user.id,
-          metadata: payload.metadata,
-          status: "success",
-          latencyMs: Math.round(performance.now() - startedAt),
-        });
-        await saveConversationExchange({
-          userId: user.id,
-          toolKind: "formula",
-          mode: GENERATE_MODE,
-          platform: requestPayload.platform,
-          dialect: requestPayload.formulaLanguage,
-          userPrompt: requestPayload.prompt,
-          assistantPayload: payload,
-          attachmentContext,
-        });
-
-        return responseFromStream(
-          prefixIntentEvent(createFormulaEventStream(payload, undefined, attachmentMeta), classification)
-        );
-      }
-
-      case "sql": {
-        const requestPayload = sqlGenerateRequestSchema.parse({
-          dialect: fields.sqlDialect,
-          prompt: promptResult.prompt,
-        });
-        const history = await findConversationExchanges(user.id, "sql");
-        const payload = await resolveSqlPayload({ request: requestPayload, history, attachmentContext });
-
-        await recordToolRequest({
-          userId: user.id,
-          toolKind: "sql",
-          mode: GENERATE_MODE,
-          dialect: requestPayload.dialect,
-          status: "success",
-          latencyMs: Math.round(performance.now() - startedAt),
-          providerModel: payload.metadata.providerModel,
-        });
-        await saveConversationExchange({
-          userId: user.id,
-          toolKind: "sql",
-          mode: GENERATE_MODE,
-          dialect: requestPayload.dialect,
-          userPrompt: requestPayload.prompt,
-          assistantPayload: payload,
-          attachmentContext,
-        });
-
-        return responseFromStream(
-          prefixIntentEvent(createSqlEventStream(payload, undefined, attachmentMeta), classification)
-        );
-      }
-
-      case "regex": {
-        const requestPayload = regexGenerateRequestSchema.parse({ prompt: promptResult.prompt });
-        const history = await findConversationExchanges(user.id, "regex");
-        const payload = await resolveRegexPayload({
-          mode: "generate",
-          request: requestPayload,
-          history,
-          attachmentContext,
-        });
-
-        await recordToolRequest({
-          userId: user.id,
-          toolKind: "regex",
-          mode: GENERATE_MODE,
-          status: "success",
-          latencyMs: Math.round(performance.now() - startedAt),
-          providerModel: payload.metadata.providerModel,
-        });
-        await saveConversationExchange({
-          userId: user.id,
-          toolKind: "regex",
-          mode: GENERATE_MODE,
-          userPrompt: requestPayload.prompt,
-          assistantPayload: payload,
-          attachmentContext,
-        });
-
-        return responseFromStream(
-          prefixIntentEvent(createRegexEventStream(payload, undefined, attachmentMeta), classification)
-        );
-      }
-
-      case "script": {
-        const requestPayload = scriptGenerateRequestSchema.parse({
-          scriptType: fields.scriptType,
-          prompt: promptResult.prompt,
-        });
-        const history = await findConversationExchanges(user.id, "script");
-        const payload = await resolveScriptPayload({ request: requestPayload, history, attachmentContext });
-
-        await recordToolRequest({
-          userId: user.id,
-          toolKind: "script",
-          mode: GENERATE_MODE,
-          dialect: requestPayload.scriptType,
-          status: "success",
-          latencyMs: Math.round(performance.now() - startedAt),
-          providerModel: payload.metadata.providerModel,
-        });
-        await saveConversationExchange({
-          userId: user.id,
-          toolKind: "script",
-          mode: GENERATE_MODE,
-          dialect: requestPayload.scriptType,
-          userPrompt: requestPayload.prompt,
-          assistantPayload: payload,
-          attachmentContext,
-        });
-
-        return responseFromStream(
-          prefixIntentEvent(createScriptEventStream(payload, undefined, attachmentMeta), classification)
-        );
-      }
-
-      case "template": {
-        const requestPayload = templateGenerateRequestSchema.parse({ prompt: promptResult.prompt });
-        const history = await findConversationExchanges(user.id, "template");
-        const payload = await resolveTemplatePayload({ request: requestPayload, history, attachmentContext });
-
-        await recordToolRequest({
-          userId: user.id,
-          toolKind: "template",
-          mode: GENERATE_MODE,
-          status: "success",
-          latencyMs: Math.round(performance.now() - startedAt),
-          providerModel: payload.metadata.providerModel,
-        });
-        await saveConversationExchange({
-          userId: user.id,
-          toolKind: "template",
-          mode: GENERATE_MODE,
-          userPrompt: requestPayload.prompt,
-          assistantPayload: payload,
-          attachmentContext,
-        });
-
-        return responseFromStream(
-          prefixIntentEvent(createTemplateEventStream(payload, undefined, attachmentMeta), classification)
-        );
-      }
-
-      default:
-        return responseFromStream(unsupportedTableGenerationStream(classification, promptResult.prompt));
-    }
+    return responseFromStream(
+      unsupportedLegacyIntentStream(classification, promptResult.prompt, resolvedToolKind, attachmentMeta)
+    );
   } catch (err) {
     console.error("unified chat failed", { err });
     return NextResponse.json({ error: "Nao consegui validar a resposta." }, { status: 502 });

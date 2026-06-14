@@ -77,6 +77,8 @@ const templatePayload = {
   metadata: { mode: "generate", providerModel: "test" },
 } satisfies UnifiedCompletePayload;
 
+const archivedMessage = "Este tipo de resposta foi removido no novo modo de planilha viva.";
+
 function encodeLine(line: unknown) {
   return new TextEncoder().encode(`${JSON.stringify(line)}\n`);
 }
@@ -195,23 +197,23 @@ describe("RenderDispatcher", () => {
     onRetry: vi.fn(),
   };
 
-  it("renders formula, SQL, regex, script, template, table_stub, needs_file, and streaming states", () => {
+  it("renders archived legacy outputs, table_stub, needs_file, and streaming states", () => {
     const { rerender } = render(
       <RenderDispatcher {...baseProps} payload={formulaPayload} metadata={formulaPayload.metadata} />
     );
-    expect(screen.getByText("=SOMA(A:A)")).toBeInTheDocument();
+    expect(screen.getByText(archivedMessage)).toBeInTheDocument();
 
     rerender(<RenderDispatcher {...baseProps} payload={sqlPayload} metadata={sqlPayload.metadata} />);
-    expect(screen.getByText("SELECT * FROM vendas")).toBeInTheDocument();
+    expect(screen.getByText(archivedMessage)).toBeInTheDocument();
 
     rerender(<RenderDispatcher {...baseProps} payload={regexPayload} metadata={regexPayload.metadata} />);
-    expect(screen.getByText("\\d+")).toBeInTheDocument();
+    expect(screen.getByText(archivedMessage)).toBeInTheDocument();
 
     rerender(<RenderDispatcher {...baseProps} payload={scriptPayload} metadata={scriptPayload.metadata} />);
-    expect(screen.getByText("function main() {}")).toBeInTheDocument();
+    expect(screen.getByText(archivedMessage)).toBeInTheDocument();
 
     rerender(<RenderDispatcher {...baseProps} payload={templatePayload} metadata={templatePayload.metadata} />);
-    expect(screen.getByText("| Campo | Tipo |")).toBeInTheDocument();
+    expect(screen.getByText(archivedMessage)).toBeInTheDocument();
 
     rerender(
       <RenderDispatcher
@@ -295,7 +297,7 @@ describe("UnifiedChatTool", () => {
       controller.close();
     });
 
-    await waitFor(() => expect(screen.getByText("=SOMA(A:A)")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText(archivedMessage)).toBeInTheDocument());
     expect(fetchMock).toHaveBeenCalledWith("/api/chat/unified", expect.any(Object));
   });
 
@@ -367,7 +369,7 @@ describe("UnifiedChatTool", () => {
 
     await user.type(screen.getByLabelText("Pedido"), "Tenho PROCV, mas quero SQL");
     await user.click(screen.getByRole("button", { name: "Enviar" }));
-    await waitFor(() => expect(screen.getByText("=SOMA(A:A)")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText(archivedMessage)).toBeInTheDocument());
 
     await user.click(screen.getByRole("button", { name: /Tipo detectado: Fórmula/ }));
     await user.click(screen.getByRole("option", { name: "SQL" }));
@@ -379,7 +381,7 @@ describe("UnifiedChatTool", () => {
       prompt: "Tenho PROCV, mas quero SQL",
       overrideIntent: "sql",
     });
-    await waitFor(() => expect(screen.getByText("SELECT * FROM vendas")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText(archivedMessage)).toBeInTheDocument());
     expect(screen.getByText("SQL · corrigido")).toBeInTheDocument();
   });
 
@@ -401,11 +403,11 @@ describe("UnifiedChatTool", () => {
 
     await user.type(screen.getByLabelText("Pedido"), "Some a coluna A");
     await user.click(screen.getByRole("button", { name: "Enviar" }));
-    await waitFor(() => expect(screen.getByText("=SOMA(A:A)")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText(archivedMessage)).toBeInTheDocument());
 
     await user.click(screen.getByRole("button", { name: "Limpar" }));
 
-    expect(screen.queryByText("=SOMA(A:A)")).not.toBeInTheDocument();
+    expect(screen.queryByText(archivedMessage)).not.toBeInTheDocument();
     expect(screen.getByText("O que você quer resolver hoje?")).toBeInTheDocument();
   });
 
@@ -420,7 +422,7 @@ describe("UnifiedChatTool", () => {
     await user.selectOptions(screen.getByLabelText("Dialeto SQL"), "mysql");
     await user.type(screen.getByLabelText("Pedido"), "Primeiro pedido");
     await user.click(screen.getByRole("button", { name: "Enviar" }));
-    await waitFor(() => expect(screen.getByText("=SOMA(A:A)")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText(archivedMessage)).toBeInTheDocument());
 
     await user.type(screen.getByLabelText("Pedido"), "Segundo pedido");
     await user.click(screen.getByRole("button", { name: "Enviar" }));
@@ -537,7 +539,7 @@ describe("UnifiedChatTool", () => {
       const secondBody = parseJsonRequestBody(fetchMock, 1);
       expect(secondBody.overrideGenerate).toBe("true");
 
-      await waitFor(() => expect(screen.getByText("=SOMA(A:A)")).toBeInTheDocument());
+      await waitFor(() => expect(screen.getByText(archivedMessage)).toBeInTheDocument());
     });
 
     // CLAR-04: ConfirmationCard no DOM; click "Confirmar e Gerar" dispara request com overrideGenerate + specOverride
@@ -568,7 +570,7 @@ describe("UnifiedChatTool", () => {
       expect(parsedSpec.title).toBe("Tabela de Vendas");
       expect(parsedSpec.columns).toHaveLength(2);
 
-      await waitFor(() => expect(screen.getByText("=SOMA(A:A)")).toBeInTheDocument());
+      await waitFor(() => expect(screen.getByText(archivedMessage)).toBeInTheDocument());
     });
 
     // Cenário de resposta/onAnswer: o request NÃO inclui overrideGenerate="true"
