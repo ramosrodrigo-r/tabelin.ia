@@ -35,8 +35,8 @@
 
 ### Export & Persistência (PERS)
 
-- [ ] **PERS-01**: Usuário pode exportar a planilha atual (com fórmulas já calculadas) para CSV (RF-05)
-- [ ] **PERS-02**: Usuário pode exportar a planilha atual (com fórmulas já calculadas) para XLSX (RF-05)
+- [x] **PERS-01**: Usuário pode exportar a planilha atual (com fórmulas já calculadas) para CSV (RF-05)
+- [x] **PERS-02**: Usuário pode exportar a planilha atual (com fórmulas já calculadas) para XLSX (RF-05)
 - [ ] **PERS-03**: A planilha do usuário é salva e recuperada entre sessões (RF-06)
 - [ ] **PERS-04**: A conversa associada à planilha do usuário é salva e recuperada entre sessões (RF-06)
 
@@ -110,8 +110,8 @@ Preenchida na criação do roadmap (cada requisito mapeia para exatamente uma fa
 | CHAT-04 | Phase 20 | Complete |
 | CHAT-05 | Phase 20 | Complete |
 | CHAT-06 | Phase 20 | Complete |
-| PERS-01 | Phase 21 | Pending |
-| PERS-02 | Phase 21 | Pending |
+| PERS-01 | Phase 21 | Complete |
+| PERS-02 | Phase 21 | Complete |
 | PERS-03 | Phase 21 | Pending |
 | PERS-04 | Phase 21 | Pending |
 | LOC-01 | Phase 20 | Complete |
