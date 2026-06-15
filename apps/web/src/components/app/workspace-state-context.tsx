@@ -184,11 +184,11 @@ export function WorkspaceStateProvider({
   // gravações redundantes.
   const lastSavedRef = useRef(gridStateToSpecJson(initialPresent));
 
-  const undo = useCallback(() => dispatch({ type: "UNDO" }), []);
-  const redo = useCallback(() => dispatch({ type: "REDO" }), []);
-  const updateState = useCallback((newState: GridState) => dispatch({ type: "SET", newState }), []);
-  const setSpec = useCallback((seed: TableSpecPayload) => dispatch({ type: "RESET_TO_SEED", seed }), []);
-  const resetToBlank = useCallback(() => dispatch({ type: "RESET_TO_BLANK" }), []);
+  const undo = useCallback(() => dispatch({ type: "UNDO" }), [dispatch]);
+  const redo = useCallback(() => dispatch({ type: "REDO" }), [dispatch]);
+  const updateState = useCallback((newState: GridState) => dispatch({ type: "SET", newState }), [dispatch]);
+  const setSpec = useCallback((seed: TableSpecPayload) => dispatch({ type: "RESET_TO_SEED", seed }), [dispatch]);
+  const resetToBlank = useCallback(() => dispatch({ type: "RESET_TO_BLANK" }), [dispatch]);
   // CR-01: o reset para SAMPLE_SPEC NÃO deve disparar auto-save. O "Nova conversa"
   // já apaga a linha unified_table via DELETE no Topbar; se o auto-save POSTasse o
   // SAMPLE_SPEC logo em seguida, a linha ressuscitaria (corrida CR-01). Pré-marcamos
@@ -197,7 +197,7 @@ export function WorkspaceStateProvider({
   const resetToSeed = useCallback(() => {
     lastSavedRef.current = gridStateToSpecJson(seedToGridState(SAMPLE_SPEC));
     dispatch({ type: "RESET_TO_SEED", seed: SAMPLE_SPEC });
-  }, []);
+  }, [dispatch]);
 
   const spec = {
     kind: "table_spec" as const,
