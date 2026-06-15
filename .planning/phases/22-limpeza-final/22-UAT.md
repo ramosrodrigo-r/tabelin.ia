@@ -53,7 +53,8 @@ blocked: 0
   debug_session: ""
 
 - truth: "Planilha viva chega ao contexto do chat — fórmulas/perguntas operam sobre os dados reais da grade"
-  status: diagnosed
+  status: resolved
+  resolved_by: "c768476 fix(20): send specOverride as JSON string — hook agora envia JSON.stringify(spec) no caminho JSON, igualando ao FormData. + teste de regressão em unified-chat-tool.test.tsx (antes codificava o bug). typecheck/lint/test verdes."
   reason: "User reported: enviou =SOMA(b2); chat detectou 'Pergunta' e a IA respondeu 'Não há planilha no contexto'. Estado da planilha não injetado no contexto da requisição do chat."
   severity: major
   test: 3
