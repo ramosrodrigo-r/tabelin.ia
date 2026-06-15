@@ -82,13 +82,21 @@ export const unifiedCompletePayloadSchema = z.union([
   qaResponsePayloadSchema,
 ]);
 
+// WR-02: metadata do stream tem forma conhecida ({ mode, providerModel }).
+// Tipar explicitamente evita asserções não verificadas a jusante e permite
+// validar payloads mal-formados via safeParse em vez de cast cego.
+export const unifiedChatStreamMetadataSchema = z.object({
+  mode: z.string(),
+  providerModel: z.string(),
+});
+
 export const unifiedStreamEventSchema = z.discriminatedUnion("type", [
   z.object({
     type: z.literal("intent_detected"),
     intent: unifiedIntentSchema,
     confidence: z.enum(["high", "low"]),
   }),
-  z.object({ type: z.literal("metadata"), metadata: z.unknown() }),
+  z.object({ type: z.literal("metadata"), metadata: unifiedChatStreamMetadataSchema }),
   z.object({
     type: z.literal("attachment_grounded"),
     charCount: z.number().int().nonnegative(),
@@ -108,4 +116,5 @@ export type TableColumn = z.infer<typeof tableColumnSchema>;
 export type TableSpecPayload = z.infer<typeof tableSpecPayloadSchema>;
 export type QaResponsePayload = z.infer<typeof qaResponsePayloadSchema>;
 export type UnifiedCompletePayload = z.infer<typeof unifiedCompletePayloadSchema>;
+export type UnifiedChatStreamMetadata = z.infer<typeof unifiedChatStreamMetadataSchema>;
 export type UnifiedStreamEvent = z.infer<typeof unifiedStreamEventSchema>;

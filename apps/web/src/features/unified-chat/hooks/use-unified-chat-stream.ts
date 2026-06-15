@@ -2,8 +2,10 @@
 
 import {
   type OverrideIntent,
+  type UnifiedChatStreamMetadata,
   type UnifiedCompletePayload,
   type UnifiedIntent,
+  unifiedChatStreamMetadataSchema,
   unifiedStreamEventSchema,
 } from "@tabelin/shared";
 import { useCallback, useState } from "react";
@@ -25,10 +27,10 @@ export type SubmitUnifiedChatInput = {
   lastIntent?: UnifiedIntent | null;
 };
 
-export type UnifiedChatStreamMetadata = {
-  mode: string;
-  providerModel: string;
-};
+// Re-export do tipo canônico definido no schema do shared (WR-02). Mantém a
+// API pública deste hook estável enquanto a forma passa a ser derivada do
+// schema validado em runtime.
+export type { UnifiedChatStreamMetadata };
 
 export function useUnifiedChatStream() {
   const [status, setStatus] = useState<UnifiedChatStreamStatus>("idle");
@@ -161,7 +163,8 @@ export function useUnifiedChatStream() {
       }
 
       if (event.type === "metadata") {
-        setMetadata(event.metadata as UnifiedChatStreamMetadata);
+        // event.metadata já é UnifiedChatStreamMetadata via unifiedStreamEventSchema.
+        setMetadata(event.metadata);
       }
 
       if (event.type === "warning") {
@@ -176,8 +179,17 @@ export function useUnifiedChatStream() {
       if (event.type === "complete") {
         hasCompleteEvent = true;
         finalPayload = event.payload;
+        // WR-02: o payload pode (em variações do protocolo) carregar metadata.
+        // Em vez de asserir o tipo cegamente, validamos com safeParse do
+        // sub-schema — payloads mal-formados são descartados sem corromper o
+        // estado a jusante.
         if (event.payload && typeof event.payload === "object" && "metadata" in event.payload) {
-          finalMetadata = (event.payload as { metadata: UnifiedChatStreamMetadata }).metadata;
+          const parsedMetadata = unifiedChatStreamMetadataSchema.safeParse(
+            (event.payload as { metadata: unknown }).metadata,
+          );
+          if (parsedMetadata.success) {
+            finalMetadata = parsedMetadata.data;
+          }
         }
       }
 
