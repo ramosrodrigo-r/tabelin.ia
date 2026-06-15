@@ -4,14 +4,14 @@ milestone: v3.0
 milestone_name: Planilha Viva + Chat de IA
 status: verifying
 stopped_at: Phase 20 complete & secured
-last_updated: "2026-06-14T20:58:32.781Z"
+last_updated: "2026-06-15T01:25:25.364Z"
 last_activity: 2026-06-14 -- Phase 21 execution started
 progress:
   total_phases: 11
-  completed_phases: 6
-  total_plans: 19
-  completed_plans: 20
-  percent: 55
+  completed_phases: 7
+  total_plans: 21
+  completed_plans: 22
+  percent: 64
 ---
 
 # Project State
@@ -65,6 +65,9 @@ Recent decisions affecting current work:
 - [Phase ?]: 21-01: auto-save do WorkspaceStateProvider debancado 1.5s e deduplicado por lastSavedRef; sem POST no mount inicial
 - [Phase ?]: WorkspacePage reusa a sessao via getCachedUser (React cache) ao hidratar o historico server-side, evitando segunda query de auth
 - [Phase ?]: Reset coerente (D-04): handleNewConversation chama workspaceState.resetToSeed() para devolver a planilha viva a SAMPLE_SPEC junto com a conversa limpa
+- [Phase 21]: 21-03: dedupe de key na escrita (seedToGridState) é a garantia primária de round-trip; superRefine do schema é defesa secundária
+- [Phase 21]: 21-03: spec ativo usa MAX_ACTIVE_SPEC_BYTES (512KB) e LANÇA em oversize; histórico de chat mantém 32KB tolerante a truncamento
+- [Phase 21]: 21-03: persistência fonte-de-verdade falha-em-voz-alta (propaga→500); supressão de auto-save por pré-marcação de lastSavedRef no reset
 
 ### Pending Todos
 
@@ -90,6 +93,7 @@ None yet.
 | Phase 20 P02 | 3 | 3 tasks | 3 files |
 | Phase 21 P01 | 10min | 3 tasks | 5 files |
 | Phase 21 P02 | 2min | 4 tasks | 5 files |
+| Phase 21 P03 | 18min | 3 tasks | 8 files |
 
 ## Deferred Items
 
@@ -112,7 +116,7 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-06-14T20:58:01.512Z
+Last session: 2026-06-15T01:24:45.844Z
 Stopped at: Phase 20 complete & secured
 Resume file: .planning/phases/20-protocolo-de-muta-o-chat-grade-q-a/20-SECURITY.md
 
