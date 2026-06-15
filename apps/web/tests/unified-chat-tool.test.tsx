@@ -552,8 +552,14 @@ describe("UnifiedChatTool", () => {
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
     const body = parseJsonRequestBody(fetchMock);
 
-    expect(body.specOverride).toMatchObject({ kind: "table_spec" });
-    expect((body.specOverride as Record<string, unknown>).columns).toBeInstanceOf(Array);
+    // Regressão: specOverride DEVE ser uma string JSON (não o objeto cru). O BFF
+    // lê o campo via asString()/JSON.parse(); o objeto cru era descartado por
+    // asString() → a planilha viva sumia do contexto do chat (modelo respondia
+    // "não há planilha no contexto"). Bug de 20-02 (e4e19a9), corrigido aqui.
+    expect(typeof body.specOverride).toBe("string");
+    const parsedSpec = JSON.parse(body.specOverride as string) as Record<string, unknown>;
+    expect(parsedSpec).toMatchObject({ kind: "table_spec" });
+    expect(parsedSpec.columns).toBeInstanceOf(Array);
   });
 
   it("applies a table_spec mutation to the live grid (and stays undoable)", async () => {

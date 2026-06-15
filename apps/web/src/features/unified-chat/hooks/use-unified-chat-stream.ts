@@ -90,7 +90,10 @@ export function useUnifiedChatStream() {
         prompt: input.prompt,
         overrideIntent: input.overrideIntent,
         lastIntent: input.lastIntent,
-        specOverride: workspaceState.spec,
+        // O BFF lê specOverride via asString()/JSON.parse(), então precisa ser uma
+        // STRING JSON (como no caminho FormData). Enviar o objeto cru fazia o
+        // asString() descartá-lo → a planilha viva sumia do contexto do chat.
+        specOverride,
       });
       headers = { "content-type": "application/json" };
     }
