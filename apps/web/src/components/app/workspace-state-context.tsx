@@ -1,6 +1,6 @@
 "use client";
 import { createContext, useCallback, useContext, useEffect, useReducer, useRef } from "react";
-import type { TableColumn, TableSpecPayload } from "@tabelin/shared";
+import { deriveColumnKey, type TableColumn, type TableSpecPayload } from "@tabelin/shared";
 import { SAMPLE_SPEC } from "@/features/unified-chat/lib/sample-spec";
 
 /** Janela de debounce do auto-save da planilha (D-02): 1.5s sem mudanças. */
@@ -29,14 +29,31 @@ type Action =
   | { type: "RESET_TO_SEED"; seed: TableSpecPayload };
 
 function seedToGridState(seed: TableSpecPayload): GridState {
-  const columns = seed.columns.map((c) => ({
-    ...c,
-    key: c.key ?? c.name.toLowerCase().replace(/\s+/g, "_"),
-  }));
+  // CR-02: desambigua keys colidentes na ESCRITA. Duas colunas que derivam (ou
+  // declaram) a mesma key sobrescreveriam uma à outra em newRow[key], perdendo
+  // dados no reload. Mantém um Set de keys já usadas e sufixa o índice na
+  // colisão. Usa deriveColumnKey (@tabelin/shared) — a MESMA normalização do
+  // schema — para evitar drift entre validação e escrita. Esta dedupe de escrita
+  // é a garantia primária de round-trip sem perda; o superRefine do schema só
+  // pega as colisões que a própria normalização produz.
+  const seen = new Set<string>();
+  const columns = seed.columns.map((c) => {
+    let key = c.key ?? deriveColumnKey(c.name);
+    if (seen.has(key)) {
+      // Sufixa o índice da coluna até obter uma key inédita.
+      const colIndex = seed.columns.indexOf(c);
+      let suffixed = `${key}_${colIndex}`;
+      while (seen.has(suffixed)) suffixed = `${suffixed}_x`;
+      key = suffixed;
+    }
+    seen.add(key);
+    return { ...c, key };
+  });
   const rows = (seed.rows ?? []).map((r) => {
     const newRow: RowData = {};
     seed.columns.forEach((c, index) => {
       const resolvedKey = columns[index].key;
+      // Leitura tolerante: aceita key explícita, nome, ou a key resolvida (única).
       const val = r[c.key ?? ""] ?? r[c.name] ?? r[resolvedKey];
       newRow[resolvedKey] = val !== undefined ? val : "";
     });
@@ -48,6 +65,25 @@ function seedToGridState(seed: TableSpecPayload): GridState {
     rows,
     separator: seed.separator ?? ";",
   };
+}
+
+/**
+ * Deriva o specJson canônico de um GridState — a MESMA serialização usada pelo
+ * auto-save. Reutilizado para pré-marcar lastSavedRef no reset (CR-01), de modo
+ * que o efeito de auto-save veja `specJson === lastSavedRef.current` e retorne
+ * cedo, sem disparar POST.
+ */
+function gridStateToSpecJson(state: GridState): string {
+  const spec = {
+    kind: "table_spec" as const,
+    title: state.title,
+    columns: state.columns,
+    rows: state.rows,
+    rowCount: state.rows.length,
+    separator: state.separator ?? ";",
+    formulaLanguage: "pt-BR" as const,
+  };
+  return JSON.stringify(spec);
 }
 
 function historyReducer(state: HistoryState, action: Action): HistoryState {
@@ -141,12 +177,27 @@ export function WorkspaceStateProvider({
     future: [],
   });
 
+  // D-02: auto-save debancado e deduplicado. lastSavedRef guarda a string do
+  // último estado conhecido como salvo; o mount inicial não dispara POST porque
+  // lastSavedRef já reflete o estado inicial. Mudanças subsequentes agendam um
+  // POST após AUTO_SAVE_DEBOUNCE_MS; o sucesso atualiza o ref para evitar
+  // gravações redundantes.
+  const lastSavedRef = useRef(gridStateToSpecJson(initialPresent));
+
   const undo = useCallback(() => dispatch({ type: "UNDO" }), []);
   const redo = useCallback(() => dispatch({ type: "REDO" }), []);
   const updateState = useCallback((newState: GridState) => dispatch({ type: "SET", newState }), []);
   const setSpec = useCallback((seed: TableSpecPayload) => dispatch({ type: "RESET_TO_SEED", seed }), []);
   const resetToBlank = useCallback(() => dispatch({ type: "RESET_TO_BLANK" }), []);
-  const resetToSeed = useCallback(() => dispatch({ type: "RESET_TO_SEED", seed: SAMPLE_SPEC }), []);
+  // CR-01: o reset para SAMPLE_SPEC NÃO deve disparar auto-save. O "Nova conversa"
+  // já apaga a linha unified_table via DELETE no Topbar; se o auto-save POSTasse o
+  // SAMPLE_SPEC logo em seguida, a linha ressuscitaria (corrida CR-01). Pré-marcamos
+  // lastSavedRef com o specJson do estado de reset ANTES do dispatch, de modo que o
+  // efeito de auto-save veja specJson === lastSavedRef.current e retorne cedo.
+  const resetToSeed = useCallback(() => {
+    lastSavedRef.current = gridStateToSpecJson(seedToGridState(SAMPLE_SPEC));
+    dispatch({ type: "RESET_TO_SEED", seed: SAMPLE_SPEC });
+  }, []);
 
   const spec = {
     kind: "table_spec" as const,
@@ -158,12 +209,6 @@ export function WorkspaceStateProvider({
     formulaLanguage: "pt-BR" as const,
   };
 
-  // D-02: auto-save debancado e deduplicado. lastSavedRef guarda a string do
-  // último estado conhecido como salvo; o mount inicial não dispara POST porque
-  // lastSavedRef já reflete o estado inicial. Mudanças subsequentes agendam um
-  // POST após AUTO_SAVE_DEBOUNCE_MS; o sucesso atualiza o ref para evitar
-  // gravações redundantes.
-  const lastSavedRef = useRef(JSON.stringify(spec));
   const specJson = JSON.stringify(spec);
 
   useEffect(() => {
