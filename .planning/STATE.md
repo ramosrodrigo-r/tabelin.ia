@@ -25,10 +25,10 @@ See: .planning/PROJECT.md (updated 2026-06-08)
 
 ## Current Position
 
-Phase: 22
+Phase: 22 (limpeza-final) — not started
 Plan: Not started
-Status: Verification gaps_found (2/5 must-haves) — needs gap closure via /gsd-plan-phase 21 --gaps
-Last activity: 2026-06-15
+Status: Phase 21 complete (verified 5/5 after gap closure) — ready to plan Phase 22
+Last activity: 2026-06-15 -- Phase 21 gap closure verified & complete
 
 ## Performance Metrics
 
