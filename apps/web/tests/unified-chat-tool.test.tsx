@@ -403,6 +403,74 @@ describe("UnifiedChatTool", () => {
     expect(screen.getByTestId("ws-title").textContent).not.toBe(tableSpecWithRows.title);
   });
 
+  // CR-01 end-to-end: o fluxo "Nova conversa" não dispara auto-save de estado
+  // (a linha unified_table apagada pelo DELETE não é re-semeada via POST).
+  // Usa timers reais (como o teste D-04) e filtra os fetches por URL+method para
+  // distinguir o POST de auto-save (/api/workspace/state) do stream
+  // (/api/chat/unified). O debounce do auto-save é 1.5s (AUTO_SAVE_DEBOUNCE_MS).
+  it("new conversation does not trigger a state auto-save POST (CR-01)", async () => {
+    const user = userEvent.setup();
+    // O stream usa POST /api/chat/unified; o auto-save usaria POST
+    // /api/workspace/state. Respondemos ambos e contamos só os de estado.
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation((input) => {
+      const url = typeof input === "string" ? input : (input as Request).url;
+      if (url.includes("/api/workspace/state")) {
+        return Promise.resolve(new Response(JSON.stringify({ ok: true }), { status: 200 }));
+      }
+      return Promise.resolve(tableSpecStream());
+    });
+
+    const stateSavePosts = () =>
+      fetchMock.mock.calls.filter(([input, init]) => {
+        const url = typeof input === "string" ? input : (input as Request).url;
+        const method = (
+          init?.method ??
+          (typeof input === "string" ? "GET" : (input as Request).method)
+        ).toUpperCase();
+        return url.includes("/api/workspace/state") && method === "POST";
+      });
+
+    function ClearButton() {
+      const invoke = useInvokeNewConversation();
+      return <button type="button" onClick={() => invoke?.()}>Limpar</button>;
+    }
+
+    render(
+      <WorkspaceStateProvider>
+        <WorkspaceConversationProvider>
+          <WorkspaceProbe />
+          <ClearButton />
+          <UnifiedChatTool />
+        </WorkspaceConversationProvider>
+      </WorkspaceStateProvider>
+    );
+
+    const seedTitle = screen.getByTestId("ws-title").textContent;
+
+    // Muta a planilha viva via chat→grade.
+    await user.type(screen.getByLabelText("Pedido"), "cria a tabela de vendas");
+    await user.click(screen.getByRole("button", { name: "Enviar" }));
+    await waitFor(() =>
+      expect(screen.getByTestId("ws-title").textContent).toBe(tableSpecWithRows.title)
+    );
+
+    // A mutação chat→grade legítima agenda um auto-save (1.5s). Deixamos passar
+    // o debounce e zeramos a contagem para isolar o efeito do RESET.
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 1_700));
+    });
+    fetchMock.mockClear();
+
+    // "Nova conversa": reseta a grade e NÃO deve disparar POST de estado.
+    await user.click(screen.getByRole("button", { name: "Limpar" }));
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 1_700));
+    });
+
+    expect(screen.getByTestId("ws-title").textContent).toBe(seedTitle);
+    expect(stateSavePosts()).toHaveLength(0);
+  });
+
   it("renders initialExchanges hydrated from the server (D-03)", () => {
     render(
       <WorkspaceStateProvider>
