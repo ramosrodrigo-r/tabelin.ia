@@ -49,20 +49,20 @@
 - [x] **CLEAN-01**: A cadeia completa dos geradores de texto avulsos (Fórmula, Scripts, SQL, Regex, Template como tools/páginas/rotas) é removida — sem entrada pela UI nem por rota (§5.1). A *avaliação* de fórmula dentro da planilha viva permanece (§4.2)
 - [x] **CLEAN-02**: A cadeia completa do OCR (imagem→tabela) é removida — página, rota, módulo de Vision, fixtures e assets de imagem (§5.2)
 - [x] **CLEAN-03**: A Análise de Arquivos como ferramenta separada (página/rota/chat próprios) é removida; sobra apenas o caminho de ingestão CSV/XLSX da DATA-03 (§5.3)
-- [ ] **CLEAN-04**: Toda a monetização/cota é removida — checkout, provedor de pagamento (Mercado Pago), webhooks, plano Pro, entitlement gates, sistema de cota/usage ledger e UI de upsell/limite (§5.4)
+- [x] **CLEAN-04**: Toda a monetização/cota é removida — checkout, provedor de pagamento (Mercado Pago), webhooks, plano Pro, entitlement gates, sistema de cota/usage ledger e UI de upsell/limite (§5.4)
 - [x] **CLEAN-05**: A navegação multi-ferramenta (sidebar/tool-nav e roteamento entre módulos sem destino) é removida (§5.5)
-- [ ] **CLEAN-06**: O classificador de intent e o render-dispatcher são **reduzidos** ao que serve à planilha + Q&A; ramos que apontam para capacidades removidas saem (§5.6)
+- [x] **CLEAN-06**: O classificador de intent e o render-dispatcher são **reduzidos** ao que serve à planilha + Q&A; ramos que apontam para capacidades removidas saem (§5.6)
 - [x] **CLEAN-07**: A geração de tabela do zero pela IA (stub → clarificação → confirmação de spec) é removida (§5.7, D5)
-- [ ] **CLEAN-08**: Modelos Prisma e migrations órfãos (billing/cota/ferramentas removidas) são removidos via migration coerente e revisável; o banco aplica as migrations limpo, preservando dados de usuário (contas, planilhas) (§6.4, aceite §9.9)
-- [ ] **CLEAN-09**: Dependências de `package.json` que ficam sem qualquer import após a remoção são removidas — e somente essas (§6.5, aceite §9.10)
-- [ ] **CLEAN-10**: Configuração órfã é limpa/atualizada — env vars, `.env.example`, `docker-compose`, scripts, README e docs que descrevem só capacidades OUT (§6.6, aceite §9.10/§9.13)
-- [ ] **CLEAN-11**: Testes e fixtures (unit/e2e) que exercitam exclusivamente capacidades OUT são removidos (§6.7, aceite §9.11)
-- [ ] **CLEAN-12**: Assets soltos do repositório que só serviam às capacidades OUT (ex.: amostras de OCR) são removidos, preservando os assets do escopo IN (ex.: planilha-amostra de seed) (§6.8)
+- [x] **CLEAN-08**: Modelos Prisma e migrations órfãos (billing/cota/ferramentas removidas) são removidos via migration coerente e revisável; o banco aplica as migrations limpo, preservando dados de usuário (contas, planilhas) (§6.4, aceite §9.9)
+- [x] **CLEAN-09**: Dependências de `package.json` que ficam sem qualquer import após a remoção são removidas — e somente essas (§6.5, aceite §9.10)
+- [x] **CLEAN-10**: Configuração órfã é limpa/atualizada — env vars, `.env.example`, `docker-compose`, scripts, README e docs que descrevem só capacidades OUT (§6.6, aceite §9.10/§9.13)
+- [x] **CLEAN-11**: Testes e fixtures (unit/e2e) que exercitam exclusivamente capacidades OUT são removidos (§6.7, aceite §9.11)
+- [x] **CLEAN-12**: Assets soltos do repositório que só serviam às capacidades OUT (ex.: amostras de OCR) são removidos, preservando os assets do escopo IN (ex.: planilha-amostra de seed) (§6.8)
 
 ### Higiene & Verificação da Limpeza (QA)
 
-- [ ] **QA-01**: Zero imports quebrados e zero referências pendentes a código removido, comprovado por busca (imports, `href`, chamadas, uso de tipos) (aceite §9.7)
-- [ ] **QA-02**: `pnpm -r typecheck`, `lint`, `test` e `build` passam verdes ao fim do milestone (aceite §9.8)
+- [x] **QA-01**: Zero imports quebrados e zero referências pendentes a código removido, comprovado por busca (imports, `href`, chamadas, uso de tipos) (aceite §9.7)
+- [x] **QA-02**: `pnpm -r typecheck`, `lint`, `test` e `build` passam verdes ao fim do milestone (aceite §9.8)
 
 > **Regra de segurança (§6):** símbolos compartilhados entre IN e OUT (locale de fórmula, cliente OpenAI, validação de bytes do upload, schema do unified-chat) **ficam** — remove-se só o ramo comprovadamente sem consumidor IN. Na dúvida, investigar referências antes de remover.
 >
@@ -118,17 +118,17 @@ Preenchida na criação do roadmap (cada requisito mapeia para exatamente uma fa
 | CLEAN-01 | Phase 18 | Complete |
 | CLEAN-02 | Phase 18 | Complete |
 | CLEAN-03 | Phase 18 | Complete |
-| CLEAN-04 | Phase 17 | Pending |
+| CLEAN-04 | Phase 17 | Complete |
 | CLEAN-05 | Phase 16 | Complete |
-| CLEAN-06 | Phase 18 | Pending |
+| CLEAN-06 | Phase 18 | Complete |
 | CLEAN-07 | Phase 18 | Complete |
-| CLEAN-08 | Phase 22 | Pending |
-| CLEAN-09 | Phase 22 | Pending |
-| CLEAN-10 | Phase 22 | Pending |
-| CLEAN-11 | Phase 22 | Pending |
-| CLEAN-12 | Phase 22 | Pending |
-| QA-01 | Phase 22 | Pending |
-| QA-02 | Phase 22 | Pending |
+| CLEAN-08 | Phase 22 | Complete |
+| CLEAN-09 | Phase 22 | Complete |
+| CLEAN-10 | Phase 22 | Complete |
+| CLEAN-11 | Phase 22 | Complete |
+| CLEAN-12 | Phase 22 | Complete |
+| QA-01 | Phase 22 | Complete |
+| QA-02 | Phase 22 | Complete |
 
 **Coverage:**
 
