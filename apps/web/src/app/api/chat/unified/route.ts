@@ -272,7 +272,7 @@ async function buildBinaryResult(
 }
 
 export async function POST(request: Request) {
-  const user = getSessionFromCookieHeader(request.headers.get("cookie"));
+  const user = await getSessionFromCookieHeader(request.headers.get("cookie"));
   if (!user) {
     return NextResponse.json({ error: "Autenticacao obrigatoria." }, { status: 401 });
   }

@@ -10,7 +10,7 @@ export const ALL_UNIFIED_TOOL_KINDS = ALL_PERSISTED_TOOL_KINDS;
 
 export async function DELETE(request: Request) {
   try {
-    const user = getSessionFromCookieHeader(request.headers.get("cookie"));
+    const user = await getSessionFromCookieHeader(request.headers.get("cookie"));
 
     if (!user) {
       return NextResponse.json({ error: "Autenticacao obrigatoria." }, { status: 401 });
