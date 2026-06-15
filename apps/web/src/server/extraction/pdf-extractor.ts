@@ -34,7 +34,7 @@ export async function extractPdf(bytes: Uint8Array): Promise<ExtractionResult> {
         ok: false,
         code: "SCANNED_PDF",
         message:
-          "Este PDF parece ser escaneado (sem texto selecionável). Use o tool de OCR para extrair a tabela da imagem.",
+          "Este PDF parece ser escaneado (sem texto selecionável). Exporte os dados como CSV/XLSX ou cole o conteúdo na planilha.",
       };
     }
 

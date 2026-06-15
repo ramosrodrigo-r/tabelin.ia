@@ -1,7 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { createSessionToken, createSessionUser } from "@/server/auth/session";
-import { DELETE as deleteToolConversation } from "@/app/api/conversations/[tool]/route";
 import {
   ALL_UNIFIED_TOOL_KINDS,
   DELETE as deleteUnifiedConversation,
@@ -12,6 +11,7 @@ const conversationMocks = vi.hoisted(() => ({
 }));
 
 vi.mock("@/server/tools/conversation-repository", () => ({
+  ALL_PERSISTED_TOOL_KINDS: ["sheet_operation", "qa", "unified_table"] as const,
   deleteConversationExchanges: conversationMocks.deleteConversationExchanges,
 }));
 
@@ -47,62 +47,21 @@ describe("conversation delete routes", () => {
     expect(conversationMocks.deleteConversationExchanges).not.toHaveBeenCalled();
   });
 
-  it("deletes all unified tool histories for the authenticated user", async () => {
+  it("deletes every persisted unified tool history for the authenticated user", async () => {
     const response = await deleteUnifiedConversation(authedRequest());
     const body = await response.json();
 
     expect(response.status).toBe(200);
     expect(body).toEqual({ ok: true });
-    expect(ALL_UNIFIED_TOOL_KINDS).toEqual([
-      "sheet_operation",
-      "qa",
-      "formula",
-      "sql",
-      "regex",
-      "script",
-      "template",
-      "unified_table",
-    ]);
-    expect(conversationMocks.deleteConversationExchanges).toHaveBeenCalledTimes(8);
+    // Apenas os kinds que a v3.0 efetivamente persiste — sem capacidades removidas.
+    expect(ALL_UNIFIED_TOOL_KINDS).toEqual(["sheet_operation", "qa", "unified_table"]);
+    expect(conversationMocks.deleteConversationExchanges).toHaveBeenCalledTimes(3);
 
     for (const kind of ALL_UNIFIED_TOOL_KINDS) {
-      expect(conversationMocks.deleteConversationExchanges).toHaveBeenCalledWith(expect.any(String), kind);
+      expect(conversationMocks.deleteConversationExchanges).toHaveBeenCalledWith(
+        expect.any(String),
+        kind,
+      );
     }
-  });
-
-  it("keeps existing formula delete working", async () => {
-    const response = await deleteToolConversation(authedRequest(), {
-      params: Promise.resolve({ tool: "formula" }),
-    });
-    const body = await response.json();
-
-    expect(response.status).toBe(200);
-    expect(body).toEqual({ ok: true });
-    expect(conversationMocks.deleteConversationExchanges).toHaveBeenCalledWith(expect.any(String), "formula");
-  });
-
-  it("deletes new binary tool histories directly", async () => {
-    const response = await deleteToolConversation(authedRequest(), {
-      params: Promise.resolve({ tool: "sheet_operation" }),
-    });
-    const body = await response.json();
-
-    expect(response.status).toBe(200);
-    expect(body).toEqual({ ok: true });
-    expect(conversationMocks.deleteConversationExchanges).toHaveBeenCalledWith(
-      expect.any(String),
-      "sheet_operation"
-    );
-  });
-
-  it("rejects invalid existing tool kinds", async () => {
-    const response = await deleteToolConversation(authedRequest(), {
-      params: Promise.resolve({ tool: "dashboard" }),
-    });
-    const body = await response.json();
-
-    expect(response.status).toBe(400);
-    expect(body).toEqual({ error: "Tool invalido." });
-    expect(conversationMocks.deleteConversationExchanges).not.toHaveBeenCalled();
   });
 });

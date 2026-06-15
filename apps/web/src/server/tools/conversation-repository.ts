@@ -23,6 +23,17 @@ const ACTIVE_SPEC_MODE = "active_spec";
  */
 const UNIFIED_CHAT_TOOL_KINDS = ["sheet_operation", "qa"] as const;
 
+/**
+ * Todos os toolKinds que a aplicação v3.0 efetivamente persiste por usuário:
+ * o histórico de chat (sheet_operation/qa) mais o spec ativo (unified_table).
+ * Fonte única para varreduras como "Apagar histórico" — sem nomear capacidades
+ * removidas (geradores avulsos/OCR já não escrevem nenhum kind).
+ */
+export const ALL_PERSISTED_TOOL_KINDS = [
+  ...UNIFIED_CHAT_TOOL_KINDS,
+  ACTIVE_SPEC_TOOL_KIND,
+] as const;
+
 const MAX_PAYLOAD_BYTES = 32 * 1024; // 32 KB per row
 
 /**
