@@ -51,6 +51,7 @@ function historyReducer(state: HistoryState, action: Action): HistoryState {
       };
     default: {
       const _exhaustive: never = action;
+      void _exhaustive;
       return state;
     }
   }
@@ -280,6 +281,7 @@ export function TableGridPanel({ spec: propSpec }: { spec?: TableSpecPayload }) 
         newState: {
           rows: currentRows.map((r) => {
             const { [key]: _removed, ...rest } = r;
+            void _removed;
             return rest;
           }),
           columns: currentColumns.filter((c) => c.key !== key),

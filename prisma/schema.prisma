@@ -17,11 +17,6 @@ model User {
   updatedAt        DateTime          @updatedAt
   sessions         Session[]
   accounts         Account[]
-  toolRequests     ToolRequest[]
-  entitlements     Entitlement[]
-  usageLedger      UsageLedger[]
-  billingCheckouts BillingCheckout[]
-  uploadedFiles    UploadedFile[]
   conversationExchanges ConversationExchange[]
 }
 
@@ -70,125 +65,7 @@ model Verification {
   @@index([identifier])
 }
 
-model ToolRequest {
-  id              String   @id @default(cuid())
-  userId          String
-  toolKind        String
-  mode            String
-  platform        String
-  formulaLanguage String?
-  separator       String?
-  status          String
-  latencyMs       Int?
-  providerModel   String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@index([userId, createdAt])
-  @@index([toolKind, mode])
-}
-
-model Entitlement {
-  id                 String    @id @default(cuid())
-  userId             String
-  plan               String
-  cycle              String?
-  status             String
-  currentPeriodStart DateTime?
-  currentPeriodEnd   DateTime?
-  provider           String?
-  providerCustomerId String?
-  providerSubId      String?
-  createdAt          DateTime  @default(now())
-  updatedAt          DateTime  @updatedAt
-  user               User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId, status])
-  @@index([status, currentPeriodEnd])
-}
-
-model UsageLedger {
-  id             String    @id @default(cuid())
-  userId         String
-  meterKind      String
-  toolKind       String?
-  mode           String?
-  status         String
-  reservationKey String    @unique
-  periodStart    DateTime?
-  periodEnd      DateTime?
-  confirmedAt    DateTime?
-  releasedAt     DateTime?
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
-  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId, meterKind, status, createdAt])
-  @@index([status, confirmedAt])
-}
-
-model BillingCheckout {
-  id                  String    @id @default(cuid())
-  userId              String
-  cycle               String
-  status              String
-  provider            String
-  providerPreferenceId String?
-  externalReference   String    @unique
-  checkoutUrl         String?
-  createdAt           DateTime  @default(now())
-  updatedAt           DateTime  @updatedAt
-  user                User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId, status])
-  @@index([externalReference])
-}
-
-model UploadedFile {
-  id         String        @id @default(cuid())
-  userId     String
-  fileName   String
-  fileSize   Int
-  mimeType   String
-  schema     Json
-  rowCount   Int
-  lastChatAt DateTime?
-  createdAt  DateTime      @default(now())
-  updatedAt  DateTime      @updatedAt
-  user       User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  messages   ChatMessage[]
-
-  @@index([userId, createdAt])
-  @@index([lastChatAt])
-}
-
-model ChatMessage {
-  id             String       @id @default(cuid())
-  uploadedFileId String
-  role           String
-  content        String       @db.Text
-  createdAt      DateTime     @default(now())
-  uploadedFile   UploadedFile @relation(fields: [uploadedFileId], references: [id], onDelete: Cascade)
-
-  @@index([uploadedFileId, createdAt])
-}
-
-model PaymentEvent {
-  id              String    @id @default(cuid())
-  provider        String
-  providerEventId String
-  topic           String?
-  resourceId      String?
-  status          String
-  rawPayload      String?
-  processedAt     DateTime?
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
-
-  @@index([provider, providerEventId])
-  @@unique([provider, providerEventId])
-}
 
 model ConversationExchange {
   id               String   @id @default(cuid())

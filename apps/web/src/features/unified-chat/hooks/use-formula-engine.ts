@@ -441,8 +441,9 @@ function resolveArgument(
   dataContext: unknown,
   rowsData: RowData[],
   columns: TableColumn[],
-  separator: ";" | ","
+  _separator: ";" | ","
 ): unknown {
+  void _separator;
   const trimmed = arg.trim();
 
   // String literal

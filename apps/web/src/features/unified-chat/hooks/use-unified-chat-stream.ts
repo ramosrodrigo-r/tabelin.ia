@@ -131,7 +131,7 @@ export function useUnifiedChatStream() {
     let buffer = "";
 
     let finalPayload: UnifiedCompletePayload | null = null;
-    let finalMetadata: any = null;
+    let finalMetadata: UnifiedChatStreamMetadata | null = null;
     let finalError: string | null = null;
     let hasCompleteEvent = false;
 
@@ -176,8 +176,8 @@ export function useUnifiedChatStream() {
       if (event.type === "complete") {
         hasCompleteEvent = true;
         finalPayload = event.payload;
-        if ("metadata" in event.payload) {
-          finalMetadata = event.payload.metadata;
+        if (event.payload && typeof event.payload === "object" && "metadata" in event.payload) {
+          finalMetadata = (event.payload as { metadata: UnifiedChatStreamMetadata }).metadata;
         }
       }
 

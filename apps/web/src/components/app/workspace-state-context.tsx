@@ -103,6 +103,7 @@ function historyReducer(state: HistoryState, action: Action): HistoryState {
     }
     default: {
       const _exhaustive: never = action;
+      void _exhaustive;
       return state;
     }
   }
