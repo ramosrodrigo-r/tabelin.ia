@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Planilha Viva + Chat de IA
-status: milestone-complete
-stopped_at: Milestone v3.0 complete — phases 16–22 done & secured
-last_updated: "2026-06-15T00:00:00.000Z"
-last_activity: 2026-06-15
+status: Awaiting next milestone
+stopped_at: "Sessão retomada — milestone v3.0 completo (fases 16–22 concluídas & securizadas); SECURITY.md da fase 16 gerado e 17/18/21/22 versionados. Próximo: auditar/concluir milestone."
+last_updated: "2026-06-15T13:22:25.108Z"
+last_activity: 2026-06-15 — Milestone v3.0 completed and archived
 progress:
-  total_phases: 7
-  completed_phases: 7
-  total_plans: 22
-  completed_plans: 22
+  total_phases: 22
+  completed_phases: 22
+  total_plans: 21
+  completed_plans: 21
   percent: 100
 ---
 
@@ -18,17 +18,17 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-06-08)
+See: .planning/PROJECT.md (updated 2026-06-15)
 
 **Core value:** Usuários brasileiros trabalham numa planilha viva sempre na tela e pedem em português que a IA manipule os dados na própria grade — ou responda dúvidas sobre eles — sem escolher ferramentas nem navegar entre módulos.
-**Current focus:** Phase 21 — export-persistencia-da-planilha-conversa
+**Current focus:** v3.0 shipped & arquivado — próximo milestone a definir via /gsd-new-milestone
 
 ## Current Position
 
-Phase: 22 (limpeza-final) — not started
-Plan: Not started
-Status: Phase 21 complete (verified 5/5 after gap closure) — ready to plan Phase 22
-Last activity: 2026-06-15 -- Phase 21 gap closure verified & complete
+Phase: Milestone v3.0 complete
+Plan: —
+Status: Awaiting next milestone
+Last activity: 2026-06-15 — Milestone v3.0 completed and archived
 
 ## Performance Metrics
 
@@ -122,5 +122,4 @@ Resume file: none
 
 ## Operator Next Steps
 
-- Phase 20 CONCLUÍDA & SECURED: O protocolo de mutação chat→grade e Q&A do chat unificado foi completamente implementado, auditado, corrigido contra todas as vulnerabilidades e warnings listados no relatório de code-review, e validado.
-- Próximo: Avançar para a Phase 21 (ou realizar a próxima etapa do plano de desenvolvimento).
+- Start the next milestone with /gsd-new-milestone

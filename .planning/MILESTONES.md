@@ -1,5 +1,36 @@
 # Milestones: Tabelin.IA
 
+## v3.0 Planilha Viva + Chat de IA (Shipped: 2026-06-15)
+
+**Phases completed:** 7 phases, 21 plans, 42 tasks
+
+**Key accomplishments:**
+
+- redirects() 308 das 6 rotas antigas de tool para /workspace, Topbar sem deteccao de rota com link /privacidade, e SAMPLE_SPEC tipado pronto para a TableGridPanel persistente
+- WorkspaceLayout reescrito para tela única: TableGridPanel(SAMPLE_SPEC) ~70% + UnifiedChatTool ~30% lado a lado via novo WorkspaceSplit, com toggle Planilha/Chat em <900px (data-hidden, sem desmontar); Sidebar e ToolNav removidos do código e CSS
+- Removido o pré-check de cota (429), os gates Pro de anexo e template (403) e todas as ~9 chamadas confirmToolUse/releaseToolUse/ensureProUser/getUserEntitlement de `POST /api/chat/unified`, com `quotaCheck.lastFreeUse` substituído por `undefined`; auth, classificação de intent, switch-cases e loop de clarificação preservados intactos e a suíte de 20 testes verde no mesmo commit.
+- Removida toda a UI de monetização (badge Pro, Suporte Pro, banners de cota/upgrade) do Topbar e do UnifiedChatTool, e os estados/branches de cota/Pro do hook de stream e dos layouts do workspace — suíte de 371 testes vitest e typecheck verdes no mesmo commit.
+- Remoção completa do provedor de pagamento Mercado Pago (3 serviços + 2 rotas + página de retorno), poda de entitlements.ts preservando getUserEntitlement, remoção da dep mercadopago e das 4 env vars MP/PRO_PRICE, e exclusão dos 3 testes de billing OUT — typecheck e suite vitest verdes.
+- Standalone Formula/SQL/Regex/Scripts/Template tool entrypoints, feature modules, and route-level tests were removed while preserving a shared copy button and generic attachment-context coverage.
+- The dedicated OCR route, page, feature UI, processor, and shared OCR package were deleted while keeping generic image attachment extraction functional.
+- The standalone File Analysis tool was removed while preserving the CSV/XLSX parser used by generic attachment extraction.
+- The unified chat route was reduced to auth, prompt validation, optional extraction, classification, and a temporary archived-response fallback while all legacy generator branches and streams were removed.
+- O classificador de intents e os esquemas unificados foram reduzidos dos 9 intents legados para o novo eixo binário: `sheet_operation` (operações estruturadas na planilha) e `qa` (perguntas analíticas e Q&A textual), além do fallback `unknown`.
+- O `unifiedCompletePayloadSchema` e o `render-dispatcher.tsx` foram reduzidos ao que serve "operação na planilha" (`table_spec` via `TableGridPanel`, preservado) + "Q&A" (`qa_response`, payload textual novo), e os 3 componentes exclusivos da geração de tabela do zero (`ClarificationCard`, `ConfirmationCard`, `TableIntentStub`) foram deletados.
+- `unified-chat-tool.tsx`, `use-unified-chat-stream.ts` e `context-messages.ts` foram reduzidos ao eixo binário `sheet_operation`/`qa`: removido todo o estado de contexto de sessão de tools avulsos e os handlers de clarificação/geração-do-zero, deletado o `SessionContextSelector`, e a serialização multi-turn colapsada para os dois kinds sobreviventes (`table_spec`, `qa_response`).
+- O Bloco 8 final da Phase 18: `packages/shared` reduzido aos schemas sobreviventes, módulos de billing/quota órfãos removidos, e a suite de testes E2E/schema alinhada ao que sobrevive (auth + chat unificado planilha/Q&A).
+- removed the standalone text-tool, OCR-tool, and File Analysis-tool surfaces while preserving shared pieces needed by the unified workspace: generic `CopyButton`, image extraction, and CSV/XLSX parsing.
+- A Wave 1 da Fase 19 foi totalmente concluída. Implementou-se a infraestrutura de estado do cliente unificado via Contexto React e o endpoint seguro de parsing e ingestão de planilhas no servidor.
+- Implementação de JWT-free file upload e controles de tri-estado da planilha: botões Nova em Branco, Carregar Exemplo e Importar Planilha integrados ao WorkspaceStateContext, com overlay de loading, banner de erro pt-BR e suporte a undo/redo da ingestão.
+- Tradutor de fórmulas EN↔pt-BR + provedor unificado (Structured Outputs para mutação, streaming para Q&A) com fixtures determinísticas, ligado à rota /api/chat/unified que recebe o contexto completo da planilha via specOverride.
+- O frontend da planilha viva agora envia o estado atual da grade como `specOverride` e, ao receber um `table_spec` no evento `complete`, aplica a mutação diretamente na grade via `setSpec` — de forma transparente e desfazível com Ctrl+Z.
+- Persistencia do estado da planilha viva: helpers Prisma single-row, rota POST /api/workspace/state com auth+validacao, e auto-save debancado (1.5s) deduplicado no WorkspaceStateProvider.
+- Fiacao server-side do estado persistido nos Server Components do workspace (layout + page), hidratando planilha e chat sem flash, mais reset coerente que devolve a planilha viva a semente ao iniciar nova conversa.
+- Fecha os 4 defeitos de perda de dados da Phase 21 (CR-01/CR-02/WR-03/WR-04): spec ativo persiste sem placeholder, save falho propaga para 500, keys colidentes fazem round-trip sem perda, e "Nova conversa" não ressuscita o SAMPLE_SPEC via auto-save.
+- Limpeza final de banco de dados, linter, dependências e documentação do repositório para o escopo do Tabelin.IA v3.0.
+
+---
+
 ## v2.0 Chat Unificado & Tabela Viva (Executado: 2026-06-10)
 
 **Phases:** 12–15 | **Plans:** 17 (17 concluídos)
@@ -18,6 +49,7 @@
 **Decisões-chave:** engine `@formulajs/formulajs` (HyperFormula GPL bloqueado); partição `userId+toolKind` + kind `"unified_table"` (sem migração Prisma); `TableSpecPayload` em `ConversationExchange.assistantPayload`, grid efêmero; abas por-tool preservadas como deep links.
 
 **Archives:**
+
 - `.planning/milestones/v2.0-ROADMAP.md` — phase details
 - `.planning/milestones/v2.0-REQUIREMENTS.md` — requisitos UNI/TBL/CLR/etc.
 - `.planning/milestones/v2.0-MILESTONE-AUDIT.md` — auditoria

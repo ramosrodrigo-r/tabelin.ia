@@ -187,14 +187,76 @@
 
 ---
 
+## Milestone: v3.0 — Planilha Viva + Chat de IA (pivô / redução de escopo)
+
+**Shipped:** 2026-06-15
+**Phases:** 7 (16–22) | **Plans:** 21 | **Tasks:** 42
+
+---
+
+### What Was Built
+
+1. Tela única (Phase 16): `WorkspaceSplit` com planilha viva (~70%) + chat (~30%) lado a lado, toggle responsivo <900px; sidebar/tool-nav removidos; 6 rotas antigas de tool com redirect 308.
+2. Remoção comprovada da cadeia OUT (Phases 17/18): billing/cota (Mercado Pago, checkout, webhooks, Pro, usage ledger), OCR como tool, geradores de texto avulsos, File Analysis como tool, geração de tabela do zero; classificador de intent reduzido ao eixo binário `sheet_operation`/`qa`; render-dispatcher reduzido a `table_spec`/`qa_response`.
+3. Ingestão tri-estado (Phase 19): seed / em branco / upload CSV-XLSX que substitui a grade, com arquivo efêmero (só o conteúdo persistido) e validação de bytes reaproveitada.
+4. Protocolo de mutação chat→grade + Q&A (Phase 20): estado vivo da grade enviado como `specOverride`, operações estruturadas aplicadas via `setSpec` com undo Ctrl+Z, Q&A em texto, streaming, fixture sem chave, fórmulas EN↔pt-BR traduzidas.
+5. Export & persistência (Phase 21): export CSV/XLSX com fórmulas calculadas + sanitização; spec ativo single-row + conversa hidratados server-side; gap closure 21-03 fechando 4 defeitos de perda de dados.
+6. Limpeza final (Phase 22): migration destrutiva dropando exatamente 7 tabelas órfãs preservando dados de usuário; deps/config/testes/assets órfãos removidos; suíte verde.
+
+---
+
+### What Worked
+
+- **Deleção dirigida por critérios (§6 do PRD), não por lista fixa:** remover só o que tem zero consumidores IN, comprovado por grep, protegeu símbolos compartilhados (locale, cliente IA, validação de bytes, extração genérica) de remoção acidental num pivô de −16k linhas.
+- **Commits atômicos por bloco de remoção, árvore verde a cada passo:** tornou uma limpeza grande e destrutiva (migrations Prisma irreversíveis) bisseccionável e reversível — exatamente o que reduziu o risco do pivô.
+- **Auditoria de milestone como rede de segurança real:** o audit pegou 3 fases sem VERIFICATION.md e 9 checkboxes de traceability defasados que os testes verdes não revelavam; o integration checker confirmou os fluxos E2E e rodou os 4 gates de verdade.
+- **Verificação retroativa fechou os gaps em minutos:** como a implementação estava de fato pronta, gerar 17/18/22-VERIFICATION.md retroativamente passou de imediato (5/5, 5/5, 7/7) — o gap era de artefato, não de código.
+
+---
+
+### What Was Inefficient
+
+- **VERIFICATION.md ausente em 3 fases (17/18/22) — recorrência do v1.2:** mesma lição não internalizada (gerar o artefato durante a execução, não no close). Phase 22 fez UAT 3/3 conversacional sem produzir o artefato do verifier.
+- **Traceability defasada de novo:** 9 requisitos (CLEAN-04/06/08–12, QA-01/02) ficaram `Pending`/`[ ]` apesar de implementados e verificados — terceiro milestone seguido com o mesmo drift entre VERIFICATION.md e REQUIREMENTS.md.
+- **Tech debt de limpeza sobreviveu até o close:** rota morta `/api/conversations/[tool]` e copy obsoleto de OCR (`pdf-extractor.ts`) só foram removidos na auditoria de milestone — o critério §6 deveria tê-los pego nas Phases 18/22.
+- **Falso-positivo do audit-open em quick tasks recorreu:** o mismatch `{id}-SUMMARY.md` vs `SUMMARY.md` marcou 2 quick tasks concluídas como "unknown" no close — mesmo bug do v1.1, ainda não corrigido upstream.
+
+---
+
+### Patterns Established
+
+- **Fonte única canônica para listas de domínio** (`ALL_PERSISTED_TOOL_KINDS` derivado de `UNIFIED_CHAT_TOOL_KINDS` + `ACTIVE_SPEC_TOOL_KIND`) em vez de literais duplicados — elimina nomes de capacidades removidas espalhados.
+- **Persistência fonte-da-verdade falha-em-voz-alta:** o save do spec ativo propaga erro→500 em vez de engolir, para nunca perder dados silenciosamente (gap closure 21-03).
+- **Migration destrutiva com allowlist explícito de tabelas preservadas:** dropar por enumeração das órfãs, não por inferência, com os modelos de usuário/sessão/conversa preservados verificados.
+
+---
+
+### Key Lessons
+
+1. **Gerar VERIFICATION.md e atualizar a traceability no fechamento da fase é um gate de processo, não opcional.** Três milestones seguidos (v1.2, v2.0 implícito, v3.0) tiveram o mesmo drift — vale automatizar/forçar no execute-phase.
+2. **O critério de deleção por referências deve incluir copy/strings e allow-lists, não só imports.** A rota morta e a mensagem de OCR não eram imports quebrados, então passaram pelos gates — mas eram referências pendentes a capacidades removidas (QA-01).
+3. **Num pivô de redução, a auditoria de integração + verificação retroativa é mais barata que bloquear.** A implementação estava pronta; o custo real foi só produzir os artefatos faltantes — fazer isso antes de arquivar mantém o histórico íntegro sem retrabalho.
+
+---
+
+### Cost Observations
+
+- Model mix: principalmente Opus (balanced profile)
+- Sessions: ~4 dias de execução + 1 sessão de auditoria/fechamento; pivô pesado em remoção (+20.576 / −16.007 linhas, 334 arquivos)
+- Notable: 1 gap closure de fase (21-03) + 3 VERIFICATION.md retroativos + 2 itens de tech debt limpos no close
+
+---
+
 ## Cross-Milestone Trends
 
-| Metric | v1.0 | v1.1 | v1.2 |
-|--------|------|------|------|
-| Days to ship | 4 | 4 | ~2 |
-| Phases | 5 | 3 | 3 |
-| Plans | 16 | 10 | 14 |
-| Requirements | 46/46 | 9/9 | 25/25 |
-| Smoke tests | 9/9 pass | — (reusa suite v1.0) | 207 unit/integration pass |
-| LOC TypeScript | ~10.500 | ~8.450 ins. | — |
-| Gap closures | 1 (05-04) | 1 (08-04) | 1 (SEAM-05, pós-auditoria) |
+| Metric | v1.0 | v1.1 | v1.2 | v3.0 |
+|--------|------|------|------|------|
+| Days to ship | 4 | 4 | ~2 | ~4 |
+| Phases | 5 | 3 | 3 | 7 |
+| Plans | 16 | 10 | 14 | 21 |
+| Requirements | 46/46 | 9/9 | 25/25 | 32/32 |
+| Smoke tests | 9/9 pass | — (reusa suite v1.0) | 207 unit/integration pass | 288 unit/integration pass |
+| LOC TypeScript | ~10.500 | ~8.450 ins. | — | +20.576 / −16.007 (pivô) |
+| Gap closures | 1 (05-04) | 1 (08-04) | 1 (SEAM-05, pós-auditoria) | 1 (21-03) + 3 VERIFICATION.md retroativos |
+
+> **Padrão recorrente a corrigir:** drift entre VERIFICATION.md/traceability e o estado real persiste desde v1.2 (e o falso-positivo do audit-open em quick tasks desde v1.1). Ambos pedem correção upstream no execute-phase/fechamento de fase, não remediação manual por milestone.

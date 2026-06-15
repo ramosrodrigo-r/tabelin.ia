@@ -14,33 +14,13 @@ Usuários brasileiros trabalham numa planilha viva sempre na tela e pedem em por
 
 ## Current State
 
-**Executado:** v2.0 Chat Unificado & Tabela Viva (2026-06-10) — Phases 12–15.
+**Executado:** v3.0 Planilha Viva + Chat de IA (2026-06-15) — Phases 16–22. **Shipped — audit passed 32/32, integração PASS, gates verdes.**
 
-Chat unificado roteia o intent automaticamente (OpenAI Structured Outputs, SLA 2,5s) e a **tabela viva** entregou um grid editável estilo mini-Excel com motor de fórmulas pt-BR (`@formulajs/formulajs`), undo/redo, ordenação, tooltips de erro estilo Excel e export CSV/XLSX sanitizado (SEC-04). UAT 6/6. Detalhes em MILESTONES.md.
+O pivô concluiu a transformação do produto de um SaaS "canivete suíço" multi-ferramenta para **uma única tela**: planilha viva sempre presente + chat de IA que opera sobre ela. Construído: tela única (planilha + chat lado a lado, sem sidebar/tool-nav), ingestão tri-estado da grade (seed / em branco / upload CSV-XLSX que substitui a grade), protocolo de mutação chat→grade (operações estruturadas aplicadas com undo Ctrl+Z), Q&A analítico em texto, export CSV/XLSX com fórmulas calculadas + sanitização, persistência da planilha+conversa entre sessões e modo fixture sem `OPENAI_API_KEY`. Removido por completo: billing/cota (Mercado Pago, checkout, webhooks, Pro, usage ledger), OCR como tool, geradores de texto avulsos, File Analysis como tool, navegação multi-ferramenta, geração de tabela do zero, e os modelos Prisma/deps/config/testes órfãos — comprovadamente, sem imports quebrados. Detalhes em MILESTONES.md.
 
-**Acumulado v1.0–v1.2:** SaaS multi-ferramenta completo — auth (Better Auth), billing Mercado Pago (Pix/card, free-tier quota), 5 tools de texto (fórmula/scripts/SQL/regex/template), OCR (Vision), file analysis, anexos universais, histórico persistente. Tudo shipped e validado.
+**Acumulado v1.0–v2.0:** SaaS multi-ferramenta completo — auth (Better Auth), billing Mercado Pago, 5 tools de texto, OCR (Vision), file analysis, anexos universais, histórico persistente, chat unificado e a tabela viva. Shipped e validado; o subconjunto fora da tela única foi desmontado em v3.0.
 
-**Próximo (este milestone):** v3.0 Planilha Viva — pivô que estreita o produto para a tela única e remove a cadeia de código morto.
-
-## Current Milestone: v3.0 Planilha Viva + Chat de IA (pivô / redução de escopo)
-
-**Goal:** Estreitar o produto de um SaaS multi-ferramenta para uma única tela — planilha viva sempre presente + chat de IA que opera sobre ela — removendo toda a cadeia de código morto (billing/cota, OCR, tools de texto avulsos, navegação multi-ferramenta, geração de tabela do zero), comprovadamente e sem imports quebrados.
-
-**Fonte da verdade:** `PRD-MILESTONE-PLANILHA-VIVA.md` (decisões de escopo D1–D6, escopo IN §4, escopo OUT §5, critérios de deleção §6, RF/RNF §7, aceite §9).
-
-**Target features (IN / construir):**
-- Tela única autenticada: planilha viva ocupando o espaço principal + chat de IA ao lado/abaixo, sem menu de ferramentas
-- 3 estados iniciais da grade: planilha-amostra (seed), planilha em branco, upload CSV/XLSX (importar substitui a grade)
-- **Protocolo de mutação chat→grade** (trabalho novo): a IA recebe o estado da planilha e retorna operações estruturadas (células/colunas/linhas/fórmulas) aplicadas à grade, com undo
-- Chat responde dúvidas analíticas sobre os dados em texto, sem alterar a grade
-- Export CSV/XLSX com fórmulas calculadas; persistência da planilha + conversa por usuário entre sessões; localização pt-BR; modo fixture sem `OPENAI_API_KEY`
-
-**Removals (OUT / deletar a cadeia completa):**
-- Geradores de texto avulsos: Fórmula, Scripts, SQL, Regex, Template como tools/páginas/rotas independentes
-- OCR (imagem→tabela) inteiro; Análise de Arquivos como ferramenta separada (sobra só o caminho de ingestão)
-- Toda monetização/cota: Mercado Pago, checkout, webhooks, plano Pro, entitlement gates, usage ledger e UI de upsell
-- Navegação multi-ferramenta (sidebar/tool-nav); geração de tabela do zero pela IA (stub/clarificação/confirmação de spec)
-- Modelos Prisma, migrations, deps, env e testes que existem **somente** por causa do que sai (derivados pelos critérios §6, não por lista fixa)
+**Próximo:** a definir via `/gsd-new-milestone`. Candidato natural: **AbacatePay** (reintrodução de billing brasileiro com Pix), marcado como milestone futuro no PRD.
 
 ## Requirements
 
@@ -84,11 +64,20 @@ Chat unificado roteia o intent automaticamente (OpenAI Structured Outputs, SLA 2
 - ✓ Localização de fórmula pt-BR (PROCV/SE/SOMASE… via mapa PT-BR→EN), separador `;`, formatação R$/DD-MM-AAAA — Phase 14 (LOC-01..03)
 - ✓ Export da tabela para CSV e XLSX com sanitização de injeção de fórmula (prefixo `'`) e render sem XSS — Phase 14/15 (EXP-01..02, SEC-04, SEC-05)
 
-> ⚠️ **Removido no pivô v3.0:** um subconjunto das capacidades validadas acima é deliberadamente desmontado neste milestone — billing/cota (Mercado Pago, checkout, webhooks, Pro, usage ledger), OCR, geradores de texto avulsos (Fórmula/Scripts/SQL/Regex/Template como tools), File Analysis como tool separada, navegação multi-ferramenta e a geração de tabela do zero (clarificação/confirmação de spec). Permanecem validados: auth, persistência, planilha viva, motor de fórmulas pt-BR, export e o caminho de ingestão CSV/XLSX. Ao concluir v3.0, as entradas removidas migram para Out of Scope.
+**v3.0 Planilha Viva + Chat de IA (pivô) — shipped 2026-06-15:**
+
+- ✓ Tela única autenticada: planilha viva no espaço principal + chat ao lado, sem navegação multi-ferramenta (sidebar/tool-nav) acessível por UI ou rota — v3.0 (SHELL-01..03, CLEAN-05)
+- ✓ Ingestão tri-estado da grade: seed (planilha-amostra), em branco, ou upload CSV/XLSX que substitui a grade; arquivo importado efêmero, só o conteúdo persistido — v3.0 (DATA-01..04)
+- ✓ Protocolo de mutação chat→grade: estado da planilha enviado ao modelo, operações estruturadas aplicadas à grade aberta com undo; Q&A analítico em texto sem alterar a grade; streaming; fixture sem `OPENAI_API_KEY` — v3.0 (CHAT-01..06)
+- ✓ Localização pt-BR preservada sem regressão (nomes de função, separador `;`, R$/DD-MM-AAAA, cópia de UI) — v3.0 (LOC-01)
+- ✓ Export CSV/XLSX com fórmulas calculadas e sanitização; planilha + conversa persistidas e recuperadas entre sessões — v3.0 (PERS-01..04)
+- ✓ Remoção comprovada da cadeia OUT (billing/cota, OCR, geradores avulsos, File Analysis-como-tool, geração de tabela do zero) e dos artefatos órfãos (Prisma/deps/config/testes/assets), com suíte verde — v3.0 (CLEAN-01..12, QA-01..02)
+
+> ✅ **Removido no pivô v3.0 (concluído):** o subconjunto das capacidades validadas acima fora da tela única foi desmontado e migrado para Out of Scope — billing/cota (Mercado Pago, checkout, webhooks, Pro, usage ledger), OCR, geradores de texto avulsos (Fórmula/Scripts/SQL/Regex/Template como tools), File Analysis como tool separada, navegação multi-ferramenta e a geração de tabela do zero (clarificação/confirmação de spec). Permanecem validados e ativos: auth, persistência, planilha viva, motor de fórmulas pt-BR, export e o caminho de ingestão CSV/XLSX.
 
 ### Active
 
-Milestone **v3.0 Planilha Viva + Chat de IA** — requisitos definidos via `/gsd:new-milestone` (ver REQUIREMENTS.md e `## Current Milestone` acima). Mistura de construção (tela única, protocolo de mutação chat→grade, ingestão tri-estado) e remoção comprovada (cadeia OUT da §5 do PRD).
+Nenhum milestone ativo. Próximo a definir via `/gsd-new-milestone` (candidato: AbacatePay — billing brasileiro com Pix, §8 do PRD).
 
 ### Out of Scope
 
@@ -154,11 +143,12 @@ The recommended technical direction from the PRD is a web SaaS with a Next.js/Ta
 | Pro-gate no backend ANTES de qualquer I/O de extração | Anti-bypass: free não deve disparar OCR/parse; 403 antes de reservar cota | Validado — v1.2 (Phase 10, PRO-02) |
 | PDF escaneado → erro acionável (sem fallback OCR automático) | Custo/latência de converter páginas→Vision a validar com uso Pro real; orienta usuário ao tool de OCR dedicado | Validado — v1.2 (Phase 9, EXT-06); erro surfacado na UI pós-auditoria (SEAM-05) |
 | Formula como amostra Nyquist representativa dos 5 tools | Os 5 tools compartilham componentes e replicam o mesmo padrão de hook; testar render completo no Formula + grep/code-review nos demais | Validado — v1.2 (Phase 11) |
-| Pivotar para tela única (planilha viva + chat), abandonar o modelo multi-ferramenta | Produto está "largo e raso"; a tabela viva já madura é o ativo mais valioso e deve ser o centro, não um output ocasional | — Pending (v3.0) |
-| Remover toda a monetização/cota agora, AbacatePay depois | Mercado Pago/checkout/Pro/ledger são camada transversal pesada acoplada às rotas; removê-los simplifica drasticamente a superfície antes de reintroduzir billing | — Pending (v3.0) |
-| Derivar o conjunto de deleção por critérios (§6 do PRD), não por lista fixa de arquivos | Código morto deve ser comprovado por ausência de referências de entrada (zero consumidores IN), não presumido; protege símbolos compartilhados (locale, cliente IA, validação de bytes) | — Pending (v3.0) |
-| Geração de tabela do zero pela IA sai; protocolo de mutação chat→grade entra | O valor passa a ser operar sobre a planilha já aberta (editar células/colunas/fórmulas), não montar tabelas novas via clarificação/spec | — Pending (v3.0) |
-| Commits atômicos por bloco de remoção, cada um deixando a árvore verde | Permite bisseção/rollback de uma limpeza grande e destrutiva (migrations Prisma irreversíveis); reduz risco do pivô | — Pending (v3.0) |
+| Pivotar para tela única (planilha viva + chat), abandonar o modelo multi-ferramenta | Produto está "largo e raso"; a tabela viva já madura é o ativo mais valioso e deve ser o centro, não um output ocasional | ✓ Validado — v3.0 (Phase 16) |
+| Remover toda a monetização/cota agora, AbacatePay depois | Mercado Pago/checkout/Pro/ledger são camada transversal pesada acoplada às rotas; removê-los simplifica drasticamente a superfície antes de reintroduzir billing | ✓ Validado — v3.0 (Phase 17, 0 símbolos de billing no código) |
+| Derivar o conjunto de deleção por critérios (§6 do PRD), não por lista fixa de arquivos | Código morto deve ser comprovado por ausência de referências de entrada (zero consumidores IN), não presumido; protege símbolos compartilhados (locale, cliente IA, validação de bytes) | ✓ Validado — v3.0 (Phase 18/22; extração genérica e locale preservados) |
+| Geração de tabela do zero pela IA sai; protocolo de mutação chat→grade entra | O valor passa a ser operar sobre a planilha já aberta (editar células/colunas/fórmulas), não montar tabelas novas via clarificação/spec | ✓ Validado — v3.0 (Phase 18/20, mutação com undo) |
+| Commits atômicos por bloco de remoção, cada um deixando a árvore verde | Permite bisseção/rollback de uma limpeza grande e destrutiva (migrations Prisma irreversíveis); reduz risco do pivô | ✓ Validado — v3.0 (migration dropa 7 tabelas órfãs preservando dados) |
+| Spec ativo persistido single-row (toolKind=unified_table, mode=active_spec) + auto-save debounced | Uma planilha viva por usuário, substituída via transaction; auto-save 1.5s deduplicado falha-em-voz-alta para não perder dados | ✓ Validado — v3.0 (Phase 21, gap closure 21-03) |
 
 ## Evolution
 
@@ -178,4 +168,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-06-10 — início do milestone v3.0 Planilha Viva + Chat de IA (pivô / redução de escopo). v2.0 arquivado em MILESTONES.md; PROJECT.md repivotado para a tela única; requisitos v3.0 definidos via /gsd:new-milestone.*
+*Last updated: 2026-06-15 — após o milestone v3.0 Planilha Viva + Chat de IA (pivô / redução de escopo). Shipped: tela única, ingestão tri-estado, protocolo de mutação chat→grade, export/persistência e remoção comprovada da cadeia OUT (audit 32/32). v3.0 arquivado em MILESTONES.md; requisitos v3.0 movidos para Validated; próximo milestone a definir via /gsd-new-milestone.*

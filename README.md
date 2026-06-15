@@ -23,10 +23,10 @@ A proposta é **Brazil-first**: prompts em português, sintaxe do Excel brasilei
 ## ✨ Funcionalidades
 
 - 📊 **Planilha Viva (Live Grid)**: Grade de planilha interativa baseada em [react-datasheet-grid](https://github.com/selbekk/react-datasheet-grid), com suporte a fórmulas dinâmicas locais calculadas via [@formulajs/formulajs](https://github.com/formulajs/formulajs).
-- 💬 **Assistente de IA Integrado (Unified Chat)**: Chat de IA unificado que processa as solicitações do usuário:
-  - **Operações na Grade**: A IA edita dados, adiciona colunas, aplica fórmulas traduzidas ou estrutura tabelas do zero a partir do prompt do usuário.
-  - **Q&A Conversacional**: O usuário pode fazer perguntas diretas sobre os dados na tabela atual.
-- 📎 **Anexos Universais (Grounding)**: Arraste ou anexe arquivos (CSV/XLSX, PDF, imagens de tabelas ou TXT). O texto e dados são extraídos no servidor e servem como contexto de grounding para fundamentar as respostas do modelo.
+- 💬 **Assistente de IA Integrado (Unified Chat)**: Chat de IA unificado que processa as solicitações do usuário sobre a planilha aberta:
+  - **Operações na Grade**: A IA recebe o estado atual da planilha e retorna operações estruturadas — edita células, adiciona/preenche colunas, aplica fórmulas traduzidas (pt-BR), ordena e transforma os dados — aplicadas diretamente na grade e **desfazíveis com Ctrl+Z**.
+  - **Q&A Conversacional**: O usuário pode fazer perguntas analíticas diretas sobre os dados na tabela atual e recebe resposta em texto, sem alterar a grade.
+- 🗂️ **Ingestão Tri-Estado**: Abra a planilha viva em três estados iniciais — planilha-amostra (seed), planilha em branco, ou importando um arquivo CSV/XLSX que substitui a grade. O arquivo importado é efêmero: só a planilha resultante é persistida.
 - 💾 **Persistência de Sessão**: O estado atual da grade de planilha e o histórico unificado de conversa (com limite de 50 mensagens) são persistidos no banco de dados automaticamente por usuário, garantindo uma inicialização instantânea e sem flash de tela.
 - 📤 **Exportação Sanitizada**: Exportação rápida da planilha atual para formatos CSV ou XLSX, mantendo as fórmulas calculadas resolvidas e prevenindo injeções maliciosas.
 - 🔐 **Autenticação Segura**: Fluxo completo de cadastro, login, logout e redefinição de senha com [Better Auth](https://www.better-auth.com/).
