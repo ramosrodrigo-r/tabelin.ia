@@ -75,7 +75,7 @@ Full details: ver seções abaixo (Phase 12-15) ou `.planning/milestones/v2.0-RO
 - [x] **Phase 18: Remover Tools Avulsos, OCR, File Analysis & Reduzir Dispatcher** - Geradores de texto, OCR, Análise de Arquivos e geração de tabela do zero saem; classificador de intent e render-dispatcher reduzidos a planilha + Q&A (completed 2026-06-14)
 - [x] **Phase 19: Ingestão Tri-Estado da Planilha** - Usuário abre a planilha viva com seed, em branco, ou via upload CSV/XLSX (substitui a grade) (completed 2026-06-14)
 - [x] **Phase 20: Protocolo de Mutação Chat→Grade & Q&A** - Chat aplica operações estruturadas à grade aberta com undo, responde dúvidas analíticas em texto, com streaming e fixture sem chave (completed 2026-06-14)
-- [x] **Phase 21: Export & Persistência da Planilha+Conversa** - Export CSV/XLSX com fórmulas calculadas; planilha e conversa do usuário persistem entre sessões (verification gaps_found 2026-06-14 — 2/5 must-haves; needs gap closure) (completed 2026-06-15)
+- [x] **Phase 21: Export & Persistência da Planilha+Conversa** - Export CSV/XLSX com fórmulas calculadas; planilha e conversa do usuário persistem entre sessões (completed 2026-06-15 — verification passed 5/5 after gap closure 21-03)
 - [x] **Phase 22: Limpeza Final — Prisma, Dependências, Config, Testes & QA Verde** - Migrations destrutivas (preservando dados), deps órfãs, config/docs/env órfãos, testes/fixtures/assets de capacidades OUT removidos; suíte completa verde (completed 2026-06-15)
 
 ## Phase Details
@@ -392,5 +392,5 @@ Full details: ver seções abaixo (Phase 12-15) ou `.planning/milestones/v2.0-RO
 | 18. Remover Tools Avulsos, OCR, File Analysis & Reduzir Dispatcher | v3.0 | 8/8 | Complete | 2026-06-14 |
 | 19. Ingestão Tri-Estado da Planilha | v3.0 | 2/2 | Complete    | 2026-06-14 |
 | 20. Protocolo de Mutação Chat→Grade & Q&A | v3.0 | 2/2 | Complete    | 2026-06-14 |
-| 21. Export & Persistência da Planilha+Conversa | v3.0 | 3/3 | Complete   | 2026-06-15 |
+| 21. Export & Persistência da Planilha+Conversa | v3.0 | 3/3 | Complete    | 2026-06-15 |
 | 22. Limpeza Final — Prisma, Dependências, Config, Testes & QA Verde | v3.0 | 1/1 | Complete | 2026-06-15 |

@@ -1,71 +1,33 @@
 ---
 phase: 21-export-persistencia-da-planilha-conversa
-verified: 2026-06-14T18:05:00Z
-status: gaps_found
-score: 2/5 must-haves verified
+verified: 2026-06-14T22:35:00Z
+status: passed
+score: 5/5 must-haves verified
 overrides_applied: 0
-gaps:
-  - truth: "Ao recarregar a tela única, a planilha do usuário é recarregada no estado em que foi deixada (seed/upload/edições da IA)"
-    status: failed
-    reason: >-
-      O round-trip de persistência não é garantido para casos reais e plausíveis.
-      (1) CR-02: seedToGridState usa a key derivada da coluna como índice de RowData
-      sem garantir unicidade; duas colunas que colidam na mesma key derivada
-      (nomes duplicados ou que normalizam para a mesma string — comuns em spec
-      gerado por LLM ou importado) sobrescrevem dados silenciosamente no reload.
-      O schema (tableColumnSchema) NÃO exige key/name únicos, então o spec
-      persistido pode legalmente conter colisões. (2) WR-04: spec acima de 32 KB
-      é persistido como placeholder {truncated:true}; no reload o safeParse falha,
-      retorna null e o usuário cai no SAMPLE_SPEC — a planilha grande inteira é
-      perdida. O teto de 200 linhas × 26 colunas com conteúdo pt-BR pode exceder
-      32 KB legitimamente. (3) WR-03: saveActiveSpreadsheetSpec engole o erro e a
-      rota sempre retorna 200; uma gravação que falha é marcada como salva pelo
-      cliente (lastSavedRef atualizado) e nunca reagendada — perda silenciosa do
-      último estado.
-    artifacts:
-      - path: "apps/web/src/components/app/workspace-state-context.tsx"
-        issue: "seedToGridState (l.31-44) escreve newRow[resolvedKey] sem dedupe de key — colisão sobrescreve coluna (CR-02)"
-      - path: "apps/web/src/server/tools/conversation-repository.ts"
-        issue: "guardPayloadSize (l.52-55) persiste placeholder truncado p/ specs >32KB; getActiveSpreadsheetSpec (l.147) descarta no read -> SAMPLE_SPEC (WR-04). saveActiveSpreadsheetSpec (l.185-187) engole erro, retorna void (WR-03)"
-      - path: "apps/web/src/app/api/workspace/state/route.ts"
-        issue: "POST sempre retorna 200 porque o helper nunca lança; falha de gravação invisível ao cliente (WR-03)"
-      - path: "packages/shared/src/unified-chat/schema.ts"
-        issue: "tableColumnSchema (l.22-25) não exige unicidade de key/name — habilita a colisão do CR-02"
-    missing:
-      - "Garantir keys únicas ao derivar em seedToGridState (sufixar índice em colisão) e/ou validar unicidade no schema ao persistir"
-      - "Para o spec ativo: rejeitar gravação com erro explícito quando >32KB OU elevar o teto p/ acomodar o máximo do schema (200×26), em vez de persistir placeholder descartável"
-      - "saveActiveSpreadsheetSpec deve propagar a falha (ou retornar booleano) para a rota mapear 500, evitando que o cliente marque como salvo um save perdido"
-  - truth: "Export e persistência funcionam tanto para planilha de seed/em branco quanto de upload CSV/XLSX; \"Nova conversa\" limpa chat e reseta a planilha de forma coerente"
-    status: partial
-    reason: >-
-      O export funciona para qualquer origem (seed/blank/upload) — VERIFICADO.
-      Porém a PERSISTÊNCIA para planilha de upload é justamente a mais exposta aos
-      defeitos do SC-3 (CR-02 com nomes de coluna de import/LLM; WR-04 com sheets
-      grandes). Além disso, o "Nova conversa" NÃO reseta de forma coerente no banco
-      (CR-01): o DELETE da linha unified_table é desfeito pelo auto-save debancado
-      (1.5s), que recria a linha com SAMPLE_SPEC. O usuário pede para limpar, mas o
-      banco fica com um spec sample que não existia antes, e a ordem
-      delete-vs-autosave é não-determinística. Não há coordenação entre o reset e
-      a supressão do auto-save.
-    artifacts:
-      - path: "apps/web/src/features/unified-chat/unified-chat-tool.tsx"
-        issue: "handleNewConversation (l.115) chama resetToSeed() que muda specJson e dispara o auto-save POST após DELETE (CR-01)"
-      - path: "apps/web/src/components/app/workspace-state-context.tsx"
-        issue: "resetToSeed (l.148) -> RESET_TO_SEED(SAMPLE_SPEC) muda specJson; useEffect (l.168-188) agenda POST de SAMPLE_SPEC sem supressão"
-      - path: "apps/web/src/app/api/conversations/unified/route.ts"
-        issue: "DELETE remove unified_table (ALL_UNIFIED_TOOL_KINDS) mas é ressuscitado pelo auto-save concorrente"
-    missing:
-      - "Coordenar reset e auto-save: marcar lastSavedRef para o estado de reset antes do dispatch (suprime o POST) OU tratar RESET_TO_SEED(SAMPLE) como limpar persistência (delete sem re-create) OU aguardar (await) o DELETE antes de resetar com auto-save suprimido"
-      - "Corrigir CR-02/WR-04 (ver gap anterior) para que a persistência de upload sobreviva ao reload"
+re_verification:
+  previous_status: gaps_found
+  previous_score: 2/5
+  gaps_closed:
+    - "CR-02: colisão de key derivada em seedToGridState sobrescreve coluna no reload"
+    - "WR-04: spec ativo >32KB vira placeholder {truncated:true} e cai no SAMPLE_SPEC"
+    - "WR-03: saveActiveSpreadsheetSpec engole o erro; rota sempre 200; save perdido marcado como salvo"
+    - "CR-01: resetToSeed dispara auto-save que ressuscita unified_table com SAMPLE_SPEC após o DELETE"
+  gaps_remaining: []
+  regressions: []
+gaps: []
 deferred: []
 ---
 
-# Phase 21: Export & Persistência da Planilha+Conversa — Relatório de Verificação
+# Phase 21: Export & Persistência da Planilha+Conversa — Relatório de Verificação (Re-verificação)
 
-**Phase Goal:** Export da planilha (CSV/XLSX com fórmulas calculadas, sem injeção) e persistência — ao recarregar a tela única, tanto a planilha viva quanto a conversa do chat associada são recarregadas no mesmo estado, tanto para planilha de seed/em branco quanto de upload; "Nova conversa" limpa chat e reseta a planilha de forma coerente.
-**Verified:** 2026-06-14T18:05:00Z
-**Status:** gaps_found
-**Re-verification:** No — verificação inicial
+**Phase Goal:** O usuário pode exportar a planilha (CSV/XLSX com fórmulas calculadas, anti-injeção) e tanto a planilha quanto a conversa associada são salvas e recuperadas entre sessões; "Nova conversa" limpa chat e reseta a planilha de forma coerente.
+**Verified:** 2026-06-14T22:35:00Z
+**Status:** passed
+**Re-verification:** Sim — após fechamento de gaps (plano 21-03)
+
+## Resumo da Re-verificação
+
+A verificação anterior retornou **gaps_found (2/5)** com quatro defeitos de perda de dados (CR-01, CR-02, WR-03, WR-04). O plano 21-03 foi executado para fechá-los. Esta re-verificação leu o **código-fonte real** (não as alegações do SUMMARY) e executou as suítes de regressão. **Os quatro gaps estão genuinamente fechados na fonte**, cada um coberto por regressão que exercita o modo de falha real (mockando apenas a fronteira de banco, nunca o helper sob teste). Export (SC1/SC2) e hidratação da conversa (SC4) permanecem verdes — sem regressão. **Status: passed (5/5).**
 
 ## Goal Achievement
 
@@ -73,96 +35,105 @@ deferred: []
 
 | # | Truth | Status | Evidence |
 | - | ----- | ------ | -------- |
-| 1 | Exportar para CSV com valores de fórmula já calculados (não texto) | ✓ VERIFIED | `table-export.ts:buildCsv` consome `displayRows` (valores computados pelo `useFormulaEngine`); `table-grid-panel.tsx:461-463` `handleExportCsv` usa `displayRows`; botão "Exportar CSV" wired (l.636-637) |
-| 2 | Exportar para XLSX com valores calculados + sanitização contra injeção (SEC-04) | ✓ VERIFIED | `buildXlsx` escreve cell-objects `{t:"s", v: sanitizeCellForExport(...)}` (nunca infere fórmula); `DANGEROUS_LEAD`/`LEADING_NEUTRALIZERS` cobrem `= + - @ TAB CR LF` e neutralizadores iniciais; botão wired (l.644-647) |
-| 3 | Ao voltar à tela única, a planilha recarrega no estado deixado (seed/upload/IA) | ✗ FAILED | Hidratação server-side wired (layout→shell→provider), MAS round-trip quebra: CR-02 (colisão de key derivada sobrescreve coluna), WR-04 (>32KB vira placeholder e cai no SAMPLE_SPEC), WR-03 (save falho marcado como salvo) |
-| 4 | Ao recarregar, a conversa do chat associada recarrega (histórico visível) | ✓ VERIFIED | `page.tsx:18` `findUnifiedConversationExchanges(user.id)` → mapeia → `initialExchanges` em `<UnifiedChatTool>`; `UnifiedChatTool` hidrata `setExchanges` inicial. (Caveat: WR-05 — cast sem validação — é warning, não quebra o caminho feliz) |
-| 5 | Export e persistência funcionam p/ seed/branco E upload; "Nova conversa" limpa e reseta coerentemente | ✗ PARTIAL | Export: OK p/ qualquer origem. Persistência de upload: exposta a CR-02/WR-04. "Nova conversa": CR-01 — DELETE de `unified_table` é desfeito pelo auto-save que recria SAMPLE_SPEC; estado final não-determinístico |
+| 1 | Exportar para CSV com valores de fórmula já calculados (não texto) | ✓ VERIFIED | `table-export.ts:buildCsv` consome `displayRows` (valores computados); `sanitizeCellForExport`+quoting RFC 4180. Sem regressão. |
+| 2 | Exportar para XLSX com valores calculados + anti-injeção (SEC-04) | ✓ VERIFIED | `buildXlsx` escreve cell-objects `{t:"s", v: sanitizeCellForExport(...)}` (nunca infere fórmula); `DANGEROUS_LEAD=/^[=+\-@\t\r\n]/` cobre os leads perigosos. Sem regressão. |
+| 3 | Ao voltar à tela única, a planilha recarrega no estado deixado (seed/upload/IA) | ✓ VERIFIED | **CR-02 FECHADO:** `seedToGridState` (l.39-51) desambigua keys via Set+sufixo, escreve em `newRow[resolvedKey]` (l.58) — colisão preserva ambas as colunas; schema `superRefine` (l.59-72) rejeita keys colidentes. **WR-04 FECHADO:** `guardActiveSpecSize` (l.78-86) LANÇA em oversize (sem placeholder); `MAX_ACTIVE_SPEC_BYTES`=512KB acomoda 200×26 pt-BR. **WR-03 FECHADO:** `saveActiveSpreadsheetSpec` (l.195-220) não tem try/catch que engole — propaga; rota (l.32-38) mapeia para 500; cliente só avança `lastSavedRef` em `res.ok` (l.224-225). |
+| 4 | Ao recarregar, a conversa do chat associada recarrega (histórico visível) | ✓ VERIFIED | `page.tsx:18` `findUnifiedConversationExchanges(user.id)` → `initialExchanges` → `<UnifiedChatTool>`; teste D-03 hidrata o thread. Sem regressão. |
+| 5 | Export e persistência funcionam p/ seed/branco E upload; "Nova conversa" limpa e reseta coerentemente | ✓ VERIFIED | Export OK p/ qualquer origem (Truth 1/2). Persistência de upload protegida por CR-02/WR-04 (Truth 3). **CR-01 FECHADO:** `resetToSeed` (l.197-200) pré-marca `lastSavedRef` com o specJson do reset ANTES do dispatch → o efeito (l.215) retorna cedo → "Nova conversa" não ressuscita a linha `unified_table` via auto-save. |
 
-**Score:** 2/5 truths verified
+**Score:** 5/5 truths verified
+
+### Fechamento dos Gaps (rastreado do baseline anterior)
+
+| Gap | Defeito original | Correção verificada na fonte | Regressão (modo de falha real) |
+| --- | ---------------- | ---------------------------- | ------------------------------ |
+| CR-02 | `newRow[resolvedKey]` sem dedupe → colisão sobrescreve | `seedToGridState` Set+sufixo (workspace-state-context.tsx l.39-51); `deriveColumnKey` compartilhado; `superRefine` (schema.ts l.59-72) | `workspace-state-context.test.tsx` round-trip de colisão (2 keys distintas, `Set(values).size===2`); `unified-schema.test.ts` 3 casos de unicidade |
+| WR-04 | `{truncated:true}` placeholder p/ >32KB → SAMPLE_SPEC | `guardActiveSpecSize` LANÇA (conversation-repository.ts l.78-86); `MAX_ACTIVE_SPEC_BYTES`=512KB | `conversation-repository-active-spec.test.ts`: 200×26 pt-BR intacto (sem `truncated`); oversize `rejects.toThrow` + `create` não chamado — **contra helper real** |
+| WR-03 | catch engole erro → rota sempre 200 | try/catch removido; `saveActiveSpreadsheetSpec` propaga (l.195-220); rota → 500 (route.ts l.32-38); cliente só avança ref em `res.ok` | `conversation-repository-active-spec.test.ts`: Prisma rejeita → `rejects.toThrow("db down")` contra helper real; `workspace-state-route.test.ts`: 500, sem `ok` na resposta |
+| CR-01 | resetToSeed dispara auto-save pós-DELETE | `resetToSeed` pré-marca `lastSavedRef` (workspace-state-context.tsx l.197-200) | `workspace-state-context.test.tsx`: reset+avança debounce → `fetch` não chamado; `unified-chat-tool.test.tsx`: e2e timers reais, zero POST de estado pós-reset |
 
 ### Required Artifacts
 
 | Artifact | Expected | Status | Details |
 | -------- | -------- | ------ | ------- |
-| `apps/web/src/features/unified-chat/lib/table-export.ts` | CSV/XLSX builders + sanitização | ✓ VERIFIED | Existe e wired (origem Phase 15, commit c91ec5d). Substantivo: 133 linhas, fórmulas via displayRows, SEC-04 hardened |
-| `apps/web/src/server/tools/conversation-repository.ts` | Helpers de persistência | ⚠️ STUB-LIKE | Existe e wired, mas saveActiveSpreadsheetSpec engole erro (WR-03) e guardPayloadSize corrompe specs grandes (WR-04) |
-| `apps/web/src/app/api/workspace/state/route.ts` | POST persistência | ⚠️ ORPHANED-SEMANTICS | Existe e wired, mas sempre 200 (não reflete falha real) |
-| `apps/web/src/components/app/workspace-state-context.tsx` | initialSpec + auto-save | ⚠️ DEFECTIVE | Existe e wired; seedToGridState (CR-02) e auto-save sem coordenação de reset (CR-01) |
-| `apps/web/src/app/(workspace)/workspace/layout.tsx` | Carrega spec server-side | ✓ VERIFIED | `getActiveSpreadsheetSpec(user.id)` → `initialSpec` |
-| `apps/web/src/app/(workspace)/workspace/page.tsx` | Carrega histórico server-side | ✓ VERIFIED | `findUnifiedConversationExchanges` → `initialExchanges` |
-| `apps/web/src/components/app/workspace-shell.tsx` | Encaminha initialSpec | ✓ VERIFIED | `<WorkspaceStateProvider initialSpec={...}>` |
-| `apps/web/src/features/unified-chat/unified-chat-tool.tsx` | Reset coerente + hidratação | ⚠️ DEFECTIVE | handleNewConversation chama resetToSeed (dispara CR-01); hidrata initialExchanges sem validação (WR-05) |
+| `packages/shared/src/unified-chat/schema.ts` | `deriveColumnKey` + `superRefine` de unicidade | ✓ VERIFIED | `deriveColumnKey` exportado (l.36-38); `superRefine` rejeita key efetiva colidente (l.59-72) |
+| `apps/web/src/server/tools/conversation-repository.ts` | `guardActiveSpecSize` lança; `saveActiveSpreadsheetSpec` propaga | ✓ VERIFIED | `MAX_ACTIVE_SPEC_BYTES` 512KB (l.38); `guardActiveSpecSize` lança (l.78-86); save sem catch-engole (l.195-220) |
+| `apps/web/src/app/api/workspace/state/route.ts` | POST mapeia falha → 500 | ✓ VERIFIED | catch → 500 sem `{ok:true}` e sem vazar detalhe (l.35-38) |
+| `apps/web/src/components/app/workspace-state-context.tsx` | dedupe de key + supressão do auto-save | ✓ VERIFIED | `seedToGridState` Set+sufixo (l.39-51); `gridStateToSpecJson` (l.76-87); `resetToSeed` pré-marca ref (l.197-200) |
+| `apps/web/tests/conversation-repository-active-spec.test.ts` | Regressões do helper real (oversize, propagação) | ✓ VERIFIED | 105 linhas; mocka só Prisma; testa helper real (oversize rejeitado, propagação, 200×26 intacto) |
+| `apps/web/src/features/unified-chat/lib/table-export.ts` | CSV/XLSX + anti-injeção | ✓ VERIFIED | Sem regressão; `buildCsv/buildXlsx` via `displayRows`; SEC-04 intacto |
+| `apps/web/src/app/(workspace)/workspace/page.tsx` | Hidratação do histórico | ✓ VERIFIED | `findUnifiedConversationExchanges` → `initialExchanges` |
 
 ### Key Link Verification
 
 | From | To | Via | Status | Details |
 | ---- | -- | --- | ------ | ------- |
-| `table-grid-panel.tsx` | `table-export.ts` | `buildCsv/buildXlsx(currentColumns, displayRows)` | ✓ WIRED | displayRows = valores computados |
-| `layout.tsx` | `conversation-repository.ts` | `getActiveSpreadsheetSpec(user.id)` → `initialSpec` | ✓ WIRED | |
-| `page.tsx` | `conversation-repository.ts` | `findUnifiedConversationExchanges` → `initialExchanges` | ✓ WIRED | |
-| `workspace-state-context.tsx` | `/api/workspace/state` | `fetch POST` debancado | ⚠️ WIRED-MAS-DEFEITUOSO | Falha silenciosa (WR-03); ressuscita após delete (CR-01) |
-| `unified-chat-tool.tsx` | `workspace-state-context.tsx` | `resetToSeed()` em handleNewConversation | ⚠️ WIRED-MAS-INCOERENTE | Conflita com DELETE concorrente (CR-01) |
+| `route.ts` | `conversation-repository.ts` | `saveActiveSpreadsheetSpec` lança → rota 500 | ✓ WIRED | Helper propaga; catch da rota mapeia 500 |
+| `workspace-state-context.tsx` | `/api/workspace/state` | auto-save suprimido quando `resetToSeed` pré-marca `lastSavedRef` | ✓ WIRED | `specJson === lastSavedRef.current` retorna cedo (l.215) |
+| `schema.ts` | `workspace-state-context.tsx` | `deriveColumnKey` compartilhado (sem drift) | ✓ WIRED | Importado em l.3 e usado em `seedToGridState` (l.41) |
+| `page.tsx` | `conversation-repository.ts` | `findUnifiedConversationExchanges` → `initialExchanges` | ✓ WIRED | Sem regressão |
+| `table-grid-panel.tsx` | `table-export.ts` | `buildCsv/buildXlsx(currentColumns, displayRows)` | ✓ WIRED | Sem regressão |
 
 ### Data-Flow Trace (Level 4)
 
 | Artifact | Data Variable | Source | Produces Real Data | Status |
 | -------- | ------------- | ------ | ------------------ | ------ |
+| WorkspaceStateProvider | `initialPresent` | `getActiveSpreadsheetSpec` (DB) via prop | Sim — round-trip agora preserva colisão e specs grandes; falha de save não é mascarada | ✓ FLOWING |
 | TableGridPanel export | `displayRows` | `useFormulaEngine(currentColumns, rows)` | Sim — fórmulas avaliadas | ✓ FLOWING |
-| WorkspaceStateProvider | `initialPresent` | `getActiveSpreadsheetSpec` (DB) via prop | Parcial — null/placeholder/colisão → SAMPLE_SPEC | ⚠️ HOLLOW (reload nem sempre traz o estado real) |
 | UnifiedChatTool | `initialExchanges` | `findUnifiedConversationExchanges` (DB) | Sim — query real findMany | ✓ FLOWING |
 
 ### Behavioral Spot-Checks
 
 | Behavior | Command | Result | Status |
 | -------- | ------- | ------ | ------ |
-| Testes unitários da persistência (provider, rota, reset) | `vitest run` nos 3 arquivos da fase | 27 passed (3 files) | ✓ PASS (mas não cobrem o race CR-01 nem o caminho real WR-03/WR-04 — testam unidades isoladas; o teste de 500 da rota mocka o helper p/ rejeitar, o que o helper real nunca faz) |
-| Export wired a botão com displayRows | grep `handleExportCsv/Xlsx` + `displayRows` | Confirmado l.461-469, 636-647 | ✓ PASS |
+| Regressões dos 4 gaps (5 arquivos) | `vitest run` nos 5 arquivos | 55 passed (5 files) | ✓ PASS |
+| Suíte web completa (sem regressão) | `pnpm --filter web test` | 291 passed / 1 skipped (25 files) | ✓ PASS |
+| Typecheck repo-wide | `pnpm -r typecheck` | limpo (shared + web) | ✓ PASS |
+| Helper real: oversize rejeitado | `conversation-repository-active-spec.test.ts` | `rejects.toThrow` + `create` não chamado | ✓ PASS |
+| Helper real: propagação de erro | idem | `rejects.toThrow("db down")` contra helper sem mock | ✓ PASS |
+
+### Qualidade dos Testes (preocupação crítica do baseline)
+
+O baseline rejeitou a fase em parte porque os testes verdes mascaravam as falhas (o teste de 500 da rota mockava o helper para rejeitar artificialmente). A re-verificação confirmou que a nova cobertura **exercita o modo de falha real**:
+
+- `conversation-repository-active-spec.test.ts` importa o **helper real** `saveActiveSpreadsheetSpec` e mocka **apenas o Prisma** (`@/server/db/client`). Oversize dispara `guardActiveSpecSize` real (lança antes de tocar no banco); a rejeição da transação propaga de verdade. **Não há mock que mascare.**
+- `workspace-state-context.test.tsx` exercita `seedToGridState`/`resetToSeed` reais; o `fetch` é stub apenas como fronteira de rede. A supressão é observada avançando o debounce e asserindo `fetch` não chamado.
+- `unified-chat-tool.test.tsx` (CR-01 e2e) usa timers reais: muta a grade (agenda auto-save legítimo), deixa o debounce passar, zera o contador, então invoca "Nova conversa" e aguarda 1,7s — asserta zero POSTs de `/api/workspace/state`, distinguindo-os do stream `/api/chat/unified`.
+- O teste de 500 da rota (`workspace-state-route.test.ts`) ainda mocka o helper para isolar a rota, mas documenta explicitamente que a cobertura do modo de falha real vive na suíte sem mock — isolamento legítimo, não mascaramento.
 
 ### Requirements Coverage
 
-| Requirement | Source (REQUIREMENTS.md) | SUMMARY claim | Status | Evidence |
-| ----------- | ------------------------ | ------------- | ------ | -------- |
-| PERS-01 | Export CSV com fórmulas calculadas (RF-05) | SUMMARY 21-01 mapeou PERS-01 a "persistência" (incorreto) | ✓ SATISFIED (por código da Phase 15) | `buildCsv` + displayRows wired. ⚠️ DISCREPÂNCIA: nenhum plano/summary da Phase 21 implementou export — código pré-existe da Phase 15 (c91ec5d). Os SUMMARYs reatribuíram PERS-01/02 a trabalho de persistência |
-| PERS-02 | Export XLSX com fórmulas calculadas (RF-05) | SUMMARY 21-01 mapeou PERS-02 a "auto-save" (incorreto) | ✓ SATISFIED (por código da Phase 15) | `buildXlsx` + sanitização wired. Mesma discrepância de atribuição acima |
-| PERS-03 | Planilha salva/recuperada entre sessões (RF-06) | SUMMARY 21-02 PERS-03 | ✗ BLOCKED | Round-trip quebra (CR-02/WR-04/WR-03) — ver Truth 3 |
-| PERS-04 | Conversa salva/recuperada entre sessões (RF-06) | SUMMARY 21-02 PERS-04 | ✓ SATISFIED | Hidratação server-side do histórico wired — ver Truth 4 |
-
-**Nota de atribuição de requisitos:** REQUIREMENTS.md define PERS-01 e PERS-02 como os requisitos de EXPORT (CSV/XLSX). Os SUMMARYs da Phase 21 descrevem PERS-01 como "persistência do estado" e PERS-02 como "auto-save debancado" — uma reatribuição incorreta dos IDs. O export propriamente dito foi implementado na Phase 15 e apenas continua wired. Todos os 4 IDs estão contabilizados; PERS-01/02 satisfeitos por código pré-existente, PERS-03 bloqueado, PERS-04 satisfeito.
+| Requirement | Source (REQUIREMENTS.md) | Status | Evidence |
+| ----------- | ------------------------ | ------ | -------- |
+| PERS-01 | Export CSV com fórmulas calculadas (RF-05) | ✓ SATISFIED | `buildCsv` + `displayRows` + SEC-04 wired (Truth 1) |
+| PERS-02 | Export XLSX com fórmulas calculadas (RF-05) | ✓ SATISFIED | `buildXlsx` cell-objects + sanitização (Truth 2) |
+| PERS-03 | Planilha salva/recuperada entre sessões (RF-06) | ✓ SATISFIED | Round-trip agora confiável: CR-02/WR-03/WR-04 fechados (Truth 3) |
+| PERS-04 | Conversa salva/recuperada entre sessões (RF-06) | ✓ SATISFIED | Hidratação server-side wired (Truth 4) |
 
 ### Anti-Patterns Found
 
 | File | Line | Pattern | Severity | Impact |
 | ---- | ---- | ------- | -------- | ------ |
-| `conversation-repository.ts` | 185-187 | catch que só console.warn e retorna void | 🛑 Blocker | Save falho invisível ao cliente (WR-03) |
-| `conversation-repository.ts` | 52-55 | retorna placeholder `{truncated:true}` em vez de rejeitar | 🛑 Blocker | Sheet grande perdida no reload (WR-04) |
-| `workspace-state-context.tsx` | 41 | `newRow[resolvedKey] = ...` sem dedupe de key | 🛑 Blocker | Colisão de coluna sobrescreve dados (CR-02) |
-| `unified-chat-tool.tsx` | 115 | resetToSeed sem coordenar com DELETE/auto-save | 🛑 Blocker | "Nova conversa" ressuscita SAMPLE_SPEC (CR-01) |
-| `unified-chat-tool.tsx` | ~80 | `as UnifiedCompletePayload` sem safeParse | ⚠️ Warning | Payload persistido inválido pode quebrar render (WR-05) |
+| — | — | Nenhum dos 4 blockers anteriores persiste | — | catch-engole removido; placeholder substituído por throw; dedupe na escrita; supressão de auto-save no reset. Nenhum marcador de débito (TBD/FIXME/XXX) introduzido nos arquivos da fase. |
 
 ### Human Verification Required
 
-Não roteado para verificação humana porque os defeitos são observáveis no código (lógica de coordenação ausente, placeholder descartável, escrita por key colidente). São gaps determináveis estaticamente, não dúvidas de comportamento visual/runtime. Após correção, recomenda-se UAT manual do round-trip (reload com sheet de upload grande e com nomes de coluna duplicados) e do "Nova conversa" (confirmar que o banco fica limpo, não com SAMPLE_SPEC).
+Nenhum item bloqueante requer verificação humana — todos os defeitos eram observáveis estaticamente e agora têm correção comprovada na fonte + regressão. **Recomendado (não bloqueante) UAT manual de confirmação:** (1) reload com sheet de upload grande (próxima de 200×26) e com nomes de coluna duplicados, confirmando que todos os dados sobrevivem; (2) "Nova conversa" e reload, confirmando que o banco fica limpo (não com SAMPLE_SPEC re-semeado). Estes são checks de confiança end-to-end no runtime real, já cobertos por regressão automatizada no nível de unidade/componente.
 
 ### Gaps Summary
 
-O **export (SC 1, 2)** está genuinamente implementado e wired — CSV e XLSX usam `displayRows` (fórmulas já calculadas) e preservam a sanitização anti-injeção SEC-04. Esses critérios passam, embora o código de export seja herança da Phase 15 e não trabalho desta fase (os SUMMARYs reatribuíram os IDs PERS-01/02 incorretamente).
+Nenhum gap residual. Os quatro defeitos de perda de dados do baseline foram fechados na **fonte real**:
 
-A **persistência da planilha (SC 3, parte do SC 5)** NÃO é uma garantia confiável de round-trip. Três defeitos de perda de dados, todos confirmados no código e no schema:
+- **CR-02 (FECHADO):** `seedToGridState` desambigua keys colidentes (Set + sufixo de índice) e escreve em `newRow[resolvedKey]`; o schema `superRefine` rejeita keys efetivas colidentes; `deriveColumnKey` é compartilhado entre schema e provider (sem drift). Round-trip de colisão preserva os dados de ambas as colunas — comprovado por regressão.
+- **WR-04 (FECHADO):** `guardActiveSpecSize` LANÇA em oversize (sem placeholder descartável); `MAX_ACTIVE_SPEC_BYTES` (512KB) acomoda o pior caso legítimo 200×26 pt-BR com folga. Sheet grande persiste intacta — comprovado contra helper real.
+- **WR-03 (FECHADO):** `saveActiveSpreadsheetSpec` propaga a falha; a rota retorna 500; o cliente só avança `lastSavedRef` em resposta OK. Save falho não é mais marcado como salvo — comprovado contra helper real.
+- **CR-01 (FECHADO):** `resetToSeed` pré-marca `lastSavedRef` com o specJson do reset antes do dispatch, suprimindo o auto-save; "Nova conversa" não ressuscita a linha `unified_table`. Comprovado por regressão de provider e e2e de componente.
 
-- **CR-02 (BLOCKER):** `seedToGridState` indexa `RowData` pela key derivada da coluna; o schema não força unicidade, então colunas com nomes que colidam (plausível em spec de LLM/import) sobrescrevem-se silenciosamente no reload.
-- **WR-04 (BLOCKER):** specs acima de 32 KB são persistidos como placeholder e descartados no read, jogando o usuário no SAMPLE_SPEC — a planilha grande inteira some.
-- **WR-03 (BLOCKER):** uma gravação que falha retorna 200; o cliente marca como salva e nunca retenta.
+Export (SC1/SC2) e hidratação da conversa (SC4) permanecem verdes sem regressão. Suíte web completa: 291 passed / 1 skipped; typecheck repo-wide limpo. A remoção do órfão `tool-repository.ts` é faxina não relacionada e não afeta as correções.
 
-O **reset coerente do "Nova conversa" (SC 5)** está quebrado por **CR-01 (BLOCKER):** o DELETE da linha `unified_table` é desfeito pelo auto-save debancado, que recria a linha com SAMPLE_SPEC sem nenhuma coordenação. O estado final no banco é não-determinístico e diferente de "limpo".
-
-A **persistência da conversa (SC 4)** está corretamente fiada server-side e passa, com a ressalva menor do WR-05 (cast sem validação no boundary de hidratação).
-
-Os 27 testes da fase passam, mas testam unidades isoladas: não exercitam a corrida entre delete e auto-save (CR-01), nem os caminhos reais de WR-03/WR-04 (o teste de 500 mocka o helper para rejeitar, comportamento que o helper real nunca produz). Passar nos testes não comprova a garantia de round-trip.
-
-**Conclusão goal-backward:** distinguindo "edge case, núcleo funciona" de "garantia central quebrada" — aqui a garantia central de persistência (SC 3) e de reset coerente (SC 5) está quebrada para casos realistas (upload, sheets grandes, nomes de coluna duplicados, falha de gravação, fluxo de "Nova conversa"), não apenas em edge cases exóticos. Status: **gaps_found**.
+**Conclusão goal-backward:** a garantia central de persistência (SC3) e de reset coerente (SC5) agora é confiável para os casos realistas que o baseline expôs (upload, sheets grandes, nomes de coluna duplicados, falha de gravação, fluxo de "Nova conversa"), e a qualidade dos testes foi confirmada como exercitando o modo de falha real (sem mock que mascare). Status: **passed (5/5)**.
 
 ---
 
-_Verificado: 2026-06-14T18:05:00Z_
+_Verificado: 2026-06-14T22:35:00Z_
 _Verifier: Claude (gsd-verifier)_
