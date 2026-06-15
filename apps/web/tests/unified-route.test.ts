@@ -1,7 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { POST } from "@/app/api/chat/unified/route";
-import { createSessionToken, createSessionUser } from "@/server/auth/session";
 import * as provider from "@/server/ai/unified-provider";
 
 type StreamEvent = {
@@ -39,6 +38,14 @@ const routeMocks = vi.hoisted(() => ({
   saveConversationExchange: vi.fn(),
 }));
 
+const sessionMocks = vi.hoisted(() => ({
+  getSessionFromCookieHeader: vi.fn(),
+}));
+
+vi.mock("@/server/auth/session", () => ({
+  getSessionFromCookieHeader: sessionMocks.getSessionFromCookieHeader,
+}));
+
 vi.mock("@/server/ai/intent-classifier", () => ({
   classifyIntent: routeMocks.classifyIntent,
 }));
@@ -62,8 +69,13 @@ async function readEvents(response: Response) {
 }
 
 function sessionCookie() {
-  const token = createSessionToken(createSessionUser("ana@empresa.com", "Ana"));
-  return `tabelin_session=${token}`;
+  sessionMocks.getSessionFromCookieHeader.mockResolvedValue({
+    id: "user_1",
+    email: "ana@empresa.com",
+    name: "Ana",
+  });
+
+  return "tabelin_session=fake";
 }
 
 function authedJson(body: unknown) {

@@ -1,14 +1,20 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { TableSpecPayload } from "@tabelin/shared";
 
-import { createSessionToken, createSessionUser } from "@/server/auth/session";
-
 const repositoryMocks = vi.hoisted(() => ({
   saveActiveSpreadsheetSpec: vi.fn(),
 }));
 
+const sessionMocks = vi.hoisted(() => ({
+  getSessionFromCookieHeader: vi.fn(),
+}));
+
 vi.mock("@/server/tools/conversation-repository", () => ({
   saveActiveSpreadsheetSpec: repositoryMocks.saveActiveSpreadsheetSpec,
+}));
+
+vi.mock("@/server/auth/session", () => ({
+  getSessionFromCookieHeader: sessionMocks.getSessionFromCookieHeader,
 }));
 
 import { POST } from "@/app/api/workspace/state/route";
@@ -24,8 +30,13 @@ const validSpec: TableSpecPayload = {
 };
 
 function sessionCookie() {
-  const token = createSessionToken(createSessionUser("ana@empresa.com", "Ana"));
-  return `tabelin_session=${token}`;
+  sessionMocks.getSessionFromCookieHeader.mockResolvedValue({
+    id: "user_1",
+    email: "ana@empresa.com",
+    name: "Ana",
+  });
+
+  return "tabelin_session=fake";
 }
 
 function jsonRequest(body: unknown, opts: { authed: boolean }) {

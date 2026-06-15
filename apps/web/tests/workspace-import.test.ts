@@ -1,10 +1,22 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { POST } from "@/app/api/workspace/import/route";
-import { createSessionToken, createSessionUser } from "@/server/auth/session";
+
+const sessionMocks = vi.hoisted(() => ({
+  getSessionFromCookieHeader: vi.fn(),
+}));
+
+vi.mock("@/server/auth/session", () => ({
+  getSessionFromCookieHeader: sessionMocks.getSessionFromCookieHeader,
+}));
 
 function sessionCookie() {
-  const token = createSessionToken(createSessionUser("ana@empresa.com", "Ana"));
-  return `tabelin_session=${token}`;
+  sessionMocks.getSessionFromCookieHeader.mockResolvedValue({
+    id: "user_1",
+    email: "ana@empresa.com",
+    name: "Ana",
+  });
+
+  return "tabelin_session=fake";
 }
 
 function unauthedRequest(formData: FormData) {

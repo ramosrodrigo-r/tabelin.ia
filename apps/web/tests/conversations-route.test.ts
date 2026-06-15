@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { createSessionToken, createSessionUser } from "@/server/auth/session";
 import {
   ALL_UNIFIED_TOOL_KINDS,
   DELETE as deleteUnifiedConversation,
@@ -10,18 +9,30 @@ const conversationMocks = vi.hoisted(() => ({
   deleteConversationExchanges: vi.fn(),
 }));
 
+const sessionMocks = vi.hoisted(() => ({
+  getSessionFromCookieHeader: vi.fn(),
+}));
+
 vi.mock("@/server/tools/conversation-repository", () => ({
   ALL_PERSISTED_TOOL_KINDS: ["sheet_operation", "qa", "unified_table"] as const,
   deleteConversationExchanges: conversationMocks.deleteConversationExchanges,
 }));
 
+vi.mock("@/server/auth/session", () => ({
+  getSessionFromCookieHeader: sessionMocks.getSessionFromCookieHeader,
+}));
+
 function authedRequest() {
-  const token = createSessionToken(createSessionUser("ana@empresa.com", "Ana"));
+  sessionMocks.getSessionFromCookieHeader.mockResolvedValue({
+    id: "user_1",
+    email: "ana@empresa.com",
+    name: "Ana",
+  });
 
   return new Request("http://localhost:3000/api/conversations/unified", {
     method: "DELETE",
     headers: {
-      cookie: `tabelin_session=${token}`,
+      cookie: "tabelin_session=fake",
     },
   });
 }
