@@ -76,9 +76,35 @@ describe("workspace state route", () => {
     );
   });
 
-  it("retorna 500 quando a persistência lança", async () => {
+  it("retorna 500 quando a persistência rejeita (WR-03)", async () => {
+    // O helper real PROPAGA falhas (oversize ou erro de banco); aqui mockamos a
+    // rejeição que o helper de fato produz — a cobertura do modo de falha real
+    // (guardActiveSpecSize lança, transação rejeita) vive em
+    // conversation-repository-active-spec.test.ts contra o helper sem mock.
     repositoryMocks.saveActiveSpreadsheetSpec.mockRejectedValueOnce(new Error("db down"));
     const response = await POST(jsonRequest(validSpec, { authed: true }));
     expect(response.status).toBe(500);
+    const json = await response.json();
+    // Não vaza detalhe interno na resposta e não retorna { ok: true }.
+    expect(json).not.toHaveProperty("ok");
+  });
+
+  it("rejeita spec com colunas de key colidente antes de persistir (CR-02)", async () => {
+    const colliding = {
+      kind: "table_spec",
+      title: "Duplicada",
+      // Duas colunas "Total" sem key explícita → mesma key derivada.
+      columns: [
+        { name: "Total", type: "text" },
+        { name: "Total", type: "number" },
+      ],
+      rows: [{ total: "a" }],
+      rowCount: 1,
+      separator: ";",
+      formulaLanguage: "pt-BR",
+    };
+    const response = await POST(jsonRequest(colliding, { authed: true }));
+    expect(response.status).toBe(422);
+    expect(repositoryMocks.saveActiveSpreadsheetSpec).not.toHaveBeenCalled();
   });
 });

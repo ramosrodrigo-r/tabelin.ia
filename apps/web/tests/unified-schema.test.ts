@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  deriveColumnKey,
   intentClassificationSchema,
   overrideIntentSchema,
   qaResponsePayloadSchema,
@@ -187,5 +188,63 @@ describe("tableSpecPayloadSchema", () => {
     });
 
     expect(result.success).toBe(false);
+  });
+
+  // CR-02: unicidade de key efetiva (key explícita ou derivada de deriveColumnKey).
+  it("rejects two columns that derive the same key (CR-02)", () => {
+    const result = tableSpecPayloadSchema.safeParse({
+      kind: "table_spec",
+      title: "Duas colunas Total",
+      columns: [
+        { name: "Total", type: "text" },
+        { name: "Total", type: "number" },
+      ],
+      rowCount: 1,
+    });
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      // O issue aponta para a SEGUNDA coluna.
+      expect(result.error.issues.some((i) => i.path.join(".") === "columns.1.key")).toBe(true);
+    }
+  });
+
+  it("rejects two columns with the same explicit key (CR-02)", () => {
+    const result = tableSpecPayloadSchema.safeParse({
+      kind: "table_spec",
+      title: "Keys explícitas iguais",
+      columns: [
+        { name: "Receita", type: "currency", key: "valor" },
+        { name: "Despesa", type: "currency", key: "valor" },
+      ],
+      rowCount: 1,
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it("accepts columns whose derived keys are distinct (CR-02)", () => {
+    const result = tableSpecPayloadSchema.safeParse({
+      kind: "table_spec",
+      title: "Keys distintas",
+      columns: [
+        { name: "Total Geral", type: "number" },
+        { name: "Total Líquido", type: "number" },
+      ],
+      rowCount: 1,
+    });
+
+    expect(result.success).toBe(true);
+  });
+});
+
+describe("deriveColumnKey", () => {
+  it("normaliza minúsculas e troca espaços por underscore", () => {
+    expect(deriveColumnKey("Total Geral")).toBe("total_geral");
+    expect(deriveColumnKey("Total   Líquido")).toBe("total_líquido");
+  });
+
+  it("colide para o mesmo valor quando os nomes normalizam igual", () => {
+    expect(deriveColumnKey("Total")).toBe(deriveColumnKey("total"));
   });
 });

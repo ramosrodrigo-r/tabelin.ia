@@ -26,6 +26,18 @@ const UNIFIED_CHAT_TOOL_KINDS = ["sheet_operation", "qa"] as const;
 const MAX_PAYLOAD_BYTES = 32 * 1024; // 32 KB per row
 
 /**
+ * Teto dedicado do SPEC ATIVO da planilha (WR-04). Diferente do histórico de
+ * chat (32 KB/linha, que tolera truncamento), o spec ativo é a fonte de verdade
+ * do round-trip: truncá-lo para um placeholder `{truncated:true}` faria o reload
+ * cair no SAMPLE_SPEC e PERDER a planilha do usuário. Por isso o teto é elevado
+ * para acomodar o pior caso legítimo do schema (200 linhas × 26 colunas com
+ * conteúdo pt-BR) com folga, e o oversize é rejeitado em voz alta (lança) em vez
+ * de silenciosamente descartado. Dimensionamento: 200×26 ≈ 5200 células; mesmo
+ * com ~40 bytes pt-BR por célula + chaves + estrutura JSON, fica < 512 KB.
+ */
+const MAX_ACTIVE_SPEC_BYTES = 512 * 1024; // 512 KB
+
+/**
  * Teto de linhas lido do banco por (userId, toolKind).
  *
  * Limita o read independentemente do prune de 50 linhas do write-path (WR-01):
@@ -54,6 +66,23 @@ function guardPayloadSize(payload: unknown): object {
     return { kind: p["kind"] ?? "unknown", truncated: true };
   }
   return payload;
+}
+
+/**
+ * Guard do spec ativo (WR-04): valida o tamanho serializado contra
+ * MAX_ACTIVE_SPEC_BYTES e LANÇA quando excede — nunca retorna placeholder
+ * descartável. Diferente de guardPayloadSize (histórico de chat), aqui um
+ * oversize é um erro de gravação que o caller precisa propagar, não um
+ * truncamento tolerado. Retorna o spec intacto quando dentro do teto.
+ */
+function guardActiveSpecSize(spec: TableSpecPayload): TableSpecPayload {
+  const json = JSON.stringify(spec);
+  if (Buffer.byteLength(json, "utf8") > MAX_ACTIVE_SPEC_BYTES) {
+    throw new Error(
+      "Planilha excede o tamanho máximo persistível e não pode ser salva.",
+    );
+  }
+  return spec;
 }
 
 export async function saveConversationExchange(input: {
@@ -155,36 +184,39 @@ export async function getActiveSpreadsheetSpec(userId: string): Promise<TableSpe
 /**
  * Persiste o spec da planilha ativa (D-01): mantém exatamente uma linha
  * `unified_table` por usuário, substituindo via transaction delete + create.
- * O payload passa por guardPayloadSize para respeitar o teto de 32 KB/linha.
+ *
+ * Falha-em-voz-alta (WR-03/WR-04): o spec ativo é a fonte de verdade do
+ * round-trip, então esta função PROPAGA qualquer falha (oversize rejeitado por
+ * guardActiveSpecSize ou rejeição da transação Prisma) em vez de engolir o erro.
+ * O caller (POST /api/workspace/state) mapeia a rejeição para 500, e o cliente
+ * não avança lastSavedRef — preservando a chance de reagendar a gravação. O
+ * teto usado é MAX_ACTIVE_SPEC_BYTES (não os 32 KB do histórico de chat).
  */
 export async function saveActiveSpreadsheetSpec(
   userId: string,
   spec: TableSpecPayload,
 ): Promise<void> {
-  try {
-    await prisma.$transaction(
-      async (tx) => {
-        await tx.conversationExchange.deleteMany({
-          where: { userId, toolKind: ACTIVE_SPEC_TOOL_KIND },
-        });
-        await tx.conversationExchange.create({
-          data: {
-            userId,
-            toolKind: ACTIVE_SPEC_TOOL_KIND,
-            mode: ACTIVE_SPEC_MODE,
-            platform: null,
-            dialect: null,
-            userPrompt: "",
-            assistantPayload: guardPayloadSize(spec),
-            attachmentContext: null,
-          },
-        });
-      },
-      { isolationLevel: "Serializable" },
-    );
-  } catch (err) {
-    console.warn("Active spreadsheet spec persistence skipped.", err);
-  }
+  const guardedSpec = guardActiveSpecSize(spec);
+  await prisma.$transaction(
+    async (tx) => {
+      await tx.conversationExchange.deleteMany({
+        where: { userId, toolKind: ACTIVE_SPEC_TOOL_KIND },
+      });
+      await tx.conversationExchange.create({
+        data: {
+          userId,
+          toolKind: ACTIVE_SPEC_TOOL_KIND,
+          mode: ACTIVE_SPEC_MODE,
+          platform: null,
+          dialect: null,
+          userPrompt: "",
+          assistantPayload: guardedSpec,
+          attachmentContext: null,
+        },
+      });
+    },
+    { isolationLevel: "Serializable" },
+  );
 }
 
 /**

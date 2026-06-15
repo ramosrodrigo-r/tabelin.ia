@@ -27,19 +27,50 @@ export const tableColumnSchema = z.object({
   width: z.number().optional(),
 });
 
-export const tableSpecPayloadSchema = z.object({
-  kind: z.literal("table_spec"),
-  title: z.string(),
-  // WR-03: .min(1).max(26) — alinha com o limite de UI e bloqueia payloads LLM adversariais
-  columns: z.array(tableColumnSchema).min(1).max(26),
-  rowCount: z.number().int().min(1).max(200),
-  format: z.string().optional(),
-  // Campos novos — opcionais para retrocompatibilidade com Phase 13 (D-01):
-  // WR-02: .max(200) — alinha com o guard de addRow e bloqueia payloads LLM adversariais
-  rows: z.array(z.record(z.string(), z.union([z.string(), z.number()]))).max(200).optional(),
-  formulaLanguage: z.enum(["pt-BR", "en"]).optional(),
-  separator: z.enum([";", ","]).optional(),
-});
+/**
+ * Normalização canônica de key de coluna (CR-02). Compartilhada entre o schema
+ * (validação de unicidade) e o provider de estado da planilha (seedToGridState),
+ * para que escrita e validação derivem EXATAMENTE a mesma key — sem drift que
+ * permita uma colisão escapar de um dos lados.
+ */
+export function deriveColumnKey(name: string): string {
+  return name.toLowerCase().replace(/\s+/g, "_");
+}
+
+export const tableSpecPayloadSchema = z
+  .object({
+    kind: z.literal("table_spec"),
+    title: z.string(),
+    // WR-03: .min(1).max(26) — alinha com o limite de UI e bloqueia payloads LLM adversariais
+    columns: z.array(tableColumnSchema).min(1).max(26),
+    rowCount: z.number().int().min(1).max(200),
+    format: z.string().optional(),
+    // Campos novos — opcionais para retrocompatibilidade com Phase 13 (D-01):
+    // WR-02: .max(200) — alinha com o guard de addRow e bloqueia payloads LLM adversariais
+    rows: z.array(z.record(z.string(), z.union([z.string(), z.number()]))).max(200).optional(),
+    formulaLanguage: z.enum(["pt-BR", "en"]).optional(),
+    separator: z.enum([";", ","]).optional(),
+  })
+  // CR-02: rejeita colunas cuja key efetiva colide. A key efetiva é `column.key`
+  // quando presente, senão a key derivada por deriveColumnKey (mesma normalização
+  // de seedToGridState). Duas colunas com a mesma key efetiva sobrescreveriam uma
+  // à outra no round-trip de persistência — a primeira linha de defesa é a dedupe
+  // na escrita (seedToGridState), mas o schema bloqueia o caso explícito.
+  .superRefine((value, ctx) => {
+    const seen = new Set<string>();
+    value.columns.forEach((column, index) => {
+      const effectiveKey = column.key ?? deriveColumnKey(column.name);
+      if (seen.has(effectiveKey)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["columns", index, "key"],
+          message: "Colunas com chave duplicada não são permitidas.",
+        });
+        return;
+      }
+      seen.add(effectiveKey);
+    });
+  });
 
 export const qaResponsePayloadSchema = z.object({
   kind: z.literal("qa_response"),
