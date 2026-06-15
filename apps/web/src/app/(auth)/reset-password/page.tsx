@@ -44,7 +44,7 @@ function ResetPasswordForm() {
     const response = await fetch("/api/auth/reset-password", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ token, password: form.get("password") })
+      body: JSON.stringify({ token, newPassword: form.get("password") })
     });
 
     setPending(false);
