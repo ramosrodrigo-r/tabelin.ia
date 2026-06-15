@@ -76,7 +76,7 @@ Full details: ver seções abaixo (Phase 12-15) ou `.planning/milestones/v2.0-RO
 - [x] **Phase 19: Ingestão Tri-Estado da Planilha** - Usuário abre a planilha viva com seed, em branco, ou via upload CSV/XLSX (substitui a grade) (completed 2026-06-14)
 - [x] **Phase 20: Protocolo de Mutação Chat→Grade & Q&A** - Chat aplica operações estruturadas à grade aberta com undo, responde dúvidas analíticas em texto, com streaming e fixture sem chave (completed 2026-06-14)
 - [ ] **Phase 21: Export & Persistência da Planilha+Conversa** - Export CSV/XLSX com fórmulas calculadas; planilha e conversa do usuário persistem entre sessões (verification gaps_found 2026-06-14 — 2/5 must-haves; needs gap closure)
-- [ ] **Phase 22: Limpeza Final — Prisma, Dependências, Config, Testes & QA Verde** - Migrations destrutivas (preservando dados), deps órfãs, config/docs/env órfãos, testes/fixtures/assets de capacidades OUT removidos; suíte completa verde
+- [x] **Phase 22: Limpeza Final — Prisma, Dependências, Config, Testes & QA Verde** - Migrations destrutivas (preservando dados), deps órfãs, config/docs/env órfãos, testes/fixtures/assets de capacidades OUT removidos; suíte completa verde (completed 2026-06-15)
 
 ## Phase Details
 
@@ -364,7 +364,9 @@ Full details: ver seções abaixo (Phase 12-15) ou `.planning/milestones/v2.0-RO
   4. Nenhum teste/fixture unit ou e2e exercita exclusivamente uma capacidade OUT (geradores avulsos, OCR, billing, file-analysis-como-tool, geração de tabela do zero); assets soltos (ex.: amostras de OCR) são removidos preservando os assets IN (ex.: planilha-amostra de seed)
   5. `pnpm -r typecheck`, `pnpm -r lint`, `pnpm -r test` e `pnpm -r build` passam verdes na árvore final; busca abrangente por símbolos/rotas/imports de todas as capacidades da §5 do PRD retorna zero referências de dentro do escopo IN
 
-**Plans**: TBD
+**Plans**: 1/1 plan complete
+
+- [x] 22-01-PLAN.md
 
 ## Progress
 
@@ -391,4 +393,4 @@ Full details: ver seções abaixo (Phase 12-15) ou `.planning/milestones/v2.0-RO
 | 19. Ingestão Tri-Estado da Planilha | v3.0 | 2/2 | Complete    | 2026-06-14 |
 | 20. Protocolo de Mutação Chat→Grade & Q&A | v3.0 | 2/2 | Complete    | 2026-06-14 |
 | 21. Export & Persistência da Planilha+Conversa | v3.0 | 2/2 | Gaps found  | -          |
-| 22. Limpeza Final — Prisma, Dependências, Config, Testes & QA Verde | v3.0 | 0/TBD | Not started | - |
+| 22. Limpeza Final — Prisma, Dependências, Config, Testes & QA Verde | v3.0 | 1/1 | Complete | 2026-06-15 |
