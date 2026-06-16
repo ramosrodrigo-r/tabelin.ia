@@ -9,13 +9,15 @@ type Mode = "signin" | "signup";
  * Modal de autenticação não-dispensável (D-02/D-04/D-05).
  *
  * Reaproveita as MESMAS rotas de auth existentes (T-dw3-03): POST para
- * /api/auth/sign-in/email e /api/auth/sign-up/email. Não há nova lógica de
- * autenticação — apenas chama as rotas que já fazem validateAuthPostOrigin e
- * setam o cookie HMAC httpOnly.
+ * /api/auth/sign-in/email e /api/auth/sign-up/email. Essas rotas são
+ * registradas pelo toNextJsHandler(auth.handler) do Better Auth — não há nova
+ * lógica de autenticação no app. O originCheck é feito nativamente pelo Better
+ * Auth via trustedOrigins configurado em auth.config.ts. O cookie de sessão
+ * (better-auth.session_token, httpOnly) é setado pelo próprio Better Auth.
  *
  * Não-dispensável: sem botão de fechar, sem fechar por overlay, sem fechar no ESC.
  * Em sucesso (D-05), chama router.refresh() para revalidar os server components,
- * que então leem a sessão (cookie já setado) e param de renderizar o gate.
+ * que então leem a sessão via auth.api.getSession e param de renderizar o gate.
  */
 export function AuthGateModal() {
   const router = useRouter();
