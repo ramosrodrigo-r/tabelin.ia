@@ -1,10 +1,7 @@
 import { redirect } from "next/navigation";
 
-import { getCurrentUser } from "@/server/auth/session";
-
 export default async function HomePage() {
-  const user = await getCurrentUser();
-
-  redirect(user ? "/workspace" : "/sign-in");
+  // D-03: a rota raiz abre sempre o workspace (logado ou deslogado).
+  // Deslogado, o workspace renderiza um preview travado (sem redirect para /sign-in).
+  redirect("/workspace");
 }
-

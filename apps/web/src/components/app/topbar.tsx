@@ -13,7 +13,7 @@ export function Topbar({
   toolKind: toolKindProp,
   onNewConversation: onNewConversationProp,
 }: {
-  user: SessionUser;
+  user?: SessionUser;
   supportLinks: SupportLinks;
   toolKind?: string;
   onNewConversation?: () => void;
@@ -80,7 +80,7 @@ export function Topbar({
     <header className="topbar">
       <strong className="topbar-brand">Tabelin.IA</strong>
       <div className="topbar-actions">
-        {toolKind ? (
+        {user ? (
           <div className="account-menu-container" ref={newConvContainerRef}>
             <button
               ref={newConvTriggerRef}
@@ -123,25 +123,27 @@ export function Topbar({
         <a href="/privacidade" className="ghost-button">
           Privacidade
         </a>
-        <div className="account-menu-container">
-          <button
-            className="ghost-button"
-            type="button"
-            onClick={() => setShowAccountMenu(!showAccountMenu)}
-            aria-expanded={showAccountMenu}
-            aria-haspopup="true"
-          >
-            {user.email}
-          </button>
-          {showAccountMenu ? (
-            <div className="account-menu" role="menu">
-              <button className="menu-item" type="button" onClick={signOut} role="menuitem">
-                <LogOut aria-hidden size={16} />
-                Sair
-              </button>
-            </div>
-          ) : null}
-        </div>
+        {user ? (
+          <div className="account-menu-container">
+            <button
+              className="ghost-button"
+              type="button"
+              onClick={() => setShowAccountMenu(!showAccountMenu)}
+              aria-expanded={showAccountMenu}
+              aria-haspopup="true"
+            >
+              {user.email}
+            </button>
+            {showAccountMenu ? (
+              <div className="account-menu" role="menu">
+                <button className="menu-item" type="button" onClick={signOut} role="menuitem">
+                  <LogOut aria-hidden size={16} />
+                  Sair
+                </button>
+              </div>
+            ) : null}
+          </div>
+        ) : null}
       </div>
     </header>
   );

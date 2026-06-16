@@ -1,5 +1,3 @@
-import { redirect } from "next/navigation";
-
 import { UnifiedChatTool } from "@/features/unified-chat/unified-chat-tool";
 import { getCachedUser } from "@/server/request-cache";
 import { findUnifiedConversationExchanges } from "@/server/tools/conversation-repository";
@@ -7,8 +5,11 @@ import { findUnifiedConversationExchanges } from "@/server/tools/conversation-re
 export default async function WorkspacePage() {
   const user = await getCachedUser();
 
+  // D-02: deslogado renderiza o chat sem histórico (preview travado).
+  // Proteção de dados (T-dw3-01): findUnifiedConversationExchanges só é chamada
+  // quando há user.id; o caminho deslogado nunca toca em dados do usuário.
   if (!user) {
-    redirect("/sign-in");
+    return <UnifiedChatTool initialExchanges={[]} />;
   }
 
   // D-03: hidrata o chat unificado server-side com o histórico persistido,
