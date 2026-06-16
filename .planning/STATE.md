@@ -5,7 +5,7 @@ milestone_name: Planilha Viva + Chat de IA
 status: Awaiting next milestone
 stopped_at: "Sessão retomada — milestone v3.0 completo (fases 16–22 concluídas & securizadas); SECURITY.md da fase 16 gerado e 17/18/21/22 versionados. Próximo: auditar/concluir milestone."
 last_updated: "2026-06-15T13:22:25.108Z"
-last_activity: 2026-06-16 — Completed quick task 260616-dw3: site abre direto no workspace com auth gate (preview travado + modal)
+last_activity: 2026-06-16 — Completed quick task 260616-qei: funcoes topbar da tabela — Filtrar e Colunas
 progress:
   total_phases: 22
   completed_phases: 22
@@ -86,6 +86,7 @@ None yet.
 | 260615-ns8 | Restaurar verificacao real de usuario com Better Auth, removendo fallback insegura de sessao que permite acesso ao workspace sem conta | 2026-06-15 | 5e42151 | [260615-ns8](./quick/260615-ns8-restaurar-verificacao-real-de-usuario-co/) |
 | 260616-dw3 | Remover landing page: site abre direto no workspace; deslogado vê preview travado e qualquer clique abre modal de login/cadastro (auth reusa /api/auth); autenticado libera o app | 2026-06-16 | 5b8c3d4 | [260616-dw3](./quick/260616-dw3-auth-gate-workspace/) |
 | 260616-o50 | Higiene de código: harmonizar auth gate com Better Auth (JSDoc atualizado + 4 testes unitários para AuthGate) | 2026-06-16 | c3dfd8d | [260616-o50](./quick/260616-o50-harmonizar-auth-gate-com-better-auth/) |
+| 260616-qei | Funcoes topbar da tabela: Filtrar (barra de texto em tempo real) e Colunas (dropdown de visibilidade); remove botão Imprimir | 2026-06-16 | 5cb2c84 | [260616-qei](./quick/260616-qei-adicionar-funcoes-da-topbar-da-tabela/) |
 | Phase 18 P01 | 5 min | 2 tasks | 40 files |
 | Phase 18 P02 | 4 min | 2 tasks | 13 files |
 | Phase 18 P03 | 3 min | 2 tasks | 19 files |
