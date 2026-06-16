@@ -11,6 +11,7 @@ import {
   ArrowUp,
   ArrowUpDown,
   Bold,
+  Check,
   ChevronDown,
   ChevronsLeft,
   ChevronsRight,
@@ -25,7 +26,6 @@ import {
   PaintBucket,
   Percent,
   Plus,
-  Printer,
   Redo2,
   Share2,
   Sigma,
@@ -202,6 +202,11 @@ export function TableGridPanel({ spec: propSpec }: { spec?: TableSpecPayload }) 
   );
 
   const [sortState, setSortState] = useState<{ key: string; dir: "asc" | "desc" } | null>(null);
+  const [filterText, setFilterText] = useState("");
+  const [showFilter, setShowFilter] = useState(false);
+  const [hiddenCols, setHiddenCols] = useState<Set<string>>(new Set());
+  const [showColsPanel, setShowColsPanel] = useState(false);
+  const colsPanelRef = useRef<HTMLDivElement>(null);
 
   const { sortedRows, sortIndexMap } = useMemo(() => {
     if (!sortState) {
@@ -318,6 +323,18 @@ export function TableGridPanel({ spec: propSpec }: { spec?: TableSpecPayload }) 
     [currentRows, currentColumns, dispatch]
   );
 
+  // ── Fechar painel de colunas ao clicar fora ──
+  useEffect(() => {
+    if (!showColsPanel) return;
+    function handleMouseDown(e: MouseEvent) {
+      if (colsPanelRef.current && !colsPanelRef.current.contains(e.target as Node)) {
+        setShowColsPanel(false);
+      }
+    }
+    document.addEventListener("mousedown", handleMouseDown);
+    return () => document.removeEventListener("mousedown", handleMouseDown);
+  }, [showColsPanel]);
+
   // ── Undo/redo via Ctrl+Z / Ctrl+Y ──
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
@@ -348,7 +365,7 @@ export function TableGridPanel({ spec: propSpec }: { spec?: TableSpecPayload }) 
 
   // ── Colunas do DSG ──
   const dsgColumns = useMemo(() => {
-    const dataCols = currentColumns.map((col) => {
+    const dataCols = currentColumns.filter((col) => !hiddenCols.has(col.key!)).map((col) => {
       const colKey = col.key!;
       const colType = col.type;
       const isFormula = colType === "formula";
@@ -469,7 +486,7 @@ export function TableGridPanel({ spec: propSpec }: { spec?: TableSpecPayload }) 
         maxWidth: 36,
       },
     };
-  }, [currentColumns, sortState, sortedRows, sortIndexMap, handleSortClick, removeColumn, removeRow]);
+  }, [currentColumns, sortState, sortedRows, sortIndexMap, handleSortClick, removeColumn, removeRow, hiddenCols]);
 
   const handleExportCsv = useCallback(() => {
     const slug = slugifyTitle(activeSpec.title);
@@ -560,6 +577,24 @@ export function TableGridPanel({ spec: propSpec }: { spec?: TableSpecPayload }) 
     [context]
   );
 
+  // ── Filtro de linhas ──
+  const filteredSortedRows = useMemo(() => {
+    if (!filterText.trim()) return sortedRows;
+    const term = filterText.trim().toLowerCase();
+    return sortedRows.filter((row) =>
+      Object.values(row).some((v) => String(v).toLowerCase().includes(term))
+    );
+  }, [sortedRows, filterText]);
+
+  const toggleColVisibility = useCallback((key: string) => {
+    setHiddenCols((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  }, []);
+
   const rowsAtLimit = currentRows.length >= 200;
   const colsAtLimit = currentColumns.length >= 26;
 
@@ -585,10 +620,20 @@ export function TableGridPanel({ spec: propSpec }: { spec?: TableSpecPayload }) 
       {/* ── Utility Bar ──────────────────────────────────────────────── */}
       <div className="utility-bar">
         <div className="utility-bar-left">
-          {/* Decorative filter/sort/group */}
-          <button className="utility-btn" type="button" disabled title="Filtrar (em breve)">
+          {/* Filtrar — funcional */}
+          <button
+            className="utility-btn"
+            type="button"
+            data-active={showFilter || undefined}
+            title={showFilter ? "Ocultar filtro" : "Filtrar linhas"}
+            onClick={() => {
+              setShowFilter((v) => !v);
+              if (showFilter) setFilterText("");
+            }}
+          >
             <Filter size={15} />
             Filtrar
+            {filterText ? <span className="utility-btn-badge">{filteredSortedRows.length}</span> : null}
           </button>
           <button className="utility-btn" type="button" disabled title="Ordenar (use os cabeçalhos das colunas)">
             <ArrowUpDown size={15} />
@@ -599,10 +644,39 @@ export function TableGridPanel({ spec: propSpec }: { spec?: TableSpecPayload }) 
             Agrupar
           </button>
           <span className="utility-btn-separator" aria-hidden />
-          <button className="utility-btn" type="button" disabled title="Colunas (em breve)">
-            <Columns2 size={15} />
-            Colunas
-          </button>
+          {/* Colunas — funcional */}
+          <div className="columns-panel-container" ref={colsPanelRef}>
+            <button
+              className="utility-btn"
+              type="button"
+              data-active={showColsPanel || undefined}
+              title="Mostrar/ocultar colunas"
+              onClick={() => setShowColsPanel((v) => !v)}
+            >
+              <Columns2 size={15} />
+              Colunas
+              {hiddenCols.size > 0 ? <span className="utility-btn-badge">{hiddenCols.size}</span> : null}
+            </button>
+            {showColsPanel ? (
+              <div className="columns-panel" role="dialog" aria-label="Visibilidade de colunas">
+                <p className="columns-panel-label">Colunas visíveis</p>
+                {currentColumns.map((col) => (
+                  <label key={col.key} className="columns-panel-item">
+                    <input
+                      type="checkbox"
+                      checked={!hiddenCols.has(col.key!)}
+                      onChange={() => {
+                        if (currentColumns.filter((c) => !hiddenCols.has(c.key!)).length === 1 && !hiddenCols.has(col.key!)) return;
+                        toggleColVisibility(col.key!);
+                      }}
+                    />
+                    {col.name}
+                    {!hiddenCols.has(col.key!) ? <Check size={12} className="columns-panel-check" /> : null}
+                  </label>
+                ))}
+              </div>
+            ) : null}
+          </div>
           <span className="utility-btn-separator" aria-hidden />
 
           {/* Functional: import / new / sample */}
@@ -696,6 +770,38 @@ export function TableGridPanel({ spec: propSpec }: { spec?: TableSpecPayload }) 
         </div>
       </div>
 
+      {/* ── Filter Bar ──────────────────────────────────────────────── */}
+      {showFilter ? (
+        <div className="filter-bar" role="search" aria-label="Filtrar linhas">
+          <Filter size={14} aria-hidden />
+          <input
+            className="filter-bar-input"
+            type="text"
+            placeholder="Filtrar linhas..."
+            value={filterText}
+            autoFocus
+            onChange={(e) => setFilterText(e.target.value)}
+            aria-label="Texto de filtro"
+          />
+          {filterText ? (
+            <span className="filter-bar-count" aria-live="polite">
+              {filteredSortedRows.length} de {sortedRows.length}
+            </span>
+          ) : null}
+          <button
+            className="filter-bar-clear"
+            type="button"
+            aria-label="Limpar filtro e fechar"
+            onClick={() => {
+              setFilterText("");
+              setShowFilter(false);
+            }}
+          >
+            <X size={14} />
+          </button>
+        </div>
+      ) : null}
+
       {/* ── Formatting Toolbar ───────────────────────────────────────── */}
       <div className="formatting-toolbar">
         {/* Functional: undo / redo */}
@@ -717,10 +823,7 @@ export function TableGridPanel({ spec: propSpec }: { spec?: TableSpecPayload }) 
         >
           <Redo2 size={15} />
         </button>
-        {/* Decorative: print, paintbrush */}
-        <button className="format-btn" type="button" disabled title="Imprimir (em breve)">
-          <Printer size={15} />
-        </button>
+        {/* Decorative: paintbrush */}
         <button className="format-btn" type="button" disabled title="Formato de pintura (em breve)">
           <Paintbrush size={15} />
         </button>
@@ -822,7 +925,7 @@ export function TableGridPanel({ spec: propSpec }: { spec?: TableSpecPayload }) 
           </div>
         )}
         <DynamicDataSheetGrid
-          value={sortedRows}
+          value={filteredSortedRows}
           onChange={handleChange}
           columns={dsgColumns.columns}
           createRow={createRow}
