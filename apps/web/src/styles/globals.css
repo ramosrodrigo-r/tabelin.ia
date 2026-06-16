@@ -221,6 +221,26 @@ a {
   line-height: 1.5;
 }
 
+/* ── Auth gate (preview travado) ───────────────────────────────────── */
+
+.auth-gate-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgb(15 23 42 / 55%);
+  /* Captura QUALQUER clique na área travada (D-02). */
+  pointer-events: auto;
+}
+
+.auth-gate-modal {
+  width: min(100%, 420px);
+  max-height: calc(100vh - 48px);
+  overflow: auto;
+}
+
 /* ── Workspace layout ──────────────────────────────────────────────── */
 
 .workspace-page {
