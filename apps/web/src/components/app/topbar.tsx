@@ -1,6 +1,6 @@
 "use client";
 
-import { LogOut } from "lucide-react";
+import { HelpCircle, LogOut, Plus, User } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
@@ -23,15 +23,14 @@ export function Topbar({
   const [showNewConvPopover, setShowNewConvPopover] = useState(false);
   const newConvTriggerRef = useRef<HTMLButtonElement>(null);
   const newConvContainerRef = useRef<HTMLDivElement>(null);
+  const accountContainerRef = useRef<HTMLDivElement>(null);
 
-  // toolKind fixo "unified" — única tela após o corte de navegação multi-ferramenta
   const toolKind = toolKindProp ?? "unified";
   const deleteCopy =
     toolKind === "unified"
       ? "Apagar todo o histórico do chat unificado? Esta ação não pode ser desfeita."
       : "Apagar o histórico deste tool? Esta ação não pode ser desfeita.";
 
-  // Invoca o callback registrado pelo tool component ativo via contexto
   const invokeNewConversation = useInvokeNewConversation();
   const onNewConversation = onNewConversationProp ?? invokeNewConversation ?? undefined;
 
@@ -76,20 +75,54 @@ export function Topbar({
     };
   }, [showNewConvPopover]);
 
+  useEffect(() => {
+    if (!showAccountMenu) return;
+
+    function handleMouseDown(e: MouseEvent) {
+      if (
+        accountContainerRef.current &&
+        !accountContainerRef.current.contains(e.target as Node)
+      ) {
+        setShowAccountMenu(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleMouseDown);
+    return () => document.removeEventListener("mousedown", handleMouseDown);
+  }, [showAccountMenu]);
+
   return (
     <header className="topbar">
-      <strong className="topbar-brand">Tabelin.IA</strong>
+      {/* Left: brand + nav */}
+      <div className="topbar-left">
+        <strong className="topbar-brand">Tabelin.IA</strong>
+        <nav className="topbar-nav" aria-label="Navegação principal">
+          <a className="topbar-nav-link" data-active="true" href="/workspace">
+            Workspace
+          </a>
+          <a className="topbar-nav-link" href="#" aria-disabled="true">
+            Fontes de Dados
+          </a>
+          <a className="topbar-nav-link" href="#" aria-disabled="true">
+            Automações
+          </a>
+        </nav>
+      </div>
+
+      {/* Right: actions */}
       <div className="topbar-actions">
+        {/* Nova conversa — funcional */}
         {user ? (
           <div className="account-menu-container" ref={newConvContainerRef}>
             <button
               ref={newConvTriggerRef}
-              className="ghost-button"
+              className="topbar-new-btn"
               type="button"
               onClick={() => setShowNewConvPopover(!showNewConvPopover)}
               aria-expanded={showNewConvPopover}
               aria-haspopup="dialog"
             >
+              <Plus size={16} aria-hidden />
               Nova conversa
             </button>
             {showNewConvPopover ? (
@@ -120,22 +153,34 @@ export function Topbar({
             ) : null}
           </div>
         ) : null}
-        <a href="/privacidade" className="ghost-button">
+
+        <a href="/privacidade" className="ghost-button" style={{ fontSize: 13 }}>
           Privacidade
         </a>
+
+        {/* Help icon — decorativo */}
+        <button className="icon-button" type="button" aria-label="Ajuda" disabled>
+          <HelpCircle size={20} />
+        </button>
+
+        {/* Account */}
         {user ? (
-          <div className="account-menu-container">
+          <div className="account-menu-container" ref={accountContainerRef}>
             <button
-              className="ghost-button"
+              className="icon-button"
               type="button"
               onClick={() => setShowAccountMenu(!showAccountMenu)}
               aria-expanded={showAccountMenu}
               aria-haspopup="true"
+              aria-label={`Conta: ${user.email}`}
+              title={user.email}
             >
-              {user.email}
+              <User size={20} />
             </button>
             {showAccountMenu ? (
               <div className="account-menu" role="menu">
+                <p className="menu-label" style={{ padding: "8px 10px 4px" }}>{user.email}</p>
+                <div className="menu-divider" />
                 <button className="menu-item" type="button" onClick={signOut} role="menuitem">
                   <LogOut aria-hidden size={16} />
                   Sair

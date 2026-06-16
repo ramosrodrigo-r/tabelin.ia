@@ -5,7 +5,35 @@ import { useCallback, useContext, useEffect, useMemo, useReducer, useRef, useSta
 import { DynamicDataSheetGrid, keyColumn, textColumn } from "react-datasheet-grid";
 import "react-datasheet-grid/dist/style.css";
 
-import { ArrowDown, ArrowUp, X } from "lucide-react";
+import {
+  AlignLeft,
+  ArrowDown,
+  ArrowUp,
+  ArrowUpDown,
+  Bold,
+  ChevronDown,
+  ChevronsLeft,
+  ChevronsRight,
+  Columns2,
+  DollarSign,
+  Filter,
+  Italic,
+  LayoutGrid,
+  Layers,
+  Merge,
+  Paintbrush,
+  PaintBucket,
+  Percent,
+  Plus,
+  Printer,
+  Redo2,
+  Share2,
+  Sigma,
+  Strikethrough,
+  Undo2,
+  Type,
+  X,
+} from "lucide-react";
 
 import { type TableColumn, type TableSpecPayload, tableSpecPayloadSchema } from "@tabelin/shared";
 
@@ -88,7 +116,6 @@ const ERROR_TOOLTIPS: Record<string, string> = {
   "#DIV/0!": "Divisão por zero. O divisor dessa fórmula resultou em zero.",
   "#CIRC!": "Referência circular detectada. A fórmula referencia a própria célula.",
   "#ERRO!": "Erro ao calcular esta fórmula. Verifique os argumentos.",
-  // IN-03: adicionar códigos que mapFormulaError pode retornar mas não tinham tooltip
   "#N/A": "Valor não encontrado. PROCV/PROCH não encontrou correspondência.",
   "#VALUE!": "Tipo de valor inválido para esta fórmula.",
   "#NOME?": "Função não reconhecida (alias pt-BR de #NAME?).",
@@ -105,12 +132,11 @@ function isErrorCode(value: string | number): boolean {
 /**
  * Normaliza `spec.title` para um nome de arquivo seguro: minúsculas, sem
  * acentos, espaços viram `-`, e caracteres inválidos são removidos.
- * Usado como base do nome do arquivo exportado (CSV/XLSX).
  */
 export function slugifyTitle(title: string): string {
   const normalized = title
     .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "") // remove diacríticos
+    .replace(/[̀-ͯ]/g, "")
     .toLowerCase()
     .trim()
     .replace(/\s+/g, "-")
@@ -123,15 +149,12 @@ export function slugifyTitle(title: string): string {
 export function TableGridPanel({ spec: propSpec }: { spec?: TableSpecPayload }) {
   const context = useContext(WorkspaceStateContext);
 
-  // 1. Initial / Active Spec
   const activeSpec = propSpec ?? context!.spec;
 
-  // ── Estado de ingestão (importação de planilha) ──
   const [loading, setLoading] = useState(false);
   const [importError, setImportError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Derivar chaves de colunas a partir do spec
   const initialColumns: TableColumn[] = useMemo(
     () =>
       activeSpec.columns.map((col) => ({
@@ -141,7 +164,6 @@ export function TableGridPanel({ spec: propSpec }: { spec?: TableSpecPayload }) 
     [activeSpec.columns]
   );
 
-  // ── Estado de histórico local (só usado se propSpec for passado) ──
   const [localHistoryState, localDispatch] = useReducer(historyReducer, {
     past: [],
     present: {
@@ -151,12 +173,10 @@ export function TableGridPanel({ spec: propSpec }: { spec?: TableSpecPayload }) 
     future: [],
   });
 
-  // ── Determinar Rows, Columns, Separator com base na presença de propSpec ──
   const currentRows = propSpec ? localHistoryState.present.rows : context!.state.rows;
   const currentColumns = propSpec ? localHistoryState.present.columns : context!.state.columns;
   const currentSeparator = activeSpec.separator ?? ";";
 
-  // ── Função de dispatch unificada ──
   const dispatch = useCallback(
     (action: Action) => {
       if (propSpec) {
@@ -175,17 +195,14 @@ export function TableGridPanel({ spec: propSpec }: { spec?: TableSpecPayload }) 
     [propSpec, context, activeSpec.title, currentSeparator]
   );
 
-  // ── Motor de fórmulas — displayRows derivado, nunca armazenado (Pitfall 2) ──
   const { displayRows } = useFormulaEngine(
     currentRows,
     currentColumns,
     currentSeparator
   );
 
-  // ── Sort state ──
   const [sortState, setSortState] = useState<{ key: string; dir: "asc" | "desc" } | null>(null);
 
-  // ── sortedRows + sortIndexMap ──
   const { sortedRows, sortIndexMap } = useMemo(() => {
     if (!sortState) {
       return {
@@ -209,10 +226,7 @@ export function TableGridPanel({ spec: propSpec }: { spec?: TableSpecPayload }) 
     };
   }, [displayRows, sortState]);
 
-  // ── Ref do container do grid ──
   const gridContainerRef = useRef<HTMLDivElement>(null);
-
-  // ── Handlers ──
 
   const handleSortClick = useCallback((key: string) => {
     setSortState((prev) => {
@@ -304,7 +318,7 @@ export function TableGridPanel({ spec: propSpec }: { spec?: TableSpecPayload }) 
     [currentRows, currentColumns, dispatch]
   );
 
-  // ── Undo/redo via Ctrl+Z / Ctrl+Y (TAB-04) ──
+  // ── Undo/redo via Ctrl+Z / Ctrl+Y ──
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
       if (!gridContainerRef.current?.contains(document.activeElement)) return;
@@ -457,7 +471,6 @@ export function TableGridPanel({ spec: propSpec }: { spec?: TableSpecPayload }) 
     };
   }, [currentColumns, sortState, sortedRows, sortIndexMap, handleSortClick, removeColumn, removeRow]);
 
-  // ── Export CSV/XLSX ──
   const handleExportCsv = useCallback(() => {
     const slug = slugifyTitle(activeSpec.title);
     const csv = buildCsv(currentColumns, displayRows);
@@ -477,8 +490,6 @@ export function TableGridPanel({ spec: propSpec }: { spec?: TableSpecPayload }) 
     });
     return newRow;
   }, [currentColumns]);
-
-  // ── Controles de ingestão (Nova em Branco / Carregar Exemplo / Importar) ──
 
   const handleNewBlank = useCallback(() => {
     setImportError(null);
@@ -543,7 +554,6 @@ export function TableGridPanel({ spec: propSpec }: { spec?: TableSpecPayload }) 
         setImportError("Não foi possível importar a planilha. Verifique sua conexão e tente novamente.");
       } finally {
         setLoading(false);
-        // Limpar o seletor para permitir reimportar o mesmo arquivo
         input.value = "";
       }
     },
@@ -553,12 +563,223 @@ export function TableGridPanel({ spec: propSpec }: { spec?: TableSpecPayload }) 
   const rowsAtLimit = currentRows.length >= 200;
   const colsAtLimit = currentColumns.length >= 26;
 
+  const handleUndo = useCallback(() => {
+    if (propSpec) {
+      localDispatch({ type: "UNDO" });
+    } else {
+      context!.undo();
+    }
+  }, [propSpec, context]);
+
+  const handleRedo = useCallback(() => {
+    if (propSpec) {
+      localDispatch({ type: "REDO" });
+    } else {
+      context!.redo();
+    }
+  }, [propSpec, context]);
+
   return (
-    <div className="assistant-card" aria-label={`Tabela: ${activeSpec.title}`}>
-      <div className="output-header">
-        <h2>{activeSpec.title}</h2>
+    <div className="table-grid-wrapper" aria-label={`Tabela: ${activeSpec.title}`}>
+
+      {/* ── Utility Bar ──────────────────────────────────────────────── */}
+      <div className="utility-bar">
+        <div className="utility-bar-left">
+          {/* Decorative filter/sort/group */}
+          <button className="utility-btn" type="button" disabled title="Filtrar (em breve)">
+            <Filter size={15} />
+            Filtrar
+          </button>
+          <button className="utility-btn" type="button" disabled title="Ordenar (use os cabeçalhos das colunas)">
+            <ArrowUpDown size={15} />
+            Ordenar
+          </button>
+          <button className="utility-btn" type="button" disabled title="Agrupar (em breve)">
+            <Layers size={15} />
+            Agrupar
+          </button>
+          <span className="utility-btn-separator" aria-hidden />
+          <button className="utility-btn" type="button" disabled title="Colunas (em breve)">
+            <Columns2 size={15} />
+            Colunas
+          </button>
+          <span className="utility-btn-separator" aria-hidden />
+
+          {/* Functional: import / new / sample */}
+          {!propSpec && (
+            <>
+              <button
+                className="utility-btn"
+                type="button"
+                aria-label="Nova em Branco"
+                onClick={handleNewBlank}
+              >
+                Nova
+              </button>
+              <button
+                className="utility-btn"
+                type="button"
+                aria-label="Carregar Exemplo"
+                onClick={handleLoadSample}
+              >
+                Exemplo
+              </button>
+              <button
+                className="utility-btn"
+                type="button"
+                aria-label="Importar Planilha"
+                onClick={handleImportClick}
+              >
+                Importar
+              </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".csv,.xlsx,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                style={{ display: "none" }}
+                aria-hidden="true"
+                data-testid="import-file-input"
+                onChange={handleFileChange}
+              />
+              <span className="utility-btn-separator" aria-hidden />
+            </>
+          )}
+
+          {/* Functional: add row / column */}
+          <button
+            className="utility-btn"
+            type="button"
+            aria-label="Adicionar linha"
+            disabled={rowsAtLimit}
+            title={rowsAtLimit ? "Limite de 200 linhas atingido." : "Adicionar linha"}
+            onClick={addRow}
+          >
+            <Plus size={14} />
+            Linha
+          </button>
+          <button
+            className="utility-btn"
+            type="button"
+            aria-label="Adicionar coluna"
+            disabled={colsAtLimit}
+            title={colsAtLimit ? "Limite de 26 colunas atingido." : "Adicionar coluna"}
+            onClick={addColumn}
+          >
+            <Plus size={14} />
+            Coluna
+          </button>
+        </div>
+
+        <div className="utility-bar-right">
+          <h2 className="utility-bar-title">{activeSpec.title}</h2>
+          {/* Functional: export */}
+          <button
+            className="utility-btn"
+            type="button"
+            aria-label="Exportar CSV"
+            onClick={handleExportCsv}
+          >
+            CSV
+          </button>
+          <button
+            className="utility-btn"
+            type="button"
+            aria-label="Exportar XLSX"
+            onClick={handleExportXlsx}
+          >
+            XLSX
+          </button>
+          {/* Decorative share */}
+          <button className="utility-btn" type="button" disabled title="Compartilhar (em breve)">
+            <Share2 size={15} />
+          </button>
+        </div>
       </div>
 
+      {/* ── Formatting Toolbar ───────────────────────────────────────── */}
+      <div className="formatting-toolbar">
+        {/* Functional: undo / redo */}
+        <button
+          className="format-btn"
+          type="button"
+          title="Desfazer (Ctrl+Z)"
+          aria-label="Desfazer"
+          onClick={handleUndo}
+        >
+          <Undo2 size={15} />
+        </button>
+        <button
+          className="format-btn"
+          type="button"
+          title="Refazer (Ctrl+Y)"
+          aria-label="Refazer"
+          onClick={handleRedo}
+        >
+          <Redo2 size={15} />
+        </button>
+        {/* Decorative: print, paintbrush */}
+        <button className="format-btn" type="button" disabled title="Imprimir (em breve)">
+          <Printer size={15} />
+        </button>
+        <button className="format-btn" type="button" disabled title="Formato de pintura (em breve)">
+          <Paintbrush size={15} />
+        </button>
+        <span className="format-btn-separator" aria-hidden />
+        {/* Zoom */}
+        <span className="format-dropdown" aria-hidden>100% <ChevronDown size={11} /></span>
+        <span className="format-btn-separator" aria-hidden />
+        {/* Number format */}
+        <button className="format-btn" type="button" disabled title="Formato moeda (em breve)">
+          <DollarSign size={15} />
+        </button>
+        <button className="format-btn" type="button" disabled title="Formato percentual (em breve)">
+          <Percent size={15} />
+        </button>
+        <button className="format-btn" type="button" disabled title="Diminuir decimais (em breve)">
+          <ChevronsLeft size={15} />
+        </button>
+        <button className="format-btn" type="button" disabled title="Aumentar decimais (em breve)">
+          <ChevronsRight size={15} />
+        </button>
+        <span className="format-btn-separator" aria-hidden />
+        {/* Font */}
+        <span className="format-dropdown" aria-hidden>Inter <ChevronDown size={11} /></span>
+        <span className="format-btn-separator" aria-hidden />
+        <span className="format-dropdown" aria-hidden>10 <ChevronDown size={11} /></span>
+        <span className="format-btn-separator" aria-hidden />
+        {/* Text formatting */}
+        <button className="format-btn" type="button" disabled title="Negrito (em breve)">
+          <Bold size={15} />
+        </button>
+        <button className="format-btn" type="button" disabled title="Itálico (em breve)">
+          <Italic size={15} />
+        </button>
+        <button className="format-btn" type="button" disabled title="Tachado (em breve)">
+          <Strikethrough size={15} />
+        </button>
+        <button className="format-btn" type="button" disabled title="Cor do texto (em breve)">
+          <Type size={15} />
+        </button>
+        <button className="format-btn" type="button" disabled title="Cor de preenchimento (em breve)">
+          <PaintBucket size={15} />
+        </button>
+        <span className="format-btn-separator" aria-hidden />
+        {/* Cell formatting */}
+        <button className="format-btn" type="button" disabled title="Bordas (em breve)">
+          <LayoutGrid size={15} />
+        </button>
+        <button className="format-btn" type="button" disabled title="Mesclar células (em breve)">
+          <Merge size={15} />
+        </button>
+        <button className="format-btn" type="button" disabled title="Alinhar à esquerda (em breve)">
+          <AlignLeft size={15} />
+        </button>
+        <button className="format-btn" type="button" disabled title="Funções (em breve)">
+          <Sigma size={15} />
+        </button>
+      </div>
+
+      {/* ── Error banner ─────────────────────────────────────────────── */}
       {importError && (
         <div className="table-grid-error-banner" role="alert">
           <span className="table-grid-error-banner-message">{importError}</span>
@@ -573,83 +794,7 @@ export function TableGridPanel({ spec: propSpec }: { spec?: TableSpecPayload }) 
         </div>
       )}
 
-      <div className="table-grid-toolbar">
-        {!propSpec && (
-          <>
-            <button
-              className="ghost-button"
-              type="button"
-              aria-label="Nova em Branco"
-              onClick={handleNewBlank}
-            >
-              Nova em Branco
-            </button>
-            <button
-              className="ghost-button"
-              type="button"
-              aria-label="Carregar Exemplo"
-              onClick={handleLoadSample}
-            >
-              Carregar Exemplo
-            </button>
-            <button
-              className="ghost-button"
-              type="button"
-              aria-label="Importar Planilha"
-              onClick={handleImportClick}
-            >
-              Importar Planilha
-            </button>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".csv,.xlsx,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-              style={{ display: "none" }}
-              aria-hidden="true"
-              data-testid="import-file-input"
-              onChange={handleFileChange}
-            />
-          </>
-        )}
-        <button
-          className="ghost-button"
-          type="button"
-          aria-label="Adicionar linha"
-          disabled={rowsAtLimit}
-          title={rowsAtLimit ? "Limite de 200 linhas atingido." : undefined}
-          onClick={addRow}
-        >
-          + Linha
-        </button>
-        <button
-          className="ghost-button"
-          type="button"
-          aria-label="Adicionar coluna"
-          disabled={colsAtLimit}
-          title={colsAtLimit ? "Limite de 26 colunas atingido." : undefined}
-          onClick={addColumn}
-        >
-          + Coluna
-        </button>
-        <div className="table-grid-toolbar-spacer" />
-        <button
-          className="ghost-button"
-          type="button"
-          aria-label="Exportar CSV"
-          onClick={handleExportCsv}
-        >
-          Exportar CSV
-        </button>
-        <button
-          className="ghost-button"
-          type="button"
-          aria-label="Exportar XLSX"
-          onClick={handleExportXlsx}
-        >
-          Exportar XLSX
-        </button>
-      </div>
-
+      {/* ── Grid ─────────────────────────────────────────────────────── */}
       <div
         className="table-grid-panel"
         ref={gridContainerRef}

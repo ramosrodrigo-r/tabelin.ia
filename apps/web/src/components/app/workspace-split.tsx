@@ -32,7 +32,7 @@ export function WorkspaceSplit({
           data-active={activeTab === "chat"}
           onClick={() => setActiveTab("chat")}
         >
-          Chat
+          Chat IA
         </button>
       </div>
       <div className="workspace-grid-panel" data-hidden={activeTab === "chat"}>
