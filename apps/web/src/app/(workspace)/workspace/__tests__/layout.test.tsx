@@ -91,7 +91,7 @@ describe("WorkspaceLayout", () => {
     expect(container.querySelector(".workspace-chat-panel")).toBeInTheDocument();
   });
 
-  it("redireciona para /sign-in quando não há usuário autenticado", async () => {
+  it("deslogado: NÃO redireciona e renderiza o preview travado (SAMPLE_SPEC + AuthGate)", async () => {
     requestCacheMock.getCachedUser.mockResolvedValue(null);
     navigationMock.redirect.mockImplementation(() => {
       throw new Error("REDIRECT");
@@ -99,10 +99,17 @@ describe("WorkspaceLayout", () => {
 
     const { default: WorkspaceLayout } = await import("../layout");
 
-    await expect(
-      WorkspaceLayout({ children: <div data-testid="chat-child">chat</div> })
-    ).rejects.toThrow("REDIRECT");
+    const { container } = render(
+      await WorkspaceLayout({
+        children: <div data-testid="chat-child">chat</div>,
+      })
+    );
 
-    expect(navigationMock.redirect).toHaveBeenCalledWith("/sign-in");
+    // D-03/D-02: sem redirect quando não há sessão
+    expect(navigationMock.redirect).not.toHaveBeenCalled();
+    // casca de preview com a planilha-amostra (SAMPLE_SPEC)
+    expect(screen.getByText("Controle de Gastos")).toBeInTheDocument();
+    // overlay do AuthGate presente (gate não-dispensável)
+    expect(container.querySelector(".auth-gate-overlay")).toBeInTheDocument();
   });
 });
