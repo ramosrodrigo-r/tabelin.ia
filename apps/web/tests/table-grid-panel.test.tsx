@@ -700,3 +700,72 @@ describe("TableGridPanel — Moeda/Percentual/decimais/Zoom/Fonte/Tamanho", () =
     expect(screen.getByText("18")).toBeInTheDocument();
   });
 });
+
+// ─── Plan 260617-ukf: Sigma, Mesclar, Pintura (Task 4) ─────────────────────────
+
+describe("TableGridPanel — Sigma (funções), Mesclar, Pintura (format painter)", () => {
+  it("Sigma não é mais 'disabled' nem tem title '(em breve)'", () => {
+    render(<TableGridPanelDirect spec={SPEC_FIXTURE as TableSpecPayload} />);
+    const btn = screen.getByTitle("Funções") as HTMLButtonElement;
+    expect(btn.disabled).toBe(false);
+    expect(btn.title).not.toMatch(/em breve/);
+  });
+
+  it("clicar em Sigma sem nenhuma célula ativa não lança erro (no-op gracioso)", () => {
+    render(<TableGridPanelDirect spec={SPEC_FIXTURE as TableSpecPayload} />);
+    expect(() => fireEvent.click(screen.getByTitle("Funções"))).not.toThrow();
+  });
+
+  it("Mesclar não é mais 'disabled' nem tem title '(em breve)'", () => {
+    render(<TableGridPanelDirect spec={SPEC_FIXTURE as TableSpecPayload} />);
+    const btn = screen.getByTitle("Mesclar células") as HTMLButtonElement;
+    expect(btn.disabled).toBe(false);
+    expect(btn.title).not.toMatch(/em breve/);
+  });
+
+  it("clicar em Mesclar sem nenhuma célula ativa não lança erro (no-op gracioso)", () => {
+    render(<TableGridPanelDirect spec={SPEC_FIXTURE as TableSpecPayload} />);
+    expect(() => fireEvent.click(screen.getByTitle("Mesclar células"))).not.toThrow();
+  });
+
+  it("Pintura não é mais 'disabled' nem tem title '(em breve)'", () => {
+    render(<TableGridPanelDirect spec={SPEC_FIXTURE as TableSpecPayload} />);
+    const btn = screen.getByTitle("Formato de pintura") as HTMLButtonElement;
+    expect(btn.disabled).toBe(false);
+    expect(btn.title).not.toMatch(/em breve/);
+  });
+
+  it("clicar em Pintura sem nenhuma célula ativa não lança erro (no-op gracioso)", () => {
+    render(<TableGridPanelDirect spec={SPEC_FIXTURE as TableSpecPayload} />);
+    expect(() => fireEvent.click(screen.getByTitle("Formato de pintura"))).not.toThrow();
+  });
+
+  it("buildMergedRow concatena valores de duas colunas adjacentes na primeira e limpa a segunda", async () => {
+    const mod = await import("../src/features/unified-chat/components/table-grid-panel");
+    const helpers = mod as unknown as {
+      buildMergedRow?: (
+        row: Record<string, string | number>,
+        firstKey: string,
+        secondKey: string
+      ) => Record<string, string | number>;
+    };
+    expect(typeof helpers.buildMergedRow).toBe("function");
+    const result = helpers.buildMergedRow!({ descricao: "Aluguel", valor: "casa" }, "descricao", "valor");
+    expect(result.descricao).toBe("Aluguel casa");
+    expect(result.valor).toBe("");
+  });
+
+  it("buildSigmaRow insere '=SOMA()' na coluna alvo preservando os demais campos", async () => {
+    const mod = await import("../src/features/unified-chat/components/table-grid-panel");
+    const helpers = mod as unknown as {
+      buildSigmaRow?: (
+        row: Record<string, string | number>,
+        colKey: string
+      ) => Record<string, string | number>;
+    };
+    expect(typeof helpers.buildSigmaRow).toBe("function");
+    const result = helpers.buildSigmaRow!({ descricao: "Aluguel", valor: 2000 }, "valor");
+    expect(result.valor).toBe("=SOMA()");
+    expect(result.descricao).toBe("Aluguel");
+  });
+});
