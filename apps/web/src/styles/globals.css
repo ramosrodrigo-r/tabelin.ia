@@ -1504,6 +1504,117 @@ a {
   transform: scale(1.12);
 }
 
+/* ── Sort menu / Group menu (Task 5) ──────────────────────────────────────── */
+
+.sort-menu,
+.group-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 100;
+  background: #ffffff;
+  border: 1px solid #E2E8F0;
+  border-radius: 10px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.10);
+  min-width: 180px;
+  padding: 8px 0;
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+.sort-menu .columns-panel-item,
+.group-menu .columns-panel-item {
+  width: 100%;
+  border: 0;
+  background: none;
+  text-align: left;
+  font: inherit;
+}
+
+/* ── Share dialog (Task 5) ────────────────────────────────────────────────── */
+
+.share-dialog-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+}
+
+.share-dialog {
+  position: relative;
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 24px;
+  min-width: 280px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.share-dialog-title {
+  margin: 0 0 6px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.share-dialog-action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 16px;
+  border-radius: 8px;
+  border: 1px solid #E2E8F0;
+  background: #f8fafc;
+  color: var(--text);
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.share-dialog-action:hover {
+  background: #e2e8f0;
+}
+
+.share-dialog-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: 0;
+  border-radius: 4px;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.share-dialog-close:hover {
+  background: #f1f5f9;
+}
+
+/* ── Row group header (Task 5 — Agrupar) ─────────────────────────────────── */
+
+.row-group-header {
+  position: relative;
+  border-top: 2px solid var(--primary, #0b6b57);
+}
+
+.row-group-header-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
 /* Legacy toolbar (kept for backward-compat / tests) */
 .table-grid-toolbar {
   display: none;

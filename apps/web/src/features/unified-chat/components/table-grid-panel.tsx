@@ -485,6 +485,83 @@ export function TableGridPanel({ spec: propSpec }: { spec?: TableSpecPayload }) 
     [paintMode, copiedStyle]
   );
 
+  // ── Ordenar (menu real) — Task 5 ──
+  const [showSortMenu, setShowSortMenu] = useState(false);
+  const [sortMenuColKey, setSortMenuColKey] = useState<string | null>(null);
+  const sortMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!showSortMenu) return;
+    function handleMouseDown(e: MouseEvent) {
+      if (sortMenuRef.current && !sortMenuRef.current.contains(e.target as Node)) {
+        setShowSortMenu(false);
+        setSortMenuColKey(null);
+      }
+    }
+    document.addEventListener("mousedown", handleMouseDown);
+    return () => document.removeEventListener("mousedown", handleMouseDown);
+  }, [showSortMenu]);
+
+  // ── Agrupar (grupos visuais) — Task 5 ──
+  const [groupByKey, setGroupByKey] = useState<string | null>(null);
+  const [showGroupMenu, setShowGroupMenu] = useState(false);
+  const groupMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!showGroupMenu) return;
+    function handleMouseDown(e: MouseEvent) {
+      if (groupMenuRef.current && !groupMenuRef.current.contains(e.target as Node)) {
+        setShowGroupMenu(false);
+      }
+    }
+    document.addEventListener("mousedown", handleMouseDown);
+    return () => document.removeEventListener("mousedown", handleMouseDown);
+  }, [showGroupMenu]);
+
+  // ── Compartilhar (diálogo) — Task 5 ──
+  const [showShareDialog, setShowShareDialog] = useState(false);
+  const [shareCopyFeedback, setShareCopyFeedback] = useState(false);
+
+  useEffect(() => {
+    if (!showShareDialog) return;
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") setShowShareDialog(false);
+    }
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [showShareDialog]);
+
+  const buildShareText = useCallback(() => {
+    const header = currentColumns.map((c) => c.name).join("\t");
+    const lines = displayRows.map((row) =>
+      currentColumns.map((c) => String(row[c.key ?? c.name] ?? "")).join("\t")
+    );
+    return [header, ...lines].join("\n");
+  }, [currentColumns, displayRows]);
+
+  const handleCopyTableAsText = useCallback(async () => {
+    const text = buildShareText();
+    try {
+      await navigator.clipboard.writeText(text);
+      setShareCopyFeedback(true);
+      setTimeout(() => setShareCopyFeedback(false), 2000);
+    } catch {
+      // usuário pode negar permissão de clipboard — falha silenciosa, sem crash
+    }
+  }, [buildShareText]);
+
+  const handleShareFile = useCallback(async () => {
+    if (typeof navigator.share !== "function") return;
+    try {
+      const slug = slugifyTitle(activeSpec.title);
+      const csv = buildCsv(currentColumns, displayRows);
+      const file = new File([csv], `${slug}.csv`, { type: "text/csv" });
+      await navigator.share({ files: [file], title: activeSpec.title });
+    } catch {
+      // usuário cancelou o share nativo — falha silenciosa, sem crash
+    }
+  }, [activeSpec.title, currentColumns, displayRows]);
+
   const { sortedRows, sortIndexMap } = useMemo(() => {
     if (!sortState) {
       return {
@@ -508,6 +585,55 @@ export function TableGridPanel({ spec: propSpec }: { spec?: TableSpecPayload }) 
     };
   }, [displayRows, sortState]);
 
+  // ── Filtro de linhas ──
+  const filteredSortedRows = useMemo(() => {
+    if (!filterText.trim()) return sortedRows;
+    const term = filterText.trim().toLowerCase();
+    return sortedRows.filter((row) =>
+      Object.values(row).some((v) => String(v).toLowerCase().includes(term))
+    );
+  }, [sortedRows, filterText]);
+
+  // ── Agrupamento visual (Task 5) ──
+  // Quando groupByKey está definido, reordena implicitamente por essa coluna
+  // (mesma comparação de sortedRows) e marca a primeira linha de cada grupo
+  // distinto para exibir um separador/label visual no renderer da célula.
+  // `groupToFilteredIndexMap` preserva o índice em filteredSortedRows (que por
+  // sua vez já é rastreável até o índice ORIGINAL via sortIndexMap), para que
+  // handleChange/cellStyles/activeCell continuem corretos mesmo agrupados —
+  // nenhuma linha de dados real é inserida na grade (evita corromper rows/onChange).
+  const { groupedRows, groupStartIndexes, groupToFilteredIndexMap } = useMemo(() => {
+    if (!groupByKey) {
+      return {
+        groupedRows: filteredSortedRows,
+        groupStartIndexes: new Set<number>(),
+        groupToFilteredIndexMap: filteredSortedRows.map((_, i) => i),
+      };
+    }
+    const indexed = filteredSortedRows.map((row, i) => ({ row, i }));
+    indexed.sort((a, b) => {
+      const va = a.row[groupByKey] ?? "";
+      const vb = b.row[groupByKey] ?? "";
+      return typeof va === "number" && typeof vb === "number"
+        ? va - vb
+        : String(va).localeCompare(String(vb), "pt-BR");
+    });
+    const starts = new Set<number>();
+    let prevValue: string | number | undefined;
+    indexed.forEach((entry, idx) => {
+      const value = entry.row[groupByKey] ?? "";
+      if (idx === 0 || value !== prevValue) {
+        starts.add(idx);
+        prevValue = value;
+      }
+    });
+    return {
+      groupedRows: indexed.map((e) => e.row),
+      groupStartIndexes: starts,
+      groupToFilteredIndexMap: indexed.map((e) => e.i),
+    };
+  }, [filteredSortedRows, groupByKey]);
+
   const gridContainerRef = useRef<HTMLDivElement>(null);
 
   const handleSortClick = useCallback((key: string) => {
@@ -520,23 +646,36 @@ export function TableGridPanel({ spec: propSpec }: { spec?: TableSpecPayload }) 
 
   const handleChange = useCallback(
     (newRows: RowData[]) => {
+      // Se agrupado, primeiro desfaz o reordenamento de grupo (volta para a
+      // ordem de filteredSortedRows) antes de aplicar a restauração de sortState.
+      let newRowsInFilteredOrder: RowData[];
+      if (groupByKey) {
+        const restoredGroup = new Array<RowData>(newRows.length);
+        groupToFilteredIndexMap.forEach((filteredIdx, groupedIdx) => {
+          restoredGroup[filteredIdx] = newRows[groupedIdx];
+        });
+        newRowsInFilteredOrder = restoredGroup;
+      } else {
+        newRowsInFilteredOrder = newRows;
+      }
+
       let rowsInOriginalOrder: RowData[];
       if (sortState) {
-        const restored = new Array<RowData>(newRows.length);
+        const restored = new Array<RowData>(newRowsInFilteredOrder.length);
         sortIndexMap.forEach((origIdx, sortedIdx) => {
-          restored[origIdx] = newRows[sortedIdx];
+          restored[origIdx] = newRowsInFilteredOrder[sortedIdx];
         });
         rowsInOriginalOrder = restored;
         setSortState(null);
       } else {
-        rowsInOriginalOrder = newRows;
+        rowsInOriginalOrder = newRowsInFilteredOrder;
       }
       dispatch({
         type: "SET",
         newState: { rows: rowsInOriginalOrder, columns: currentColumns },
       });
     },
-    [currentColumns, sortState, sortIndexMap, dispatch]
+    [currentColumns, sortState, sortIndexMap, groupByKey, groupToFilteredIndexMap, dispatch]
   );
 
   const addRow = useCallback(() => {
@@ -642,7 +781,9 @@ export function TableGridPanel({ spec: propSpec }: { spec?: TableSpecPayload }) 
 
   // ── Colunas do DSG ──
   const dsgColumns = useMemo(() => {
-    const dataCols = currentColumns.filter((col) => !hiddenCols.has(col.key!)).map((col) => {
+    const visibleColumns = currentColumns.filter((col) => !hiddenCols.has(col.key!));
+    const firstVisibleColKey = visibleColumns[0]?.key;
+    const dataCols = visibleColumns.map((col) => {
       const colKey = col.key!;
       const colType = col.type;
       const isFormula = colType === "formula";
@@ -692,13 +833,19 @@ export function TableGridPanel({ spec: propSpec }: { spec?: TableSpecPayload }) 
           deleteRow: () => void;
           getContextMenuItems: () => unknown[];
         }) => {
-          const displayRow = sortedRows[rowIndex] ?? rowData;
+          const filteredRowIndex = groupToFilteredIndexMap[rowIndex] ?? rowIndex;
+          const displayRow = sortedRows[filteredRowIndex] ?? rowData;
           const rawValue = displayRow[colKey] ?? "";
           const displayValue = isFormula ? rawValue : (rowData[colKey] ?? "");
 
-          const originalRowIndex = sortIndexMap[rowIndex] ?? rowIndex;
+          const originalRowIndex = sortIndexMap[filteredRowIndex] ?? filteredRowIndex;
           const styleKey = `${originalRowIndex}:${colKey}`;
           const style = cellStyles[styleKey];
+          const isGroupStart =
+            groupByKey !== null && colKey === firstVisibleColKey && groupStartIndexes.has(rowIndex);
+          const groupLabel = isGroupStart
+            ? `— ${currentColumns.find((c) => c.key === groupByKey)?.name ?? groupByKey}: ${String(displayRow[groupByKey!] ?? "")} —`
+            : null;
 
           const cellInlineStyle: React.CSSProperties | undefined = style
             ? {
@@ -739,7 +886,12 @@ export function TableGridPanel({ spec: propSpec }: { spec?: TableSpecPayload }) 
           const effectiveType = style?.numberFormat ?? colType;
           const formatted = formatCellValue(displayValue, effectiveType, style?.decimals);
           return (
-            <span onMouseDown={handleCellMouseDown} style={cellInlineStyle}>
+            <span
+              className={isGroupStart ? "row-group-header" : undefined}
+              onMouseDown={handleCellMouseDown}
+              style={cellInlineStyle}
+            >
+              {groupLabel ? <span className="row-group-header-label">{groupLabel}</span> : null}
               {formatted}
             </span>
           );
@@ -809,6 +961,9 @@ export function TableGridPanel({ spec: propSpec }: { spec?: TableSpecPayload }) 
     cellStyles,
     handleMergeTargetCell,
     handlePaintTargetCell,
+    groupByKey,
+    groupStartIndexes,
+    groupToFilteredIndexMap,
   ]);
 
   const handleExportCsv = useCallback(() => {
@@ -900,15 +1055,6 @@ export function TableGridPanel({ spec: propSpec }: { spec?: TableSpecPayload }) 
     [context]
   );
 
-  // ── Filtro de linhas ──
-  const filteredSortedRows = useMemo(() => {
-    if (!filterText.trim()) return sortedRows;
-    const term = filterText.trim().toLowerCase();
-    return sortedRows.filter((row) =>
-      Object.values(row).some((v) => String(v).toLowerCase().includes(term))
-    );
-  }, [sortedRows, filterText]);
-
   const toggleColVisibility = useCallback((key: string) => {
     setHiddenCols((prev) => {
       const next = new Set(prev);
@@ -958,14 +1104,105 @@ export function TableGridPanel({ spec: propSpec }: { spec?: TableSpecPayload }) 
             Filtrar
             {filterText ? <span className="utility-btn-badge">{filteredSortedRows.length}</span> : null}
           </button>
-          <button className="utility-btn" type="button" disabled title="Ordenar (use os cabeçalhos das colunas)">
-            <ArrowUpDown size={15} />
-            Ordenar
-          </button>
-          <button className="utility-btn" type="button" disabled title="Agrupar (em breve)">
-            <Layers size={15} />
-            Agrupar
-          </button>
+          <div className="columns-panel-container" ref={sortMenuRef}>
+            <button
+              className="utility-btn"
+              type="button"
+              data-active={showSortMenu || undefined}
+              title="Ordenar"
+              onClick={() => {
+                setShowSortMenu((v) => !v);
+                setSortMenuColKey(null);
+              }}
+            >
+              <ArrowUpDown size={15} />
+              Ordenar
+            </button>
+            {showSortMenu ? (
+              <div className="sort-menu" role="dialog" aria-label="Ordenar por coluna">
+                {sortMenuColKey === null ? (
+                  currentColumns.map((col) => (
+                    <button
+                      key={col.key}
+                      type="button"
+                      className="columns-panel-item"
+                      onClick={() => setSortMenuColKey(col.key!)}
+                    >
+                      {col.name}
+                    </button>
+                  ))
+                ) : (
+                  <>
+                    <button
+                      type="button"
+                      className="columns-panel-item"
+                      onClick={() => {
+                        setSortState({ key: sortMenuColKey, dir: "asc" });
+                        setShowSortMenu(false);
+                        setSortMenuColKey(null);
+                      }}
+                    >
+                      Crescente
+                    </button>
+                    <button
+                      type="button"
+                      className="columns-panel-item"
+                      onClick={() => {
+                        setSortState({ key: sortMenuColKey, dir: "desc" });
+                        setShowSortMenu(false);
+                        setSortMenuColKey(null);
+                      }}
+                    >
+                      Decrescente
+                    </button>
+                  </>
+                )}
+              </div>
+            ) : null}
+          </div>
+          <div className="columns-panel-container" ref={groupMenuRef}>
+            <button
+              className="utility-btn"
+              type="button"
+              data-active={(showGroupMenu || groupByKey !== null) || undefined}
+              title="Agrupar"
+              onClick={() => setShowGroupMenu((v) => !v)}
+            >
+              <Layers size={15} />
+              Agrupar
+            </button>
+            {showGroupMenu ? (
+              <div className="group-menu" role="dialog" aria-label="Agrupar por coluna">
+                <button
+                  type="button"
+                  className="columns-panel-item"
+                  onClick={() => {
+                    setGroupByKey(null);
+                    setShowGroupMenu(false);
+                  }}
+                >
+                  Nenhum
+                  {groupByKey === null ? <Check size={12} className="columns-panel-check" /> : null}
+                </button>
+                {currentColumns.map((col) => (
+                  <button
+                    key={col.key}
+                    type="button"
+                    className="columns-panel-item"
+                    onClick={() => {
+                      setGroupByKey(col.key!);
+                      setShowGroupMenu(false);
+                    }}
+                  >
+                    {col.name}
+                    {groupByKey === col.key ? (
+                      <Check size={12} className="columns-panel-check" />
+                    ) : null}
+                  </button>
+                ))}
+              </div>
+            ) : null}
+          </div>
           <span className="utility-btn-separator" aria-hidden />
           {/* Colunas — funcional */}
           <div className="columns-panel-container" ref={colsPanelRef}>
@@ -1086,8 +1323,13 @@ export function TableGridPanel({ spec: propSpec }: { spec?: TableSpecPayload }) 
           >
             XLSX
           </button>
-          {/* Decorative share */}
-          <button className="utility-btn" type="button" disabled title="Compartilhar (em breve)">
+          <button
+            className="utility-btn"
+            type="button"
+            data-active={showShareDialog || undefined}
+            title="Compartilhar"
+            onClick={() => setShowShareDialog(true)}
+          >
             <Share2 size={15} />
           </button>
         </div>
@@ -1427,6 +1669,40 @@ export function TableGridPanel({ spec: propSpec }: { spec?: TableSpecPayload }) 
         </button>
       </div>
 
+      {/* ── Diálogo de Compartilhar ──────────────────────────────────── */}
+      {showShareDialog ? (
+        <div
+          className="share-dialog-overlay"
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) setShowShareDialog(false);
+          }}
+        >
+          <div className="share-dialog" role="dialog" aria-label="Compartilhar tabela">
+            <h3 className="share-dialog-title">Compartilhar</h3>
+            <button
+              type="button"
+              className="share-dialog-action"
+              onClick={handleCopyTableAsText}
+            >
+              {shareCopyFeedback ? "Copiado!" : "Copiar tabela como texto"}
+            </button>
+            {typeof navigator !== "undefined" && typeof navigator.share === "function" ? (
+              <button type="button" className="share-dialog-action" onClick={handleShareFile}>
+                Compartilhar arquivo
+              </button>
+            ) : null}
+            <button
+              type="button"
+              className="share-dialog-close"
+              aria-label="Fechar"
+              onClick={() => setShowShareDialog(false)}
+            >
+              <X size={14} />
+            </button>
+          </div>
+        </div>
+      ) : null}
+
       {/* ── Error banner ─────────────────────────────────────────────── */}
       {importError && (
         <div className="table-grid-error-banner" role="alert">
@@ -1478,7 +1754,7 @@ export function TableGridPanel({ spec: propSpec }: { spec?: TableSpecPayload }) 
           }}
         >
           <DynamicDataSheetGrid
-            value={filteredSortedRows}
+            value={groupedRows}
             onChange={handleChange}
             columns={dsgColumns.columns}
             createRow={createRow}
