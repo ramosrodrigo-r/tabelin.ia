@@ -111,10 +111,29 @@ function historyReducer(state: HistoryState, action: Action): HistoryState {
 /**
  * Formata valor de célula para exibição (display-only — Pitfall 2).
  * Nunca retorna JSX — apenas string (SEC-05, D-07).
+ *
+ * `decimals` é um parâmetro opcional adicional (Task 3) — não quebra
+ * chamadas existentes que passam só (value, type). Aplica
+ * minimumFractionDigits/maximumFractionDigits quando definido, para
+ * "currency"/"percent"/"number".
  */
-export function formatCellValue(value: string | number, type: string): string {
+export function formatCellValue(value: string | number, type: string, decimals?: number): string {
   if (type === "currency" && typeof value === "number") {
-    return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
+    return new Intl.NumberFormat("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+      ...(decimals !== undefined
+        ? { minimumFractionDigits: decimals, maximumFractionDigits: decimals }
+        : {}),
+    }).format(value);
+  }
+  if (type === "percent" && typeof value === "number") {
+    return new Intl.NumberFormat("pt-BR", {
+      style: "percent",
+      ...(decimals !== undefined
+        ? { minimumFractionDigits: decimals, maximumFractionDigits: decimals }
+        : {}),
+    }).format(value);
   }
   if (type === "date" && value !== "" && value !== null && value !== undefined) {
     const d = new Date(String(value));
@@ -125,6 +144,12 @@ export function formatCellValue(value: string | number, type: string): string {
         year: "numeric",
       }).format(d);
     }
+  }
+  if (decimals !== undefined && typeof value === "number") {
+    return new Intl.NumberFormat("pt-BR", {
+      minimumFractionDigits: decimals,
+      maximumFractionDigits: decimals,
+    }).format(value);
   }
   return String(value);
 }
@@ -327,6 +352,53 @@ export function TableGridPanel({ spec: propSpec }: { spec?: TableSpecPayload }) 
     document.addEventListener("mousedown", handleMouseDown);
     return () => document.removeEventListener("mousedown", handleMouseDown);
   }, [showFillPopover]);
+
+  // ── Zoom (Task 3) ──
+  const [zoom, setZoom] = useState(100);
+  const [showZoomPopover, setShowZoomPopover] = useState(false);
+  const zoomPopoverRef = useRef<HTMLDivElement>(null);
+  const ZOOM_OPTIONS = [75, 100, 125, 150];
+
+  useEffect(() => {
+    if (!showZoomPopover) return;
+    function handleMouseDown(e: MouseEvent) {
+      if (zoomPopoverRef.current && !zoomPopoverRef.current.contains(e.target as Node)) {
+        setShowZoomPopover(false);
+      }
+    }
+    document.addEventListener("mousedown", handleMouseDown);
+    return () => document.removeEventListener("mousedown", handleMouseDown);
+  }, [showZoomPopover]);
+
+  // ── Fonte / Tamanho (Task 3) ──
+  const [showFontPopover, setShowFontPopover] = useState(false);
+  const [showSizePopover, setShowSizePopover] = useState(false);
+  const fontPopoverRef = useRef<HTMLDivElement>(null);
+  const sizePopoverRef = useRef<HTMLDivElement>(null);
+  const FONT_OPTIONS = ["Inter", "Arial", "Georgia", "Courier New", "Verdana"];
+  const SIZE_OPTIONS = [8, 9, 10, 11, 12, 14, 16, 18, 24];
+
+  useEffect(() => {
+    if (!showFontPopover) return;
+    function handleMouseDown(e: MouseEvent) {
+      if (fontPopoverRef.current && !fontPopoverRef.current.contains(e.target as Node)) {
+        setShowFontPopover(false);
+      }
+    }
+    document.addEventListener("mousedown", handleMouseDown);
+    return () => document.removeEventListener("mousedown", handleMouseDown);
+  }, [showFontPopover]);
+
+  useEffect(() => {
+    if (!showSizePopover) return;
+    function handleMouseDown(e: MouseEvent) {
+      if (sizePopoverRef.current && !sizePopoverRef.current.contains(e.target as Node)) {
+        setShowSizePopover(false);
+      }
+    }
+    document.addEventListener("mousedown", handleMouseDown);
+    return () => document.removeEventListener("mousedown", handleMouseDown);
+  }, [showSizePopover]);
 
   const { sortedRows, sortIndexMap } = useMemo(() => {
     if (!sortState) {
@@ -577,7 +649,8 @@ export function TableGridPanel({ spec: propSpec }: { spec?: TableSpecPayload }) 
             );
           }
 
-          const formatted = formatCellValue(displayValue, colType);
+          const effectiveType = style?.numberFormat ?? colType;
+          const formatted = formatCellValue(displayValue, effectiveType, style?.decimals);
           return (
             <span onMouseDown={handleCellMouseDown} style={cellInlineStyle}>
               {formatted}
@@ -980,26 +1053,150 @@ export function TableGridPanel({ spec: propSpec }: { spec?: TableSpecPayload }) 
         </button>
         <span className="format-btn-separator" aria-hidden />
         {/* Zoom */}
-        <span className="format-dropdown" aria-hidden>100% <ChevronDown size={11} /></span>
+        <div className="columns-panel-container" ref={zoomPopoverRef}>
+          <button
+            className="format-dropdown format-dropdown-btn"
+            type="button"
+            title="Zoom"
+            onClick={() => setShowZoomPopover((v) => !v)}
+          >
+            {zoom}% <ChevronDown size={11} />
+          </button>
+          {showZoomPopover ? (
+            <div className="columns-panel" role="dialog" aria-label="Zoom">
+              {ZOOM_OPTIONS.map((option) => (
+                <button
+                  key={option}
+                  type="button"
+                  className="columns-panel-item"
+                  onClick={() => {
+                    setZoom(option);
+                    setShowZoomPopover(false);
+                  }}
+                >
+                  {option}%
+                  {zoom === option ? <Check size={12} className="columns-panel-check" /> : null}
+                </button>
+              ))}
+            </div>
+          ) : null}
+        </div>
         <span className="format-btn-separator" aria-hidden />
         {/* Number format */}
-        <button className="format-btn" type="button" disabled title="Formato moeda (em breve)">
+        <button
+          className="format-btn"
+          type="button"
+          title="Formato moeda"
+          data-active={activeCellStyle.numberFormat === "currency" || undefined}
+          onClick={() =>
+            applyCellStyleToActive((prev) => ({
+              numberFormat: prev.numberFormat === "currency" ? undefined : "currency",
+            }))
+          }
+        >
           <DollarSign size={15} />
         </button>
-        <button className="format-btn" type="button" disabled title="Formato percentual (em breve)">
+        <button
+          className="format-btn"
+          type="button"
+          title="Formato percentual"
+          data-active={activeCellStyle.numberFormat === "percent" || undefined}
+          onClick={() =>
+            applyCellStyleToActive((prev) => ({
+              numberFormat: prev.numberFormat === "percent" ? undefined : "percent",
+            }))
+          }
+        >
           <Percent size={15} />
         </button>
-        <button className="format-btn" type="button" disabled title="Diminuir decimais (em breve)">
+        <button
+          className="format-btn"
+          type="button"
+          title="Diminuir decimais"
+          onClick={() =>
+            applyCellStyleToActive((prev) => ({
+              decimals: Math.max(0, (prev.decimals ?? 2) - 1),
+            }))
+          }
+        >
           <ChevronsLeft size={15} />
         </button>
-        <button className="format-btn" type="button" disabled title="Aumentar decimais (em breve)">
+        <button
+          className="format-btn"
+          type="button"
+          title="Aumentar decimais"
+          onClick={() =>
+            applyCellStyleToActive((prev) => ({
+              decimals: Math.min(10, (prev.decimals ?? 2) + 1),
+            }))
+          }
+        >
           <ChevronsRight size={15} />
         </button>
         <span className="format-btn-separator" aria-hidden />
         {/* Font */}
-        <span className="format-dropdown" aria-hidden>Inter <ChevronDown size={11} /></span>
+        <div className="columns-panel-container" ref={fontPopoverRef}>
+          <button
+            className="format-dropdown format-dropdown-btn"
+            type="button"
+            title="Fonte"
+            onClick={() => setShowFontPopover((v) => !v)}
+          >
+            {activeCellStyle.fontFamily ?? "Inter"} <ChevronDown size={11} />
+          </button>
+          {showFontPopover ? (
+            <div className="columns-panel" role="dialog" aria-label="Fonte">
+              {FONT_OPTIONS.map((font) => (
+                <button
+                  key={font}
+                  type="button"
+                  className="columns-panel-item"
+                  style={{ fontFamily: font }}
+                  onClick={() => {
+                    applyCellStyleToActive({ fontFamily: font });
+                    setShowFontPopover(false);
+                  }}
+                >
+                  {font}
+                  {activeCellStyle.fontFamily === font ? (
+                    <Check size={12} className="columns-panel-check" />
+                  ) : null}
+                </button>
+              ))}
+            </div>
+          ) : null}
+        </div>
         <span className="format-btn-separator" aria-hidden />
-        <span className="format-dropdown" aria-hidden>10 <ChevronDown size={11} /></span>
+        <div className="columns-panel-container" ref={sizePopoverRef}>
+          <button
+            className="format-dropdown format-dropdown-btn"
+            type="button"
+            title="Tamanho"
+            onClick={() => setShowSizePopover((v) => !v)}
+          >
+            {activeCellStyle.fontSize ?? 10} <ChevronDown size={11} />
+          </button>
+          {showSizePopover ? (
+            <div className="columns-panel" role="dialog" aria-label="Tamanho da fonte">
+              {SIZE_OPTIONS.map((size) => (
+                <button
+                  key={size}
+                  type="button"
+                  className="columns-panel-item"
+                  onClick={() => {
+                    applyCellStyleToActive({ fontSize: size });
+                    setShowSizePopover(false);
+                  }}
+                >
+                  {size}
+                  {activeCellStyle.fontSize === size ? (
+                    <Check size={12} className="columns-panel-check" />
+                  ) : null}
+                </button>
+              ))}
+            </div>
+          ) : null}
+        </div>
         <span className="format-btn-separator" aria-hidden />
         {/* Text formatting */}
         <button
@@ -1162,14 +1359,23 @@ export function TableGridPanel({ spec: propSpec }: { spec?: TableSpecPayload }) 
             <span>Importando planilha...</span>
           </div>
         )}
-        <DynamicDataSheetGrid
-          value={filteredSortedRows}
-          onChange={handleChange}
-          columns={dsgColumns.columns}
-          createRow={createRow}
-          stickyRightColumn={dsgColumns.stickyRightColumn}
-          height={600}
-        />
+        <div
+          className="table-grid-zoom-wrapper"
+          style={{
+            transform: `scale(${zoom / 100})`,
+            transformOrigin: "top left",
+            width: `${(100 / zoom) * 100}%`,
+          }}
+        >
+          <DynamicDataSheetGrid
+            value={filteredSortedRows}
+            onChange={handleChange}
+            columns={dsgColumns.columns}
+            createRow={createRow}
+            stickyRightColumn={dsgColumns.stickyRightColumn}
+            height={600}
+          />
+        </div>
       </div>
     </div>
   );

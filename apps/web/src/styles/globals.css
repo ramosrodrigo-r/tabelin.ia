@@ -1163,6 +1163,11 @@ a {
   position: relative;
 }
 
+/* Wrapper de zoom (Task 3) — aplica scale() real à grade via toolbar de Zoom */
+.table-grid-zoom-wrapper {
+  transform-origin: top left;
+}
+
 /* ── Utility Bar ─────────────────────────────────────────────────────── */
 
 .utility-bar {
@@ -1309,6 +1314,18 @@ a {
   white-space: nowrap;
   opacity: 0.5;
   flex-shrink: 0;
+}
+
+/* Dropdown funcional (Zoom/Fonte/Tamanho) — mesmo visual de .format-dropdown, mas clicável */
+.format-dropdown-btn {
+  cursor: pointer;
+  opacity: 1;
+  transition: background 0.12s, color 0.12s;
+}
+
+.format-dropdown-btn:hover {
+  background: #e2e8f0;
+  color: var(--text);
 }
 
 /* ── Utility bar — active state ────────────────────────────────────────────── */
