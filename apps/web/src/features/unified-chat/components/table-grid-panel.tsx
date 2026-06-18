@@ -195,6 +195,33 @@ export const COLOR_SWATCHES = [
   "#92400e",
 ];
 
+/**
+ * Constrói a nova versão de `row` com `"=SOMA()"` inserido em `colKey`,
+ * preservando os demais campos (Task 4 — Sigma). Não muta `row`.
+ */
+export function buildSigmaRow(
+  row: Record<string, string | number>,
+  colKey: string
+): Record<string, string | number> {
+  return { ...row, [colKey]: "=SOMA()" };
+}
+
+/**
+ * Mescla duas células ADJACENTES da mesma linha: concatena `row[firstKey]` e
+ * `row[secondKey]` (trim + espaço, ignorando vazios) em `firstKey` e limpa
+ * `secondKey`. Não muta `row` (Task 4 — Mesclar células).
+ */
+export function buildMergedRow(
+  row: Record<string, string | number>,
+  firstKey: string,
+  secondKey: string
+): Record<string, string | number> {
+  const a = String(row[firstKey] ?? "").trim();
+  const b = String(row[secondKey] ?? "").trim();
+  const merged = [a, b].filter(Boolean).join(" ");
+  return { ...row, [firstKey]: merged, [secondKey]: "" };
+}
+
 // ─── ERROR_TOOLTIPS ────────────────────────────────────────────────────────────
 
 const ERROR_TOOLTIPS: Record<string, string> = {
@@ -399,6 +426,64 @@ export function TableGridPanel({ spec: propSpec }: { spec?: TableSpecPayload }) 
     document.addEventListener("mousedown", handleMouseDown);
     return () => document.removeEventListener("mousedown", handleMouseDown);
   }, [showSizePopover]);
+
+  // ── Sigma (Funções) — Task 4 ──
+  const handleSigmaClick = useCallback(() => {
+    if (!activeCell) return;
+    const newRows = currentRows.map((row, idx) =>
+      idx === activeCell.rowIndex ? buildSigmaRow(row, activeCell.colKey) : row
+    );
+    dispatch({ type: "SET", newState: { rows: newRows, columns: currentColumns } });
+  }, [activeCell, currentRows, currentColumns, dispatch]);
+
+  // ── Mesclar células — Task 4 ──
+  const [mergeArmed, setMergeArmed] = useState(false);
+
+  const handleMergeClick = useCallback(() => {
+    if (!activeCell) return;
+    setMergeArmed((v) => !v);
+  }, [activeCell]);
+
+  const handleMergeTargetCell = useCallback(
+    (rowIndex: number, colKey: string) => {
+      if (!mergeArmed || !activeCell) return false;
+      setMergeArmed(false);
+      if (rowIndex !== activeCell.rowIndex) return true; // cancela: linha diferente
+      if (colKey === activeCell.colKey) return true; // mesma célula: no-op
+      const colKeys = currentColumns.map((c) => c.key!);
+      const firstColKey =
+        colKeys.indexOf(activeCell.colKey) <= colKeys.indexOf(colKey) ? activeCell.colKey : colKey;
+      const secondColKey = firstColKey === activeCell.colKey ? colKey : activeCell.colKey;
+      const newRows = currentRows.map((row, idx) =>
+        idx === activeCell.rowIndex ? buildMergedRow(row, firstColKey, secondColKey) : row
+      );
+      dispatch({ type: "SET", newState: { rows: newRows, columns: currentColumns } });
+      return true;
+    },
+    [mergeArmed, activeCell, currentColumns, currentRows, dispatch]
+  );
+
+  // ── Pintura (format painter) — Task 4 ──
+  const [paintMode, setPaintMode] = useState(false);
+  const [copiedStyle, setCopiedStyle] = useState<CellStyle | null>(null);
+
+  const handlePaintbrushClick = useCallback(() => {
+    if (!activeCell) return;
+    setCopiedStyle(cellStyles[`${activeCell.rowIndex}:${activeCell.colKey}`] ?? {});
+    setPaintMode(true);
+  }, [activeCell, cellStyles]);
+
+  const handlePaintTargetCell = useCallback(
+    (rowIndex: number, colKey: string) => {
+      if (!paintMode) return false;
+      setPaintMode(false);
+      if (copiedStyle) {
+        setCellStyles((prev) => ({ ...prev, [`${rowIndex}:${colKey}`]: { ...copiedStyle } }));
+      }
+      return true;
+    },
+    [paintMode, copiedStyle]
+  );
 
   const { sortedRows, sortIndexMap } = useMemo(() => {
     if (!sortState) {
@@ -633,6 +718,8 @@ export function TableGridPanel({ spec: propSpec }: { spec?: TableSpecPayload }) 
             : undefined;
 
           const handleCellMouseDown = () => {
+            if (handleMergeTargetCell(originalRowIndex, colKey)) return;
+            if (handlePaintTargetCell(originalRowIndex, colKey)) return;
             setActiveCell({ rowIndex: originalRowIndex, colKey });
           };
 
@@ -710,7 +797,19 @@ export function TableGridPanel({ spec: propSpec }: { spec?: TableSpecPayload }) 
         maxWidth: 36,
       },
     };
-  }, [currentColumns, sortState, sortedRows, sortIndexMap, handleSortClick, removeColumn, removeRow, hiddenCols, cellStyles]);
+  }, [
+    currentColumns,
+    sortState,
+    sortedRows,
+    sortIndexMap,
+    handleSortClick,
+    removeColumn,
+    removeRow,
+    hiddenCols,
+    cellStyles,
+    handleMergeTargetCell,
+    handlePaintTargetCell,
+  ]);
 
   const handleExportCsv = useCallback(() => {
     const slug = slugifyTitle(activeSpec.title);
@@ -1047,8 +1146,13 @@ export function TableGridPanel({ spec: propSpec }: { spec?: TableSpecPayload }) 
         >
           <Redo2 size={15} />
         </button>
-        {/* Decorative: paintbrush */}
-        <button className="format-btn" type="button" disabled title="Formato de pintura (em breve)">
+        <button
+          className="format-btn"
+          type="button"
+          title="Formato de pintura"
+          data-active={paintMode || undefined}
+          onClick={handlePaintbrushClick}
+        >
           <Paintbrush size={15} />
         </button>
         <span className="format-btn-separator" aria-hidden />
@@ -1293,7 +1397,13 @@ export function TableGridPanel({ spec: propSpec }: { spec?: TableSpecPayload }) 
         >
           <LayoutGrid size={15} />
         </button>
-        <button className="format-btn" type="button" disabled title="Mesclar células (em breve)">
+        <button
+          className="format-btn"
+          type="button"
+          title="Mesclar células"
+          data-active={mergeArmed || undefined}
+          onClick={handleMergeClick}
+        >
           <Merge size={15} />
         </button>
         <button
@@ -1312,7 +1422,7 @@ export function TableGridPanel({ spec: propSpec }: { spec?: TableSpecPayload }) 
             <AlignLeft size={15} />
           )}
         </button>
-        <button className="format-btn" type="button" disabled title="Funções (em breve)">
+        <button className="format-btn" type="button" title="Funções" onClick={handleSigmaClick}>
           <Sigma size={15} />
         </button>
       </div>
