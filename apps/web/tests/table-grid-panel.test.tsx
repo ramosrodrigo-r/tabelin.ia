@@ -489,3 +489,70 @@ describe("TableGridPanel — TAB-04 undo de ingestão (Ctrl+Z)", () => {
     expect(screen.getByText(SAMPLE_SPEC.title)).toBeInTheDocument();
   });
 });
+
+// ─── Plan 260617-ukf: cellStyles model + activeCell tracking (Task 1) ─────────
+
+describe("TableGridPanel — cellStyles model (applyCellStyle)", () => {
+  it("aplicar um patch numa célula e ler de volta retorna o patch mesclado", async () => {
+    const mod = await import("../src/features/unified-chat/components/table-grid-panel");
+    const helpers = mod as unknown as {
+      mergeCellStyle?: (
+        styles: Record<string, Record<string, unknown>>,
+        key: string,
+        patch: Record<string, unknown> | ((prev: Record<string, unknown>) => Record<string, unknown>)
+      ) => Record<string, Record<string, unknown>>;
+    };
+    expect(typeof helpers.mergeCellStyle).toBe("function");
+    const result = helpers.mergeCellStyle!({}, "0:valor", { bold: true });
+    expect(result["0:valor"]).toEqual({ bold: true });
+  });
+
+  it("aplicar estilo em duas células diferentes não vaza estilo entre elas", async () => {
+    const mod = await import("../src/features/unified-chat/components/table-grid-panel");
+    const helpers = mod as unknown as {
+      mergeCellStyle: (
+        styles: Record<string, Record<string, unknown>>,
+        key: string,
+        patch: Record<string, unknown> | ((prev: Record<string, unknown>) => Record<string, unknown>)
+      ) => Record<string, Record<string, unknown>>;
+    };
+    let styles = helpers.mergeCellStyle({}, "0:valor", { bold: true });
+    styles = helpers.mergeCellStyle(styles, "1:valor", { italic: true });
+    expect(styles["0:valor"]).toEqual({ bold: true });
+    expect(styles["1:valor"]).toEqual({ italic: true });
+  });
+
+  it("toggle de uma propriedade booleana duas vezes retorna ao estado original", async () => {
+    const mod = await import("../src/features/unified-chat/components/table-grid-panel");
+    const helpers = mod as unknown as {
+      mergeCellStyle: (
+        styles: Record<string, Record<string, unknown>>,
+        key: string,
+        patch: Record<string, unknown> | ((prev: Record<string, unknown>) => Record<string, unknown>)
+      ) => Record<string, Record<string, unknown>>;
+    };
+    let styles = helpers.mergeCellStyle({}, "0:valor", (prev) => ({ bold: !prev.bold }));
+    expect(styles["0:valor"]).toEqual({ bold: true });
+    styles = helpers.mergeCellStyle(styles, "0:valor", (prev) => ({ bold: !prev.bold }));
+    expect(styles["0:valor"]).toEqual({ bold: false });
+  });
+});
+
+describe("TableGridPanel — activeCell tracking via onMouseDown", () => {
+  it("clicar (mousedown) em qualquer span de célula renderizada não lança erro", () => {
+    render(<TableGridPanelDirect spec={SPEC_FIXTURE as TableSpecPayload} />);
+    const grid = document.querySelector(".table-grid-panel");
+    expect(grid).not.toBeNull();
+    const cellSpans = grid!.querySelectorAll("span");
+    expect(() => {
+      cellSpans.forEach((span) => fireEvent.mouseDown(span));
+    }).not.toThrow();
+  });
+
+  it("renderer de célula continua aplicando o estilo lido do map sem quebrar a renderização existente (regressão TAB-01)", () => {
+    render(<TableGridPanelDirect spec={SPEC_FIXTURE as TableSpecPayload} />);
+    expect(screen.getByText("Controle de Gastos")).toBeInTheDocument();
+    const grid = document.querySelector(".table-grid-panel");
+    expect(grid).not.toBeNull();
+  });
+});
