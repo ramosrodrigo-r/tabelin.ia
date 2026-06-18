@@ -47,6 +47,25 @@ type GridState = { rows: RowData[]; columns: TableColumn[] };
 
 type Action = { type: "SET"; newState: GridState } | { type: "UNDO" } | { type: "REDO" };
 
+/**
+ * Estilo visual de uma célula individual. Vive em estado LOCAL ao componente
+ * (`cellStyles`) — não entra no `historyReducer` (undo/redo) nem no
+ * `WorkspaceStateContext`/auto-save (decisão de escopo documentada no PLAN).
+ */
+export type CellStyle = {
+  bold?: boolean;
+  italic?: boolean;
+  strikethrough?: boolean;
+  color?: string;
+  background?: string;
+  align?: "left" | "center" | "right";
+  border?: boolean;
+  fontFamily?: string;
+  fontSize?: number;
+  numberFormat?: "currency" | "percent" | undefined;
+  decimals?: number;
+};
+
 type HistoryState = {
   past: GridState[];
   present: GridState;
@@ -106,6 +125,28 @@ export function formatCellValue(value: string | number, type: string): string {
     }
   }
   return String(value);
+}
+
+// ─── mergeCellStyle (pura, module-scope) ──────────────────────────────────────
+
+/**
+ * Faz merge imutável de um patch de `CellStyle` na chave `key` de um map de
+ * estilos. Aceita um patch direto ou uma função `(prev) => patch` (para
+ * comportamento de toggle, ex.: `(prev) => ({ bold: !prev.bold })`).
+ * Nunca muta `styles` — retorna um novo objeto (Pitfall 2: mesmo padrão de
+ * `recalcAll`/`historyReducer`, que nunca mutam o estado anterior).
+ */
+export function mergeCellStyle(
+  styles: Record<string, CellStyle>,
+  key: string,
+  patch: Partial<CellStyle> | ((prev: CellStyle) => Partial<CellStyle>)
+): Record<string, CellStyle> {
+  const prev = styles[key] ?? {};
+  const resolvedPatch = typeof patch === "function" ? patch(prev) : patch;
+  return {
+    ...styles,
+    [key]: { ...prev, ...resolvedPatch },
+  };
 }
 
 // ─── ERROR_TOOLTIPS ────────────────────────────────────────────────────────────
@@ -207,6 +248,31 @@ export function TableGridPanel({ spec: propSpec }: { spec?: TableSpecPayload }) 
   const [hiddenCols, setHiddenCols] = useState<Set<string>>(new Set());
   const [showColsPanel, setShowColsPanel] = useState(false);
   const colsPanelRef = useRef<HTMLDivElement>(null);
+
+  // ── Estilo por célula + célula ativa (toolbar de formatação) ──
+  // Estado LOCAL — não entra no historyReducer nem no WorkspaceStateContext
+  // (decisão de escopo documentada no PLAN 260617-ukf).
+  const [cellStyles, setCellStyles] = useState<Record<string, CellStyle>>({});
+  const [activeCell, setActiveCell] = useState<{ rowIndex: number; colKey: string } | null>(null);
+
+  const applyCellStyle = useCallback(
+    (
+      rowIndex: number,
+      colKey: string,
+      patch: Partial<CellStyle> | ((prev: CellStyle) => Partial<CellStyle>)
+    ) => {
+      setCellStyles((prev) => mergeCellStyle(prev, `${rowIndex}:${colKey}`, patch));
+    },
+    []
+  );
+
+  const applyCellStyleToActive = useCallback(
+    (patch: Partial<CellStyle> | ((prev: CellStyle) => Partial<CellStyle>)) => {
+      if (!activeCell) return;
+      applyCellStyle(activeCell.rowIndex, activeCell.colKey, patch);
+    },
+    [activeCell, applyCellStyle]
+  );
 
   const { sortedRows, sortIndexMap } = useMemo(() => {
     if (!sortState) {
@@ -419,11 +485,38 @@ export function TableGridPanel({ spec: propSpec }: { spec?: TableSpecPayload }) 
           const rawValue = displayRow[colKey] ?? "";
           const displayValue = isFormula ? rawValue : (rowData[colKey] ?? "");
 
+          const originalRowIndex = sortIndexMap[rowIndex] ?? rowIndex;
+          const styleKey = `${originalRowIndex}:${colKey}`;
+          const style = cellStyles[styleKey];
+
+          const cellInlineStyle: React.CSSProperties | undefined = style
+            ? {
+                fontWeight: style.bold ? "bold" : undefined,
+                fontStyle: style.italic ? "italic" : undefined,
+                textDecoration: style.strikethrough ? "line-through" : undefined,
+                color: style.color,
+                background: style.background,
+                textAlign: style.align,
+                border: style.border ? "1px solid var(--text)" : undefined,
+                fontFamily: style.fontFamily,
+                fontSize: style.fontSize,
+                display: "block",
+                width: "100%",
+                boxSizing: "border-box",
+              }
+            : undefined;
+
+          const handleCellMouseDown = () => {
+            setActiveCell({ rowIndex: originalRowIndex, colKey });
+          };
+
           if (isErrorCode(displayValue)) {
             return (
               <span
                 className="cell-error"
                 title={ERROR_TOOLTIPS[String(displayValue)] ?? "Erro"}
+                onMouseDown={handleCellMouseDown}
+                style={cellInlineStyle}
               >
                 {String(displayValue)}
               </span>
@@ -431,7 +524,11 @@ export function TableGridPanel({ spec: propSpec }: { spec?: TableSpecPayload }) 
           }
 
           const formatted = formatCellValue(displayValue, colType);
-          return <span>{formatted}</span>;
+          return (
+            <span onMouseDown={handleCellMouseDown} style={cellInlineStyle}>
+              {formatted}
+            </span>
+          );
         },
       };
     });
@@ -486,7 +583,7 @@ export function TableGridPanel({ spec: propSpec }: { spec?: TableSpecPayload }) 
         maxWidth: 36,
       },
     };
-  }, [currentColumns, sortState, sortedRows, sortIndexMap, handleSortClick, removeColumn, removeRow, hiddenCols]);
+  }, [currentColumns, sortState, sortedRows, sortIndexMap, handleSortClick, removeColumn, removeRow, hiddenCols, cellStyles]);
 
   const handleExportCsv = useCallback(() => {
     const slug = slugifyTitle(activeSpec.title);
