@@ -769,3 +769,92 @@ describe("TableGridPanel — Sigma (funções), Mesclar, Pintura (format painter
     expect(result.descricao).toBe("Aluguel");
   });
 });
+
+// ─── Plan 260617-ukf: Ordenar (menu), Agrupar (grupos), Compartilhar (Task 5) ──
+
+describe("TableGridPanel — Ordenar (menu real)", () => {
+  it("Ordenar não é mais 'disabled'", () => {
+    render(<TableGridPanelDirect spec={SPEC_FIXTURE as TableSpecPayload} />);
+    const btn = screen.getByTitle("Ordenar") as HTMLButtonElement;
+    expect(btn.disabled).toBe(false);
+  });
+
+  it("clicar em Ordenar abre um menu listando as colunas", () => {
+    render(<TableGridPanelDirect spec={SPEC_FIXTURE as TableSpecPayload} />);
+    fireEvent.click(screen.getByTitle("Ordenar"));
+    expect(screen.getByText("Descrição")).toBeInTheDocument();
+    expect(screen.getByText("Valor")).toBeInTheDocument();
+  });
+
+  it("escolher coluna + Crescente fecha o menu (aciona setSortState)", () => {
+    render(<TableGridPanelDirect spec={SPEC_FIXTURE as TableSpecPayload} />);
+    fireEvent.click(screen.getByTitle("Ordenar"));
+    fireEvent.click(screen.getByText("Valor"));
+    fireEvent.click(screen.getByText("Crescente"));
+    expect(screen.queryByText("Crescente")).not.toBeInTheDocument();
+  });
+});
+
+describe("TableGridPanel — Agrupar (grupos visuais)", () => {
+  it("Agrupar não é mais 'disabled'", () => {
+    render(<TableGridPanelDirect spec={SPEC_FIXTURE as TableSpecPayload} />);
+    const btn = screen.getByTitle("Agrupar") as HTMLButtonElement;
+    expect(btn.disabled).toBe(false);
+  });
+
+  it("clicar em Agrupar abre popover com as colunas para escolher agrupamento", () => {
+    render(<TableGridPanelDirect spec={SPEC_FIXTURE as TableSpecPayload} />);
+    fireEvent.click(screen.getByTitle("Agrupar"));
+    expect(screen.getByText("Nenhum")).toBeInTheDocument();
+    expect(screen.getByText("Descrição")).toBeInTheDocument();
+  });
+
+  it("escolher uma coluna de agrupamento fecha o popover e marca o botão como ativo", () => {
+    render(<TableGridPanelDirect spec={SPEC_FIXTURE as TableSpecPayload} />);
+    fireEvent.click(screen.getByTitle("Agrupar"));
+    fireEvent.click(screen.getByText("Descrição"));
+    const btn = screen.getByTitle("Agrupar") as HTMLButtonElement;
+    expect(btn.dataset.active).toBe("true");
+  });
+});
+
+describe("TableGridPanel — Compartilhar (diálogo funcional)", () => {
+  it("Compartilhar não é mais 'disabled'", () => {
+    render(<TableGridPanelDirect spec={SPEC_FIXTURE as TableSpecPayload} />);
+    const btn = screen.getByTitle("Compartilhar") as HTMLButtonElement;
+    expect(btn.disabled).toBe(false);
+  });
+
+  it("clicar em Compartilhar abre diálogo com opção de copiar tabela como texto", () => {
+    render(<TableGridPanelDirect spec={SPEC_FIXTURE as TableSpecPayload} />);
+    fireEvent.click(screen.getByTitle("Compartilhar"));
+    expect(screen.getByText("Copiar tabela como texto")).toBeInTheDocument();
+  });
+
+  it("clicar em 'Copiar tabela como texto' chama navigator.clipboard.writeText com conteúdo TSV", async () => {
+    const writeTextMock = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, "clipboard", {
+      value: { writeText: writeTextMock },
+      configurable: true,
+    });
+
+    render(<TableGridPanelDirect spec={SPEC_FIXTURE as TableSpecPayload} />);
+    fireEvent.click(screen.getByTitle("Compartilhar"));
+    fireEvent.click(screen.getByText("Copiar tabela como texto"));
+
+    await waitFor(() => {
+      expect(writeTextMock).toHaveBeenCalledTimes(1);
+    });
+    const [tsv] = writeTextMock.mock.calls[0];
+    expect(tsv).toContain("Descrição");
+    expect(tsv).toContain("Aluguel");
+  });
+
+  it("diálogo de Compartilhar fecha com Escape", () => {
+    render(<TableGridPanelDirect spec={SPEC_FIXTURE as TableSpecPayload} />);
+    fireEvent.click(screen.getByTitle("Compartilhar"));
+    expect(screen.getByText("Copiar tabela como texto")).toBeInTheDocument();
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(screen.queryByText("Copiar tabela como texto")).not.toBeInTheDocument();
+  });
+});
