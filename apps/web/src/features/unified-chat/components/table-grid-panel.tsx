@@ -6,7 +6,9 @@ import { DynamicDataSheetGrid, keyColumn, textColumn } from "react-datasheet-gri
 import "react-datasheet-grid/dist/style.css";
 
 import {
+  AlignCenter,
   AlignLeft,
+  AlignRight,
   ArrowDown,
   ArrowUp,
   ArrowUpDown,
@@ -149,6 +151,25 @@ export function mergeCellStyle(
   };
 }
 
+/** Cicla o alinhamento de célula: left -> center -> right -> left. */
+export function nextAlign(current: "left" | "center" | "right"): "left" | "center" | "right" {
+  if (current === "left") return "center";
+  if (current === "center") return "right";
+  return "left";
+}
+
+/** Paleta fixa de cores para os popovers de Cor do texto / Preenchimento (T-260617-01). */
+export const COLOR_SWATCHES = [
+  "#000000",
+  "#dc2626",
+  "#2563eb",
+  "#16a34a",
+  "#ea580c",
+  "#7c3aed",
+  "#6b7280",
+  "#92400e",
+];
+
 // ─── ERROR_TOOLTIPS ────────────────────────────────────────────────────────────
 
 const ERROR_TOOLTIPS: Record<string, string> = {
@@ -273,6 +294,39 @@ export function TableGridPanel({ spec: propSpec }: { spec?: TableSpecPayload }) 
     },
     [activeCell, applyCellStyle]
   );
+
+  const activeCellStyle: CellStyle = activeCell
+    ? cellStyles[`${activeCell.rowIndex}:${activeCell.colKey}`] ?? {}
+    : {};
+
+  const [showColorPopover, setShowColorPopover] = useState(false);
+  const [showFillPopover, setShowFillPopover] = useState(false);
+  const colorPopoverRef = useRef<HTMLDivElement>(null);
+  const fillPopoverRef = useRef<HTMLDivElement>(null);
+
+  // ── Fechar popover de Cor do texto ao clicar fora ──
+  useEffect(() => {
+    if (!showColorPopover) return;
+    function handleMouseDown(e: MouseEvent) {
+      if (colorPopoverRef.current && !colorPopoverRef.current.contains(e.target as Node)) {
+        setShowColorPopover(false);
+      }
+    }
+    document.addEventListener("mousedown", handleMouseDown);
+    return () => document.removeEventListener("mousedown", handleMouseDown);
+  }, [showColorPopover]);
+
+  // ── Fechar popover de Preenchimento ao clicar fora ──
+  useEffect(() => {
+    if (!showFillPopover) return;
+    function handleMouseDown(e: MouseEvent) {
+      if (fillPopoverRef.current && !fillPopoverRef.current.contains(e.target as Node)) {
+        setShowFillPopover(false);
+      }
+    }
+    document.addEventListener("mousedown", handleMouseDown);
+    return () => document.removeEventListener("mousedown", handleMouseDown);
+  }, [showFillPopover]);
 
   const { sortedRows, sortIndexMap } = useMemo(() => {
     if (!sortState) {
@@ -948,31 +1002,118 @@ export function TableGridPanel({ spec: propSpec }: { spec?: TableSpecPayload }) 
         <span className="format-dropdown" aria-hidden>10 <ChevronDown size={11} /></span>
         <span className="format-btn-separator" aria-hidden />
         {/* Text formatting */}
-        <button className="format-btn" type="button" disabled title="Negrito (em breve)">
+        <button
+          className="format-btn"
+          type="button"
+          title="Negrito"
+          data-active={activeCellStyle.bold || undefined}
+          onClick={() => applyCellStyleToActive((prev) => ({ bold: !prev.bold }))}
+        >
           <Bold size={15} />
         </button>
-        <button className="format-btn" type="button" disabled title="Itálico (em breve)">
+        <button
+          className="format-btn"
+          type="button"
+          title="Itálico"
+          data-active={activeCellStyle.italic || undefined}
+          onClick={() => applyCellStyleToActive((prev) => ({ italic: !prev.italic }))}
+        >
           <Italic size={15} />
         </button>
-        <button className="format-btn" type="button" disabled title="Tachado (em breve)">
+        <button
+          className="format-btn"
+          type="button"
+          title="Tachado"
+          data-active={activeCellStyle.strikethrough || undefined}
+          onClick={() => applyCellStyleToActive((prev) => ({ strikethrough: !prev.strikethrough }))}
+        >
           <Strikethrough size={15} />
         </button>
-        <button className="format-btn" type="button" disabled title="Cor do texto (em breve)">
-          <Type size={15} />
-        </button>
-        <button className="format-btn" type="button" disabled title="Cor de preenchimento (em breve)">
-          <PaintBucket size={15} />
-        </button>
+        <div className="columns-panel-container" ref={colorPopoverRef}>
+          <button
+            className="format-btn"
+            type="button"
+            title="Cor do texto"
+            data-active={showColorPopover || undefined}
+            onClick={() => setShowColorPopover((v) => !v)}
+          >
+            <Type size={15} />
+          </button>
+          {showColorPopover ? (
+            <div className="color-popover" role="dialog" aria-label="Cor do texto">
+              {COLOR_SWATCHES.map((swatch) => (
+                <button
+                  key={swatch}
+                  type="button"
+                  className="color-popover-swatch"
+                  aria-label={`Cor do texto ${swatch}`}
+                  style={{ background: swatch }}
+                  onClick={() => {
+                    applyCellStyleToActive({ color: swatch });
+                    setShowColorPopover(false);
+                  }}
+                />
+              ))}
+            </div>
+          ) : null}
+        </div>
+        <div className="columns-panel-container" ref={fillPopoverRef}>
+          <button
+            className="format-btn"
+            type="button"
+            title="Cor de preenchimento"
+            data-active={showFillPopover || undefined}
+            onClick={() => setShowFillPopover((v) => !v)}
+          >
+            <PaintBucket size={15} />
+          </button>
+          {showFillPopover ? (
+            <div className="color-popover" role="dialog" aria-label="Cor de preenchimento">
+              {COLOR_SWATCHES.map((swatch) => (
+                <button
+                  key={swatch}
+                  type="button"
+                  className="color-popover-swatch"
+                  aria-label={`Preenchimento ${swatch}`}
+                  style={{ background: swatch }}
+                  onClick={() => {
+                    applyCellStyleToActive({ background: swatch });
+                    setShowFillPopover(false);
+                  }}
+                />
+              ))}
+            </div>
+          ) : null}
+        </div>
         <span className="format-btn-separator" aria-hidden />
         {/* Cell formatting */}
-        <button className="format-btn" type="button" disabled title="Bordas (em breve)">
+        <button
+          className="format-btn"
+          type="button"
+          title="Bordas"
+          data-active={activeCellStyle.border || undefined}
+          onClick={() => applyCellStyleToActive((prev) => ({ border: !prev.border }))}
+        >
           <LayoutGrid size={15} />
         </button>
         <button className="format-btn" type="button" disabled title="Mesclar células (em breve)">
           <Merge size={15} />
         </button>
-        <button className="format-btn" type="button" disabled title="Alinhar à esquerda (em breve)">
-          <AlignLeft size={15} />
+        <button
+          className="format-btn"
+          type="button"
+          title={`Alinhar à ${activeCellStyle.align === "center" ? "centro" : activeCellStyle.align === "right" ? "direita" : "esquerda"}`}
+          onClick={() =>
+            applyCellStyleToActive((prev) => ({ align: nextAlign(prev.align ?? "left") }))
+          }
+        >
+          {activeCellStyle.align === "center" ? (
+            <AlignCenter size={15} />
+          ) : activeCellStyle.align === "right" ? (
+            <AlignRight size={15} />
+          ) : (
+            <AlignLeft size={15} />
+          )}
         </button>
         <button className="format-btn" type="button" disabled title="Funções (em breve)">
           <Sigma size={15} />
