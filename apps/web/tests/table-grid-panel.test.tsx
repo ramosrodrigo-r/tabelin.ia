@@ -32,7 +32,10 @@ if (typeof window !== "undefined" && !window.ResizeObserver) {
 
 // Import direto: o módulo já existe nesta fase (Wave 2) — usado pelos testes
 // de export EXP-01/EXP-02 que precisam de render real (não skip-graceful).
-import { TableGridPanel as TableGridPanelDirect } from "../src/features/unified-chat/components/table-grid-panel";
+import {
+  TableGridPanel as TableGridPanelDirect,
+  formatCellValue,
+} from "../src/features/unified-chat/components/table-grid-panel";
 import { WorkspaceStateProvider } from "../src/components/app/workspace-state-context";
 import { SAMPLE_SPEC } from "../src/features/unified-chat/lib/sample-spec";
 import type { TableSpecPayload } from "@tabelin/shared";
@@ -627,5 +630,73 @@ describe("TableGridPanel — Negrito/Italico/Tachado/Cor/Preenchimento/Bordas/Al
     expect(helpers.nextAlign!("left")).toBe("center");
     expect(helpers.nextAlign!("center")).toBe("right");
     expect(helpers.nextAlign!("right")).toBe("left");
+  });
+});
+
+// ─── Plan 260617-ukf: formato numérico, decimais, zoom, fonte, tamanho (Task 3) ──
+
+describe("TableGridPanel — Moeda/Percentual/decimais/Zoom/Fonte/Tamanho", () => {
+  it("formatCellValue aceita 'percent' e formata via Intl.NumberFormat pt-BR", () => {
+    const formatted = formatCellValue(0.42, "percent");
+    expect(formatted).toMatch(/%/);
+  });
+
+  it("formatCellValue aceita decimals opcional sem quebrar chamadas existentes (assinatura compatível)", () => {
+    expect(formatCellValue(2000, "currency")).toMatch(/R\$/);
+    expect(formatCellValue(2000, "currency", 0)).toMatch(/R\$/);
+  });
+
+  it("clicar em Moeda sem nenhuma célula ativa não lança erro (no-op gracioso)", () => {
+    render(<TableGridPanelDirect spec={SPEC_FIXTURE as TableSpecPayload} />);
+    expect(() => fireEvent.click(screen.getByTitle("Formato moeda"))).not.toThrow();
+  });
+
+  it("clicar em Percentual sem nenhuma célula ativa não lança erro (no-op gracioso)", () => {
+    render(<TableGridPanelDirect spec={SPEC_FIXTURE as TableSpecPayload} />);
+    expect(() => fireEvent.click(screen.getByTitle("Formato percentual"))).not.toThrow();
+  });
+
+  it("Moeda/Percentual/decimais não são mais 'disabled' nem têm title '(em breve)'", () => {
+    render(<TableGridPanelDirect spec={SPEC_FIXTURE as TableSpecPayload} />);
+    for (const title of ["Formato moeda", "Formato percentual", "Diminuir decimais", "Aumentar decimais"]) {
+      const btn = screen.getByTitle(title) as HTMLButtonElement;
+      expect(btn.disabled).toBe(false);
+      expect(btn.title).not.toMatch(/em breve/);
+    }
+  });
+
+  it("clicar em Diminuir/Aumentar decimais sem célula ativa não lança erro (no-op gracioso)", () => {
+    render(<TableGridPanelDirect spec={SPEC_FIXTURE as TableSpecPayload} />);
+    expect(() => fireEvent.click(screen.getByTitle("Diminuir decimais"))).not.toThrow();
+    expect(() => fireEvent.click(screen.getByTitle("Aumentar decimais"))).not.toThrow();
+  });
+
+  it("Zoom inicia em 100% e abre dropdown real com 4 opções (75/100/125/150%)", () => {
+    render(<TableGridPanelDirect spec={SPEC_FIXTURE as TableSpecPayload} />);
+    const zoomBtn = screen.getByTitle("Zoom");
+    fireEvent.click(zoomBtn);
+    expect(screen.getByText("75%")).toBeInTheDocument();
+    expect(screen.getByText("125%")).toBeInTheDocument();
+    expect(screen.getByText("150%")).toBeInTheDocument();
+  });
+
+  it("selecionar 125% no dropdown de Zoom aplica scale(1.25) no wrapper do grid", () => {
+    render(<TableGridPanelDirect spec={SPEC_FIXTURE as TableSpecPayload} />);
+    fireEvent.click(screen.getByTitle("Zoom"));
+    fireEvent.click(screen.getByText("125%"));
+    const zoomWrapper = document.querySelector(".table-grid-zoom-wrapper") as HTMLElement;
+    expect(zoomWrapper).not.toBeNull();
+    expect(zoomWrapper.style.transform).toBe("scale(1.25)");
+  });
+
+  it("Fonte e Tamanho são dropdowns reais (não mais span estático) que abrem opções ao clicar", () => {
+    render(<TableGridPanelDirect spec={SPEC_FIXTURE as TableSpecPayload} />);
+    const fontBtn = screen.getByTitle("Fonte");
+    fireEvent.click(fontBtn);
+    expect(screen.getByText("Georgia")).toBeInTheDocument();
+
+    const sizeBtn = screen.getByTitle("Tamanho");
+    fireEvent.click(sizeBtn);
+    expect(screen.getByText("18")).toBeInTheDocument();
   });
 });
