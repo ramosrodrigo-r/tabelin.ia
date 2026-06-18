@@ -847,22 +847,24 @@ export function TableGridPanel({ spec: propSpec }: { spec?: TableSpecPayload }) 
             ? `— ${currentColumns.find((c) => c.key === groupByKey)?.name ?? groupByKey}: ${String(displayRow[groupByKey!] ?? "")} —`
             : null;
 
-          const cellInlineStyle: React.CSSProperties | undefined = style
-            ? {
-                fontWeight: style.bold ? "bold" : undefined,
-                fontStyle: style.italic ? "italic" : undefined,
-                textDecoration: style.strikethrough ? "line-through" : undefined,
-                color: style.color,
-                background: style.background,
-                textAlign: style.align,
-                border: style.border ? "1px solid var(--text)" : undefined,
-                fontFamily: style.fontFamily,
-                fontSize: style.fontSize,
-                display: "block",
-                width: "100%",
-                boxSizing: "border-box",
-              }
-            : undefined;
+          // Preenche 100% da célula sempre (não só quando há estilo) — sem isso,
+          // o span só cobre a largura do texto e a maior parte da célula fica
+          // sem handler de clique, deixando a célula "morta" ao clicar fora do texto.
+          const cellInlineStyle: React.CSSProperties = {
+            fontWeight: style?.bold ? "bold" : undefined,
+            fontStyle: style?.italic ? "italic" : undefined,
+            textDecoration: style?.strikethrough ? "line-through" : undefined,
+            color: style?.color,
+            background: style?.background,
+            textAlign: style?.align,
+            border: style?.border ? "1px solid var(--text)" : undefined,
+            fontFamily: style?.fontFamily,
+            fontSize: style?.fontSize,
+            display: "block",
+            width: "100%",
+            height: "100%",
+            boxSizing: "border-box",
+          };
 
           const handleCellMouseDown = () => {
             if (handleMergeTargetCell(originalRowIndex, colKey)) return;
