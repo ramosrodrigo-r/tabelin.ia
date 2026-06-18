@@ -49,6 +49,22 @@ type GridState = { rows: RowData[]; columns: TableColumn[] };
 
 type Action = { type: "SET"; newState: GridState } | { type: "UNDO" } | { type: "REDO" };
 
+type CellComponentProps = {
+  rowData: RowData;
+  rowIndex: number;
+  columnIndex: number;
+  active: boolean;
+  focus: boolean;
+  disabled: boolean;
+  columnData: unknown;
+  setRowData: (row: RowData) => void;
+  stopEditing: () => void;
+  insertRowBelow: () => void;
+  duplicateRow: () => void;
+  deleteRow: () => void;
+  getContextMenuItems: () => unknown[];
+};
+
 /**
  * Estilo visual de uma célula individual. Vive em estado LOCAL ao componente
  * (`cellStyles`) — não entra no `historyReducer` (undo/redo) nem no
@@ -327,6 +343,64 @@ export function TableGridPanel({ spec: propSpec }: { spec?: TableSpecPayload }) 
   // (decisão de escopo documentada no PLAN 260617-ukf).
   const [cellStyles, setCellStyles] = useState<Record<string, CellStyle>>({});
   const [activeCell, setActiveCell] = useState<{ rowIndex: number; colKey: string } | null>(null);
+
+  // ── Edição direta de célula (digitar sem passar pelo chat) ──
+  // Captura teclado globalmente em vez de usar um <input> focado: o
+  // react-datasheet-grid gerencia seu próprio foco/edição internos de forma
+  // agressiva (mount/unmount em cascata ao redor de cada interação, mesmo
+  // com a função de célula memoizada), o que rouba o foco do DOM quase
+  // imediatamente. Mantendo a edição em estado React puro (sem depender de
+  // qual elemento tem foco real), o recurso funciona de forma confiável.
+  const [editBuffer, setEditBuffer] = useState<string | null>(null);
+
+  const commitCellEdit = useCallback(
+    (rowIndex: number, colKey: string, newValue: string) => {
+      const newRows = currentRows.map((row, idx) =>
+        idx === rowIndex ? { ...row, [colKey]: newValue } : row
+      );
+      dispatch({ type: "SET", newState: { rows: newRows, columns: currentColumns } });
+    },
+    [currentRows, currentColumns, dispatch]
+  );
+
+  useEffect(() => {
+    function handleCellEditKeyDown(e: KeyboardEvent) {
+      if (!activeCell) return;
+      const focusedTag = (document.activeElement as HTMLElement | null)?.tagName;
+      if (focusedTag === "INPUT" || focusedTag === "TEXTAREA") return; // ex.: caixa de chat
+      const col = currentColumns.find((c) => c.key === activeCell.colKey);
+      if (col?.type === "formula") return;
+
+      if (editBuffer !== null) {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          commitCellEdit(activeCell.rowIndex, activeCell.colKey, editBuffer);
+          setEditBuffer(null);
+        } else if (e.key === "Escape") {
+          e.preventDefault();
+          setEditBuffer(null);
+        } else if (e.key === "Backspace") {
+          e.preventDefault();
+          setEditBuffer((prev) => (prev ?? "").slice(0, -1));
+        } else if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+          e.preventDefault();
+          setEditBuffer((prev) => (prev ?? "") + e.key);
+        }
+        return;
+      }
+
+      if (e.key === "Enter") {
+        e.preventDefault();
+        const current = String(currentRows[activeCell.rowIndex]?.[activeCell.colKey] ?? "");
+        setEditBuffer(current);
+      } else if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        e.preventDefault();
+        setEditBuffer(e.key);
+      }
+    }
+    window.addEventListener("keydown", handleCellEditKeyDown);
+    return () => window.removeEventListener("keydown", handleCellEditKeyDown);
+  }, [activeCell, editBuffer, currentColumns, currentRows, commitCellEdit]);
 
   const applyCellStyle = useCallback(
     (
@@ -780,13 +854,167 @@ export function TableGridPanel({ spec: propSpec }: { spec?: TableSpecPayload }) 
   }, [propSpec, context]);
 
   // ── Colunas do DSG ──
+  // `cellRendererCacheRef` mantém UMA função de renderização estável por
+  // colKey, reaproveitada entre recomputações do useMemo abaixo. Sem isso,
+  // cada recomputação (disparada por cellStyles/activeCell/groupByKey
+  // mudando) criaria uma função NOVA para `component`, e o React — que usa
+  // essa referência como o "tipo" do componente em createElement(Component,
+  // ...) — desmontaria e remontaria a célula inteira, derrubando o foco do
+  // <input> de edição a cada clique/tecla (#editar-direto). Os valores que
+  // mudam ficam em `latestCellRenderDataRef`, lidos em tempo de chamada (não
+  // por closure), então a função pode ficar estável e ainda mostrar dados
+  // atuais — e o array `dsgColumns.columns` continua sendo recriado a cada
+  // recomputação, o que já é suficiente para forçar o react-datasheet-grid
+  // (memoizado) a re-renderizar com os novos dados.
+  const cellRendererCacheRef = useRef<Map<string, (props: CellComponentProps) => React.ReactElement>>(
+    new Map()
+  );
+  const latestCellRenderDataRef = useRef<{
+    cellStyles: Record<string, CellStyle>;
+    activeCell: { rowIndex: number; colKey: string } | null;
+    groupByKey: string | null;
+    groupStartIndexes: Set<number>;
+    groupToFilteredIndexMap: number[];
+    sortedRows: RowData[];
+    sortIndexMap: number[];
+    currentColumns: TableColumn[];
+    commitCellEdit: (rowIndex: number, colKey: string, newValue: string) => void;
+    handleMergeTargetCell: (rowIndex: number, colKey: string) => boolean;
+    handlePaintTargetCell: (rowIndex: number, colKey: string) => boolean;
+    firstVisibleColKey: string | undefined;
+    editBuffer: string | null;
+  } | null>(null);
+
   const dsgColumns = useMemo(() => {
     const visibleColumns = currentColumns.filter((col) => !hiddenCols.has(col.key!));
     const firstVisibleColKey = visibleColumns[0]?.key;
+
+    latestCellRenderDataRef.current = {
+      cellStyles,
+      activeCell,
+      groupByKey,
+      groupStartIndexes,
+      groupToFilteredIndexMap,
+      sortedRows,
+      sortIndexMap,
+      currentColumns,
+      commitCellEdit,
+      editBuffer,
+      handleMergeTargetCell,
+      handlePaintTargetCell,
+      firstVisibleColKey,
+    };
     const dataCols = visibleColumns.map((col) => {
       const colKey = col.key!;
       const colType = col.type;
       const isFormula = colType === "formula";
+
+      let renderCell = cellRendererCacheRef.current.get(colKey);
+      if (!renderCell) {
+        renderCell = ({ rowData, rowIndex }: CellComponentProps) => {
+          const latest = latestCellRenderDataRef.current!;
+          const filteredRowIndex = latest.groupToFilteredIndexMap[rowIndex] ?? rowIndex;
+          const displayRow = latest.sortedRows[filteredRowIndex] ?? rowData;
+          const rawValue = displayRow[colKey] ?? "";
+          const displayValue = isFormula ? rawValue : (rowData[colKey] ?? "");
+
+          const originalRowIndex = latest.sortIndexMap[filteredRowIndex] ?? filteredRowIndex;
+          const styleKey = `${originalRowIndex}:${colKey}`;
+          const style = latest.cellStyles[styleKey];
+          const isActiveCell =
+            latest.activeCell?.rowIndex === originalRowIndex && latest.activeCell?.colKey === colKey;
+          const isGroupStart =
+            latest.groupByKey !== null &&
+            colKey === latest.firstVisibleColKey &&
+            latest.groupStartIndexes.has(rowIndex);
+          const groupLabel = isGroupStart
+            ? `— ${latest.currentColumns.find((c) => c.key === latest.groupByKey)?.name ?? latest.groupByKey}: ${String(displayRow[latest.groupByKey!] ?? "")} —`
+            : null;
+
+          // Preenche 100% da célula sempre (não só quando há estilo) — sem isso,
+          // o span só cobre a largura do texto e a maior parte da célula fica
+          // sem handler de clique, deixando a célula "morta" ao clicar fora do texto.
+          const cellInlineStyle: React.CSSProperties = {
+            fontWeight: style?.bold ? "bold" : undefined,
+            fontStyle: style?.italic ? "italic" : undefined,
+            textDecoration: style?.strikethrough ? "line-through" : undefined,
+            color: style?.color,
+            background: style?.background,
+            textAlign: style?.align,
+            border: style?.border ? "1px solid var(--text)" : undefined,
+            fontFamily: style?.fontFamily,
+            fontSize: style?.fontSize,
+            display: "block",
+            width: "100%",
+            height: "100%",
+            boxSizing: "border-box",
+            outline: isActiveCell ? "2px solid var(--primary)" : undefined,
+            outlineOffset: isActiveCell ? "-1px" : undefined,
+          };
+
+          const handleCellMouseDown = (e: React.MouseEvent) => {
+            // Impede que o mousedown chegue ao listener global do
+            // react-datasheet-grid (document-level), que gerencia seu
+            // próprio foco/seleção internos de forma agressiva.
+            e.stopPropagation();
+            const latestHandlers = latestCellRenderDataRef.current!;
+            if (latestHandlers.handleMergeTargetCell(originalRowIndex, colKey)) return;
+            if (latestHandlers.handlePaintTargetCell(originalRowIndex, colKey)) return;
+            // Confirma edição pendente da célula anterior antes de trocar.
+            if (latestHandlers.editBuffer !== null && latestHandlers.activeCell) {
+              latestHandlers.commitCellEdit(
+                latestHandlers.activeCell.rowIndex,
+                latestHandlers.activeCell.colKey,
+                latestHandlers.editBuffer
+              );
+              setEditBuffer(null);
+            }
+            setActiveCell({ rowIndex: originalRowIndex, colKey });
+          };
+
+          if (isErrorCode(displayValue)) {
+            return (
+              <span
+                className="cell-error"
+                title={ERROR_TOOLTIPS[String(displayValue)] ?? "Erro"}
+                onMouseDown={handleCellMouseDown}
+                style={cellInlineStyle}
+              >
+                {String(displayValue)}
+              </span>
+            );
+          }
+
+          // Edição direta: célula ativa e não-fórmula exibe o buffer de
+          // edição (digitado via captura de teclado global — ver useEffect
+          // de handleCellEditKeyDown) em vez do valor formatado. Não depende
+          // de foco nativo de DOM — o react-datasheet-grid rouba o foco de
+          // qualquer <input> que renderizemos quase imediatamente após
+          // montar, então a edição vive inteiramente em estado React.
+          if (isActiveCell && !isFormula && latest.editBuffer !== null) {
+            return (
+              <span className="cell-edit-active" onMouseDown={handleCellMouseDown} style={cellInlineStyle}>
+                {latest.editBuffer}
+                <span className="cell-edit-caret" aria-hidden />
+              </span>
+            );
+          }
+
+          const effectiveType = style?.numberFormat ?? colType;
+          const formatted = formatCellValue(displayValue, effectiveType, style?.decimals);
+          return (
+            <span
+              className={isGroupStart ? "row-group-header" : undefined}
+              onMouseDown={handleCellMouseDown}
+              style={cellInlineStyle}
+            >
+              {groupLabel ? <span className="row-group-header-label">{groupLabel}</span> : null}
+              {formatted}
+            </span>
+          );
+        };
+        cellRendererCacheRef.current.set(colKey, renderCell);
+      }
 
       return {
         ...keyColumn(colKey, textColumn),
@@ -815,92 +1043,7 @@ export function TableGridPanel({ spec: propSpec }: { spec?: TableSpecPayload }) 
           </div>
         ),
         disabled: isFormula ? () => true : undefined,
-        component: ({
-          rowData,
-          rowIndex,
-        }: {
-          rowData: RowData;
-          rowIndex: number;
-          columnIndex: number;
-          active: boolean;
-          focus: boolean;
-          disabled: boolean;
-          columnData: unknown;
-          setRowData: (row: RowData) => void;
-          stopEditing: () => void;
-          insertRowBelow: () => void;
-          duplicateRow: () => void;
-          deleteRow: () => void;
-          getContextMenuItems: () => unknown[];
-        }) => {
-          const filteredRowIndex = groupToFilteredIndexMap[rowIndex] ?? rowIndex;
-          const displayRow = sortedRows[filteredRowIndex] ?? rowData;
-          const rawValue = displayRow[colKey] ?? "";
-          const displayValue = isFormula ? rawValue : (rowData[colKey] ?? "");
-
-          const originalRowIndex = sortIndexMap[filteredRowIndex] ?? filteredRowIndex;
-          const styleKey = `${originalRowIndex}:${colKey}`;
-          const style = cellStyles[styleKey];
-          const isActiveCell = activeCell?.rowIndex === originalRowIndex && activeCell?.colKey === colKey;
-          const isGroupStart =
-            groupByKey !== null && colKey === firstVisibleColKey && groupStartIndexes.has(rowIndex);
-          const groupLabel = isGroupStart
-            ? `— ${currentColumns.find((c) => c.key === groupByKey)?.name ?? groupByKey}: ${String(displayRow[groupByKey!] ?? "")} —`
-            : null;
-
-          // Preenche 100% da célula sempre (não só quando há estilo) — sem isso,
-          // o span só cobre a largura do texto e a maior parte da célula fica
-          // sem handler de clique, deixando a célula "morta" ao clicar fora do texto.
-          const cellInlineStyle: React.CSSProperties = {
-            fontWeight: style?.bold ? "bold" : undefined,
-            fontStyle: style?.italic ? "italic" : undefined,
-            textDecoration: style?.strikethrough ? "line-through" : undefined,
-            color: style?.color,
-            background: style?.background,
-            textAlign: style?.align,
-            border: style?.border ? "1px solid var(--text)" : undefined,
-            fontFamily: style?.fontFamily,
-            fontSize: style?.fontSize,
-            display: "block",
-            width: "100%",
-            height: "100%",
-            boxSizing: "border-box",
-            outline: isActiveCell ? "2px solid var(--primary)" : undefined,
-            outlineOffset: isActiveCell ? "-1px" : undefined,
-          };
-
-          const handleCellMouseDown = () => {
-            if (handleMergeTargetCell(originalRowIndex, colKey)) return;
-            if (handlePaintTargetCell(originalRowIndex, colKey)) return;
-            setActiveCell({ rowIndex: originalRowIndex, colKey });
-          };
-
-          if (isErrorCode(displayValue)) {
-            return (
-              <span
-                className="cell-error"
-                title={ERROR_TOOLTIPS[String(displayValue)] ?? "Erro"}
-                onMouseDown={handleCellMouseDown}
-                style={cellInlineStyle}
-              >
-                {String(displayValue)}
-              </span>
-            );
-          }
-
-          const effectiveType = style?.numberFormat ?? colType;
-          const formatted = formatCellValue(displayValue, effectiveType, style?.decimals);
-          return (
-            <span
-              className={isGroupStart ? "row-group-header" : undefined}
-              onMouseDown={handleCellMouseDown}
-              style={cellInlineStyle}
-            >
-              {groupLabel ? <span className="row-group-header-label">{groupLabel}</span> : null}
-              {formatted}
-            </span>
-          );
-        },
+        component: renderCell,
       };
     });
 
@@ -964,6 +1107,9 @@ export function TableGridPanel({ spec: propSpec }: { spec?: TableSpecPayload }) 
     removeRow,
     hiddenCols,
     cellStyles,
+    activeCell,
+    editBuffer,
+    commitCellEdit,
     handleMergeTargetCell,
     handlePaintTargetCell,
     groupByKey,

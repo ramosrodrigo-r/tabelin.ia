@@ -1473,6 +1473,27 @@ a {
   color: #1a56db;
 }
 
+/* ── Edição direta de célula (buffer via teclado global) ─────────────────── */
+
+.cell-edit-active {
+  white-space: pre;
+}
+
+.cell-edit-caret {
+  display: inline-block;
+  width: 1px;
+  height: 1em;
+  margin-left: 1px;
+  vertical-align: text-bottom;
+  background: var(--primary);
+  animation: cell-edit-caret-blink 1s step-end infinite;
+}
+
+@keyframes cell-edit-caret-blink {
+  0%, 50% { opacity: 1; }
+  50.01%, 100% { opacity: 0; }
+}
+
 /* ── Color popover (Cor do texto / Preenchimento) ─────────────────────────────── */
 
 .color-popover {
