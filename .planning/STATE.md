@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-06-15)
 Phase: Milestone v3.0 complete
 Plan: —
 Status: Awaiting next milestone
-Last activity: 2026-06-16 — Completed quick task 260616-o50: higiene de código harmonizando auth gate com Better Auth (JSDoc atualizado + testes unitários AuthGate)
+Last activity: 2026-06-18 — Completed quick task 260618-l61: edição direta de células da planilha via teclado, sem passar pelo chat da IA
 
 ## Performance Metrics
 
@@ -88,6 +88,7 @@ None yet.
 | 260616-o50 | Higiene de código: harmonizar auth gate com Better Auth (JSDoc atualizado + 4 testes unitários para AuthGate) | 2026-06-16 | c3dfd8d | [260616-o50](./quick/260616-o50-harmonizar-auth-gate-com-better-auth/) |
 | 260616-qei | Funcoes topbar da tabela: Filtrar (barra de texto em tempo real) e Colunas (dropdown de visibilidade); remove botão Imprimir | 2026-06-16 | 5cb2c84 | [260616-qei](./quick/260616-qei-adicionar-funcoes-da-topbar-da-tabela/) |
 | 260617-ukf | Funções da toolbar da planilha: todos os 19 botões antes desabilitados ("em breve") agora funcionais — formatação de texto, número, zoom, fonte, sigma, mesclar, ordenar, agrupar, compartilhar | 2026-06-18 | 1f10bda | [260617-ukf](./quick/260617-ukf-crie-as-funcoes-da-toolbar-da-planilha-q/) |
+| 260618-l61 | Edição direta de valor de célula via teclado, sem passar pelo chat da IA (ausente desde v1) — captura de teclado global + cache de renderers estáveis para corrigir remount em cascata do react-datasheet-grid | 2026-06-18 | 3695e60 | [260618-l61](./quick/260618-l61-habilitar-edicao-direta-de-celulas-da-pl/) |
 | Phase 18 P01 | 5 min | 2 tasks | 40 files |
 | Phase 18 P02 | 4 min | 2 tasks | 13 files |
 | Phase 18 P03 | 3 min | 2 tasks | 19 files |
