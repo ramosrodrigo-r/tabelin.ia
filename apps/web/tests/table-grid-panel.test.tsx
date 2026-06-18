@@ -556,3 +556,76 @@ describe("TableGridPanel — activeCell tracking via onMouseDown", () => {
     expect(grid).not.toBeNull();
   });
 });
+
+// ─── Plan 260617-ukf: formatação de texto (Task 2) ────────────────────────────
+//
+// NOTA: react-datasheet-grid usa useResizeDetector (width/height reais do DOM)
+// para decidir quais linhas virtualizar — jsdom retorna 0 para essas medidas,
+// então nenhuma linha de DADOS é renderizada em testes (apenas o header). Por
+// isso os testes abaixo verificam (1) a lógica pura exportada (nextAlign) e
+// (2) que os botões não lançam erro ao clicar sem activeCell (no-op gracioso)
+// — mesmo padrão já usado pelos testes TAB-01/TAB-03 existentes neste arquivo.
+
+describe("TableGridPanel — Negrito/Italico/Tachado/Cor/Preenchimento/Bordas/Alinhar (format-btn)", () => {
+  it("clicar em Negrito sem nenhuma célula ativa não lança erro (no-op gracioso)", () => {
+    render(<TableGridPanelDirect spec={SPEC_FIXTURE as TableSpecPayload} />);
+    expect(() => fireEvent.click(screen.getByTitle("Negrito"))).not.toThrow();
+  });
+
+  it("clicar em Itálico sem nenhuma célula ativa não lança erro (no-op gracioso)", () => {
+    render(<TableGridPanelDirect spec={SPEC_FIXTURE as TableSpecPayload} />);
+    expect(() => fireEvent.click(screen.getByTitle("Itálico"))).not.toThrow();
+  });
+
+  it("clicar em Tachado sem nenhuma célula ativa não lança erro (no-op gracioso)", () => {
+    render(<TableGridPanelDirect spec={SPEC_FIXTURE as TableSpecPayload} />);
+    expect(() => fireEvent.click(screen.getByTitle("Tachado"))).not.toThrow();
+  });
+
+  it("clicar em Bordas sem nenhuma célula ativa não lança erro (no-op gracioso)", () => {
+    render(<TableGridPanelDirect spec={SPEC_FIXTURE as TableSpecPayload} />);
+    expect(() => fireEvent.click(screen.getByTitle("Bordas"))).not.toThrow();
+  });
+
+  it("clicar em Alinhar sem nenhuma célula ativa não lança erro (no-op gracioso)", () => {
+    render(<TableGridPanelDirect spec={SPEC_FIXTURE as TableSpecPayload} />);
+    expect(() => fireEvent.click(screen.getByTitle(/^Alinhar/))).not.toThrow();
+  });
+
+  it("Negrito/Itálico/Tachado/Bordas não são mais 'disabled' nem têm title '(em breve)'", () => {
+    render(<TableGridPanelDirect spec={SPEC_FIXTURE as TableSpecPayload} />);
+    for (const title of ["Negrito", "Itálico", "Tachado", "Bordas"]) {
+      const btn = screen.getByTitle(title) as HTMLButtonElement;
+      expect(btn.disabled).toBe(false);
+      expect(btn.title).not.toMatch(/em breve/);
+    }
+  });
+
+  it("abrir popover de Cor do texto e clicar fora dele fecha o popover", () => {
+    render(<TableGridPanelDirect spec={SPEC_FIXTURE as TableSpecPayload} />);
+    const colorBtn = screen.getByTitle("Cor do texto") as HTMLButtonElement;
+    expect(colorBtn.disabled).toBe(false);
+    fireEvent.click(colorBtn);
+    expect(document.querySelector(".color-popover")).not.toBeNull();
+    fireEvent.mouseDown(document.body);
+    expect(document.querySelector(".color-popover")).toBeNull();
+  });
+
+  it("abrir popover de Preenchimento mostra swatches de cor", () => {
+    render(<TableGridPanelDirect spec={SPEC_FIXTURE as TableSpecPayload} />);
+    const fillBtn = screen.getByTitle("Cor de preenchimento") as HTMLButtonElement;
+    expect(fillBtn.disabled).toBe(false);
+    fireEvent.click(fillBtn);
+    const swatches = document.querySelectorAll(".color-popover-swatch");
+    expect(swatches.length).toBeGreaterThan(0);
+  });
+
+  it("nextAlign cicla left -> center -> right -> left", async () => {
+    const mod = await import("../src/features/unified-chat/components/table-grid-panel");
+    const helpers = mod as unknown as { nextAlign?: (current: "left" | "center" | "right") => string };
+    expect(typeof helpers.nextAlign).toBe("function");
+    expect(helpers.nextAlign!("left")).toBe("center");
+    expect(helpers.nextAlign!("center")).toBe("right");
+    expect(helpers.nextAlign!("right")).toBe("left");
+  });
+});
