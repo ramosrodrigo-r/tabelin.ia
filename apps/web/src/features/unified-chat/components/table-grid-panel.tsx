@@ -841,6 +841,7 @@ export function TableGridPanel({ spec: propSpec }: { spec?: TableSpecPayload }) 
           const originalRowIndex = sortIndexMap[filteredRowIndex] ?? filteredRowIndex;
           const styleKey = `${originalRowIndex}:${colKey}`;
           const style = cellStyles[styleKey];
+          const isActiveCell = activeCell?.rowIndex === originalRowIndex && activeCell?.colKey === colKey;
           const isGroupStart =
             groupByKey !== null && colKey === firstVisibleColKey && groupStartIndexes.has(rowIndex);
           const groupLabel = isGroupStart
@@ -864,6 +865,8 @@ export function TableGridPanel({ spec: propSpec }: { spec?: TableSpecPayload }) 
             width: "100%",
             height: "100%",
             boxSizing: "border-box",
+            outline: isActiveCell ? "2px solid var(--primary)" : undefined,
+            outlineOffset: isActiveCell ? "-1px" : undefined,
           };
 
           const handleCellMouseDown = () => {
